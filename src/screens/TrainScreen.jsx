@@ -11,6 +11,8 @@ import { IconPlay } from "../components/icons.jsx";
 import NumField from "../components/NumField.jsx";
 import ExerciseSheet from "../components/ExerciseSheet.jsx";
 import BrandLogo from "../components/BrandLogo.jsx";
+import CoachCard from "../components/CoachCard.jsx";
+import { workoutCoach } from "../lib/coach.js";
 
 const FEELS = ["😩", "😕", "🙂", "💪", "🔥"];
 
@@ -28,6 +30,7 @@ export default function TrainScreen() {
   const weekDone = DAYS.filter(
     (d) => d.type !== "rest" && state.done[`w${week}-${d.id}`]
   ).length;
+  const coachMsg = workoutCoach(state, { week, dayId, day, todayId: today });
 
   return (
     <div className="scroll">
@@ -80,6 +83,8 @@ export default function TrainScreen() {
       </header>
 
       <main className="content">
+        <CoachCard msg={coachMsg} />
+
         {day.warmup && (
           <p className="warmup">
             <b>Warm-up:</b> {day.warmup}

@@ -36,14 +36,30 @@ export default function ExerciseSheet({ open, onClose, week, dayId, exercise }) 
         <span className="set-pill">{target}</span>
       </div>
 
-      <a className="video-wrap video-search" href={ytSearch} target="_blank" rel="noopener noreferrer">
-        <div className="video-empty">
-          <span className="yt-btn">
-            <span className="tri" /> Watch how-to on YouTube
-          </span>
-          <span className="vq">Search: “{exercise.q}”</span>
-        </div>
-      </a>
+      {exercise.video ? (
+        <>
+          <div className="video-wrap">
+            <iframe
+              src={`https://www.youtube-nocookie.com/embed/${exercise.video}?rel=0&modestbranding=1`}
+              title={`${exercise.name} how-to`}
+              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+              allowFullScreen
+            />
+          </div>
+          <a className="video-fallback" href={ytSearch} target="_blank" rel="noopener noreferrer">
+            Video not playing? Search YouTube instead ↗
+          </a>
+        </>
+      ) : (
+        <a className="video-wrap video-search" href={ytSearch} target="_blank" rel="noopener noreferrer">
+          <div className="video-empty">
+            <span className="yt-btn">
+              <span className="tri" /> Watch how-to on YouTube
+            </span>
+            <span className="vq">Search: “{exercise.q}”</span>
+          </div>
+        </a>
+      )}
 
       {exercise.cue && <p className="cue-box">{exercise.cue}</p>}
 

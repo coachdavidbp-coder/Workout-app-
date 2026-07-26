@@ -337,7 +337,7 @@
 .sheet-sub { color: var(--mu); font-size: 12px; text-transform: uppercase; letter-spacing: 0.06em; font-family: var(--font-display); font-weight: 700; margin-top: 3px; }
 
 .video-wrap { position: relative; border-radius: 16px; overflow: hidden; aspect-ratio: 16 / 9; background: #000; border: 1px solid var(--line); margin-top: 14px; }
-.video-wrap iframe { position: absolute; inset: 0; width: 100%; height: 100%; border: 0; }
+.video-wrap iframe { position: absolute; inset: 0; width: 100%; height: 100%; border: 0; background: #000; color-scheme: dark; }
 .video-empty {
   position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 12px;
   background: linear-gradient(200deg, #16203a, #0b1120);
@@ -396,6 +396,35 @@
 .setting-row .lab small { display: block; color: var(--mu); font-size: 11px; margin-top: 2px; }
 .setting-row input { width: 84px; background: var(--panel-2); border: 1px solid var(--line); border-radius: 10px; padding: 9px; color: var(--tx); text-align: center; font-family: var(--font-display); font-weight: 700; font-variant-numeric: tabular-nums; }
 
+/* ---------- coach card ---------- */
+.coach-card {
+  display: flex; gap: 13px; align-items: flex-start;
+  background: linear-gradient(135deg, var(--panel-3), var(--panel));
+  border: 1px solid var(--line); border-left-width: 4px;
+  border-radius: var(--r-lg); padding: 14px 16px;
+}
+.coach-card.push { border-left-color: var(--amber); }
+.coach-card.good { border-left-color: var(--good); }
+.coach-card.neutral { border-left-color: var(--ac); }
+.coach-avatar {
+  flex: none; width: 42px; height: 42px; border-radius: 12px;
+  display: flex; align-items: center; justify-content: center;
+  background: var(--g); border: 1px solid var(--line);
+}
+.coach-card.push .coach-avatar { color: var(--amber); }
+.coach-card.good .coach-avatar { color: var(--good); }
+.coach-card.neutral .coach-avatar { color: var(--ac); }
+.coach-body { min-width: 0; }
+.coach-name {
+  font-family: var(--font-display); font-size: 11px; font-weight: 700;
+  text-transform: uppercase; letter-spacing: 0.14em; color: var(--mu);
+}
+.coach-card.push .coach-name { color: var(--amber); }
+.coach-card.good .coach-name { color: var(--good); }
+.coach-card.neutral .coach-name { color: var(--ac); }
+.coach-title { font-family: var(--font-display); font-weight: 800; font-size: 16px; text-transform: none; letter-spacing: 0; margin-top: 2px; }
+.coach-msg { font-size: 13.5px; color: var(--tx-2); line-height: 1.5; margin-top: 4px; }
+
 /* ---------- meals week strip ---------- */
 .week-nav { display: flex; align-items: center; gap: 6px; margin-top: 14px; }
 .wk-arrow {
@@ -449,6 +478,8 @@
 
 /* video sheet: search link */
 .video-search { display: block; text-decoration: none; }
+.video-fallback { display: block; text-align: center; margin-top: 8px; color: var(--mu); font-size: 12px; text-decoration: none; }
+.video-fallback:active { color: var(--ac); }
 
 .rest-card { text-align: center; padding: 30px 22px; }
 .rest-card .ico { font-size: 40px; }

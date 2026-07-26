@@ -4,21 +4,18 @@ import TrainScreen from "./screens/TrainScreen.jsx";
 import MealsScreen from "./screens/MealsScreen.jsx";
 import WeightScreen from "./screens/WeightScreen.jsx";
 import MoreScreen from "./screens/MoreScreen.jsx";
-import SupplementsScreen from "./screens/SupplementsScreen.jsx";
 import Login from "./screens/Login.jsx";
 import {
   IconTrain,
   IconMeals,
   IconWeight,
-  IconSupps,
   IconMore,
 } from "./components/icons.jsx";
 import BrandLogo from "./components/BrandLogo.jsx";
 
 const TABS = [
   { id: "train", label: "Train", Icon: IconTrain, Screen: TrainScreen },
-  { id: "meals", label: "Meals", Icon: IconMeals, Screen: MealsScreen },
-  { id: "supps", label: "Supps", Icon: IconSupps, Screen: SupplementsScreen },
+  { id: "meals", label: "Nutrition", Icon: IconMeals, Screen: MealsScreen },
   { id: "weight", label: "Weight", Icon: IconWeight, Screen: WeightScreen },
   { id: "more", label: "You", Icon: IconMore, Screen: MoreScreen },
 ];

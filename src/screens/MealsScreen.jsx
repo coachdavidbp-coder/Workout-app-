@@ -6,6 +6,9 @@ import Ring from "../components/Ring.jsx";
 import AddFoodSheet from "../components/AddFoodSheet.jsx";
 import { IconChevron } from "../components/icons.jsx";
 import BrandLogo from "../components/BrandLogo.jsx";
+import CoachCard from "../components/CoachCard.jsx";
+import SupplementsSection from "../components/SupplementsSection.jsx";
+import { nutritionCoach } from "../lib/coach.js";
 
 const WATER_ADDS = [
   { label: "Cup", oz: 8 },
@@ -103,6 +106,8 @@ export default function MealsScreen() {
       </header>
 
       <main className="content">
+        <CoachCard msg={nutritionCoach(state, { dateKey: selected, isToday })} />
+
         {/* weekly summary */}
         <div className="mini-stats">
           <div className="mini-stat">
@@ -195,6 +200,9 @@ export default function MealsScreen() {
             </button>
           </div>
         </div>
+
+        {/* supplements */}
+        <SupplementsSection />
 
         {/* reference content */}
         <button className={`collapse-head ${showRef ? "open" : ""}`} onClick={() => setShowRef((v) => !v)}>
