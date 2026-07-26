@@ -29,6 +29,15 @@ const SEED_WEIGHTS = [
   { date: "2026-07-12", weight: 296.7, bodyFat: 39.6 },
 ];
 
+// ---- seed: sensible starter supplement list (fully editable) ----
+const SEED_SUPPS = [
+  { id: "whey", name: "Whey Protein", dose: "1 scoop", freq: "daily" },
+  { id: "creatine", name: "Creatine", dose: "5 g", freq: "daily" },
+  { id: "multivit", name: "Multivitamin", dose: "1 tablet", freq: "daily" },
+  { id: "vitd", name: "Vitamin D3", dose: "2000 IU", freq: "daily" },
+  { id: "electrolytes", name: "Electrolytes", dose: "1 packet", freq: "daily" },
+];
+
 export const DEFAULT_STATE = {
   version: 1,
   profile: {
@@ -42,7 +51,13 @@ export const DEFAULT_STATE = {
   runLogs: {}, // { "w1-tue": { intervals: [{mph, incline}], done } }
   meals: {}, // { "2026-07-26": { items: [{name, cal, p, qty, slot}], water } }
   weights: SEED_WEIGHTS, // [{date, weight, bodyFat}]
+  supplements: SEED_SUPPS, // [{id, name, dose, freq}]
+  suppLog: {}, // { "2026-07-26": { whey: true, ... } }
 };
+
+function uid() {
+  return Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
+}
 
 // ---------- helpers ----------
 export function todayKey(d = new Date()) {
@@ -54,6 +69,20 @@ export function todayKey(d = new Date()) {
 
 export function currentDayId(d = new Date()) {
   return ["sun", "mon", "tue", "wed", "thu", "fri", "sat"][d.getDay()];
+}
+
+// Sunday-first array of 7 days for the week containing `anchor`.
+export function weekDates(anchor = new Date()) {
+  const base = new Date(anchor);
+  base.setHours(12, 0, 0, 0);
+  const start = new Date(base);
+  start.setDate(base.getDate() - base.getDay()); // back to Sunday
+  const labels = ["S", "M", "T", "W", "T", "F", "S"];
+  return Array.from({ length: 7 }, (_, i) => {
+    const d = new Date(start);
+    d.setDate(start.getDate() + i);
+    return { key: todayKey(d), date: d, label: labels[i], dom: d.getDate() };
+  });
 }
 
 function loadLocal() {
@@ -237,6 +266,25 @@ export function StoreProvider({ children }) {
       }),
 
     setProfile: (patch) => update((s) => Object.assign(s.profile, patch)),
+
+    // ---- supplements ----
+    addSupplement: ({ name, dose, freq }) =>
+      update((s) => {
+        s.supplements = s.supplements || [];
+        s.supplements.push({ id: uid(), name, dose: dose || "", freq: freq || "daily" });
+      }),
+
+    removeSupplement: (id) =>
+      update((s) => {
+        s.supplements = (s.supplements || []).filter((x) => x.id !== id);
+      }),
+
+    toggleSupp: (dateKey, id) =>
+      update((s) => {
+        s.suppLog = s.suppLog || {};
+        s.suppLog[dateKey] = s.suppLog[dateKey] || {};
+        s.suppLog[dateKey][id] = !s.suppLog[dateKey][id];
+      }),
 
     replaceState: (next) => setState({ ...DEFAULT_STATE, ...next }),
   };

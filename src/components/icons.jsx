@@ -31,6 +31,13 @@ export const IconWeight = (p) => (
   </svg>
 );
 
+export const IconSupps = (p) => (
+  <svg viewBox="0 0 24 24" {...base} {...p}>
+    <rect x="2.5" y="8.5" width="19" height="7" rx="3.5" transform="rotate(-45 12 12)" />
+    <line x1="9.9" y1="14.1" x2="14.1" y2="9.9" />
+  </svg>
+);
+
 export const IconMore = (p) => (
   <svg viewBox="0 0 24 24" {...base} {...p}>
     <circle cx="12" cy="12" r="9" />

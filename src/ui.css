@@ -396,6 +396,60 @@
 .setting-row .lab small { display: block; color: var(--mu); font-size: 11px; margin-top: 2px; }
 .setting-row input { width: 84px; background: var(--panel-2); border: 1px solid var(--line); border-radius: 10px; padding: 9px; color: var(--tx); text-align: center; font-family: var(--font-display); font-weight: 700; font-variant-numeric: tabular-nums; }
 
+/* ---------- meals week strip ---------- */
+.week-nav { display: flex; align-items: center; gap: 6px; margin-top: 14px; }
+.wk-arrow {
+  flex: none; width: 30px; height: 46px; border-radius: 10px; border: 1px solid var(--line);
+  background: var(--panel); color: var(--tx-2); font-size: 20px; line-height: 1;
+}
+.week-strip { display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; flex: 1; }
+.wcell {
+  display: flex; flex-direction: column; align-items: center; gap: 3px;
+  padding: 6px 0 5px; border-radius: 10px; border: 1px solid var(--line);
+  background: var(--panel-2); color: var(--tx-2);
+}
+.wcell .wl { font-family: var(--font-display); font-size: 9px; font-weight: 700; text-transform: uppercase; color: var(--mu); }
+.wcell .wn { font-family: var(--font-display); font-size: 14px; font-weight: 800; font-variant-numeric: tabular-nums; line-height: 1; }
+.wcell .wbar { width: 70%; height: 3px; border-radius: 2px; background: var(--line); overflow: hidden; }
+.wcell .wbar span { display: block; height: 100%; background: var(--good); }
+.wcell.on { border-color: var(--ac); background: var(--ac-dim); color: var(--tx); }
+.wcell.on .wn { color: var(--ac-hi); }
+.wcell.istoday .wl { color: var(--live); }
+
+/* ---------- hydration ---------- */
+.hydration { padding: 14px; }
+.hyd-count { font-family: var(--font-display); font-weight: 800; font-size: 20px; }
+.hyd-count span { color: var(--mu); font-size: 12px; }
+.hyd-bar { height: 8px; border-radius: 5px; background: var(--panel-2); overflow: hidden; margin: 10px 0 12px; border: 1px solid var(--line); }
+.hyd-bar span { display: block; height: 100%; background: linear-gradient(90deg, #2f8fd0, var(--teal)); transition: width 0.35s ease; }
+.hyd-adds { display: flex; gap: 8px; }
+.hyd-chip {
+  flex: 1; display: flex; flex-direction: column; align-items: center; gap: 1px;
+  padding: 9px 0; border-radius: 12px; border: 1px solid var(--line); background: var(--panel-2); color: var(--teal);
+}
+.hyd-chip .ho { font-family: var(--font-display); font-weight: 800; font-size: 15px; }
+.hyd-chip .hln { font-size: 10px; color: var(--mu); text-transform: uppercase; letter-spacing: 0.04em; }
+.hyd-chip.undo { flex: 0 0 60px; color: var(--mu); font-family: var(--font-display); font-weight: 800; justify-content: center; }
+
+/* ---------- supplements ---------- */
+.supp-list { background: var(--panel); border: 1px solid var(--line); border-radius: var(--r-lg); overflow: hidden; }
+.supp-row { display: flex; align-items: center; gap: 13px; padding: 13px 14px; border-top: 1px solid var(--line-soft); }
+.supp-row:first-child { border-top: none; }
+.supp-check {
+  flex: none; width: 30px; height: 30px; border-radius: 9px; border: 2px solid var(--line);
+  background: var(--panel-2); color: var(--on-ac); font-size: 16px; font-weight: 800; line-height: 1;
+  display: flex; align-items: center; justify-content: center; transition: transform 0.08s ease;
+}
+.supp-check:active { transform: scale(0.9); }
+.supp-check.on { background: var(--good); border-color: var(--good); color: #04160b; }
+.supp-info .sn { font-size: 15px; font-weight: 600; }
+.supp-info .sd { font-size: 12px; color: var(--mu); margin-top: 1px; }
+.supp-row .del { width: 30px; height: 30px; border: 1px solid var(--line); border-radius: 9px; font-size: 20px; }
+.link-btn { background: none; border: none; color: var(--ac); font-family: var(--font-display); font-weight: 700; font-size: 13px; text-transform: uppercase; letter-spacing: 0.04em; }
+
+/* video sheet: search link */
+.video-search { display: block; text-decoration: none; }
+
 .rest-card { text-align: center; padding: 30px 22px; }
 .rest-card .ico { font-size: 40px; }
 .rest-card h2 { margin: 12px 0 8px; }
