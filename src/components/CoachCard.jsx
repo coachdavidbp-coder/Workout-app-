@@ -12,7 +12,7 @@ export default function CoachCard({ msg }) {
         </svg>
       </div>
       <div className="coach-body">
-        <div className="coach-name">Coach</div>
+        <div className="coach-name">{msg.name || "Coach"}</div>
         <div className="coach-title">{msg.title}</div>
         <div className="coach-msg">{msg.body}</div>
       </div>

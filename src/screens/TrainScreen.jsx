@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useStore, currentDayId } from "../store.jsx";
+import { useStore, currentDayId, todayKey } from "../store.jsx";
 import {
   DAYS,
   DAY_NAMES,
@@ -12,7 +12,11 @@ import NumField from "../components/NumField.jsx";
 import ExerciseSheet from "../components/ExerciseSheet.jsx";
 import BrandLogo from "../components/BrandLogo.jsx";
 import CoachCard from "../components/CoachCard.jsx";
-import { workoutCoach } from "../lib/coach.js";
+import WorkoutTimer from "../components/WorkoutTimer.jsx";
+import MusicButton from "../components/MusicButton.jsx";
+import IntervalTimer from "../components/IntervalTimer.jsx";
+import { trainingCoach } from "../lib/coach.js";
+import { fmtPace } from "../lib/progress.js";
 
 const FEELS = ["😩", "😕", "🙂", "💪", "🔥"];
 
@@ -21,6 +25,7 @@ export default function TrainScreen() {
   const today = currentDayId();
   const [dayId, setDayId] = useState(today);
   const [sheetEx, setSheetEx] = useState(null);
+  const [timerOpen, setTimerOpen] = useState(false);
 
   const week = state.week;
   const day = dayById(dayId);
@@ -30,7 +35,25 @@ export default function TrainScreen() {
   const weekDone = DAYS.filter(
     (d) => d.type !== "rest" && state.done[`w${week}-${d.id}`]
   ).length;
-  const coachMsg = workoutCoach(state, { week, dayId, day, todayId: today });
+  const coachMsg = trainingCoach(state, { week, dayId, day, todayId: today });
+  const proto = day.protocol?.find((p) => p.week === week);
+
+  const completeDay = () => {
+    if (day.type === "cardio" && !state.done[doneKey]) {
+      const speeds = (runLog.intervals || []).map((i) => parseFloat(i.mph)).filter((n) => !isNaN(n));
+      const durSec = (parseInt(runLog.durMin) || 0) * 60 + (parseInt(runLog.durSec) || 0);
+      actions.logRunSession({
+        date: todayKey(),
+        dayId,
+        week,
+        distanceMi: parseFloat(runLog.distanceMi) || null,
+        durationSec: durSec || null,
+        topMph: speeds.length ? Math.max(...speeds) : null,
+        avgMph: speeds.length ? speeds.reduce((a, b) => a + b, 0) / speeds.length : null,
+      });
+    }
+    actions.toggleDone(week, dayId);
+  };
 
   return (
     <div className="scroll">
@@ -75,7 +98,7 @@ export default function TrainScreen() {
               >
                 {d.id === today && <span className="today-dot" />}
                 {d.label}
-                <span className="ck">{isDone ? "✓" : " "}</span>
+                <span className="ck">{isDone ? "✓" : " "}</span>
               </button>
             );
           })}
@@ -85,6 +108,13 @@ export default function TrainScreen() {
       <main className="content">
         <CoachCard msg={coachMsg} />
 
+        {day.type !== "rest" && (
+          <div className="train-toolbar">
+            <WorkoutTimer week={week} dayId={dayId} />
+            <MusicButton compact />
+          </div>
+        )}
+
         {day.warmup && (
           <p className="warmup">
             <b>Warm-up:</b> {day.warmup}
@@ -92,18 +122,19 @@ export default function TrainScreen() {
         )}
 
         {day.type === "lift" && (
-          <LiftDay
-            day={day}
-            week={week}
-            log={log}
-            onOpen={setSheetEx}
-            actions={actions}
-            dayId={dayId}
-          />
+          <LiftDay day={day} week={week} log={log} onOpen={setSheetEx} actions={actions} dayId={dayId} />
         )}
 
         {day.type === "cardio" && (
-          <CardioDay day={day} week={week} runLog={runLog} actions={actions} dayId={dayId} />
+          <CardioDay
+            day={day}
+            week={week}
+            runLog={runLog}
+            actions={actions}
+            dayId={dayId}
+            onStartTimer={() => setTimerOpen(true)}
+            proto={proto}
+          />
         )}
 
         {day.type === "rest" && (
@@ -136,7 +167,7 @@ export default function TrainScreen() {
 
             <button
               className={`btn ${state.done[doneKey] ? "btn-good" : "btn-primary"} btn-block complete-btn`}
-              onClick={() => actions.toggleDone(week, dayId)}
+              onClick={completeDay}
             >
               {state.done[doneKey] ? "✓ Workout Complete" : "Mark Workout Complete"}
             </button>
@@ -151,6 +182,18 @@ export default function TrainScreen() {
         dayId={dayId}
         exercise={sheetEx}
       />
+
+      {timerOpen && proto && (
+        <div className="timer-overlay">
+          <IntervalTimer
+            rounds={proto.rounds}
+            work={proto.seconds}
+            rest={proto.rest}
+            workLabel={dayId === "tue" ? "Sprint" : "Run"}
+            onClose={() => setTimerOpen(false)}
+          />
+        </div>
+      )}
     </div>
   );
 }
@@ -201,10 +244,15 @@ function LiftDay({ day, week, log, onOpen, actions, dayId }) {
   );
 }
 
-function CardioDay({ day, week, runLog, actions, dayId }) {
+function CardioDay({ day, week, runLog, actions, dayId, onStartTimer, proto }) {
   const intervals = runLog.intervals || [];
   const speeds = intervals.map((i) => parseFloat(i.mph)).filter((n) => !isNaN(n));
   const top = speeds.length ? Math.max(...speeds) : null;
+
+  const distanceMi = parseFloat(runLog.distanceMi) || 0;
+  const durSec = (parseInt(runLog.durMin) || 0) * 60 + (parseInt(runLog.durSec) || 0);
+  const pace = distanceMi > 0 && durSec > 0 ? durSec / 60 / distanceMi : null;
+  const mph = distanceMi > 0 && durSec > 0 ? distanceMi / (durSec / 3600) : null;
 
   return (
     <>
@@ -219,39 +267,73 @@ function CardioDay({ day, week, runLog, actions, dayId }) {
         </div>
       </div>
 
+      {proto && (
+        <button className="btn btn-primary btn-block interval-launch" onClick={onStartTimer}>
+          ▶ Start Interval Timer · {proto.rounds} × {proto.seconds}s
+        </button>
+      )}
+
+      {/* run summary */}
       <div>
-        <div className="section-label">Log your speeds</div>
+        <div className="section-label">Run summary</div>
+        <div className="card" style={{ padding: 14 }}>
+          <div className="ex-log">
+            <NumField
+              label="Distance (mi)"
+              value={runLog.distanceMi}
+              placeholder="2.5"
+              accent
+              onCommit={(v) => actions.setRunField(week, dayId, { distanceMi: v })}
+            />
+            <NumField
+              label="Min"
+              value={runLog.durMin}
+              placeholder="24"
+              onCommit={(v) => actions.setRunField(week, dayId, { durMin: v })}
+            />
+            <NumField
+              label="Sec"
+              value={runLog.durSec}
+              placeholder="30"
+              onCommit={(v) => actions.setRunField(week, dayId, { durSec: v })}
+            />
+          </div>
+          <div className="mini-stats" style={{ marginTop: 12 }}>
+            <div className="mini-stat">
+              <div className="k">{pace ? fmtPace(pace).replace("/mi", "") : "—"}</div>
+              <div className="l">Pace /mi</div>
+            </div>
+            <div className="mini-stat">
+              <div className="k">{mph ? mph.toFixed(1) : "—"}</div>
+              <div className="l">Avg MPH</div>
+            </div>
+            <div className="mini-stat">
+              <div className="k" style={{ color: "var(--ac-hi)" }}>{top ? top.toFixed(1) : "—"}</div>
+              <div className="l">Top MPH</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* per-interval speeds */}
+      <div>
+        <div className="section-label">Interval speeds</div>
         <div className="ex-card">
           {intervals.length === 0 && (
             <div className="empty-hint">
-              No intervals logged yet. Add each sprint or run and enter the speed you hit.
+              Log the speed you hit each sprint or run. Add one per interval.
             </div>
           )}
           {intervals.map((iv, idx) => (
             <div className="interval-row" key={idx}>
               <span className="ix">{idx + 1}</span>
               <div className="mini">
-                <NumField
-                  label="MPH"
-                  value={iv.mph}
-                  placeholder="10.5"
-                  accent
-                  onCommit={(v) => actions.setInterval(week, dayId, idx, { mph: v })}
-                />
+                <NumField label="MPH" value={iv.mph} placeholder="10.5" accent onCommit={(v) => actions.setInterval(week, dayId, idx, { mph: v })} />
               </div>
               <div className="mini">
-                <NumField
-                  label="Incline %"
-                  value={iv.incline}
-                  placeholder="6"
-                  onCommit={(v) => actions.setInterval(week, dayId, idx, { incline: v })}
-                />
+                <NumField label="Incline %" value={iv.incline} placeholder="6" onCommit={(v) => actions.setInterval(week, dayId, idx, { incline: v })} />
               </div>
-              <button
-                className="del"
-                aria-label="Remove interval"
-                onClick={() => actions.removeInterval(week, dayId, idx)}
-              >
+              <button className="del" aria-label="Remove interval" onClick={() => actions.removeInterval(week, dayId, idx)}>
                 ×
               </button>
             </div>
@@ -261,25 +343,6 @@ function CardioDay({ day, week, runLog, actions, dayId }) {
           </button>
         </div>
       </div>
-
-      {top != null && (
-        <div className="mini-stats">
-          <div className="mini-stat">
-            <div className="k">{top.toFixed(1)}</div>
-            <div className="l">Top MPH</div>
-          </div>
-          <div className="mini-stat">
-            <div className="k">{intervals.length}</div>
-            <div className="l">Intervals</div>
-          </div>
-          <div className="mini-stat">
-            <div className="k">
-              {speeds.length ? (speeds.reduce((a, b) => a + b, 0) / speeds.length).toFixed(1) : "—"}
-            </div>
-            <div className="l">Avg MPH</div>
-          </div>
-        </div>
-      )}
     </>
   );
 }

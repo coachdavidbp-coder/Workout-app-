@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useStore } from "./store.jsx";
 import TrainScreen from "./screens/TrainScreen.jsx";
 import MealsScreen from "./screens/MealsScreen.jsx";
-import WeightScreen from "./screens/WeightScreen.jsx";
+import ProgressScreen from "./screens/ProgressScreen.jsx";
 import MoreScreen from "./screens/MoreScreen.jsx";
 import Login from "./screens/Login.jsx";
 import {
@@ -16,7 +16,7 @@ import BrandLogo from "./components/BrandLogo.jsx";
 const TABS = [
   { id: "train", label: "Train", Icon: IconTrain, Screen: TrainScreen },
   { id: "meals", label: "Nutrition", Icon: IconMeals, Screen: MealsScreen },
-  { id: "weight", label: "Weight", Icon: IconWeight, Screen: WeightScreen },
+  { id: "weight", label: "Progress", Icon: IconWeight, Screen: ProgressScreen },
   { id: "more", label: "You", Icon: IconMore, Screen: MoreScreen },
 ];
 

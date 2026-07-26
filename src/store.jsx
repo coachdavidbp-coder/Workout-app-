@@ -53,6 +53,8 @@ export const DEFAULT_STATE = {
   weights: SEED_WEIGHTS, // [{date, weight, bodyFat}]
   supplements: SEED_SUPPS, // [{id, name, dose, freq}]
   suppLog: {}, // { "2026-07-26": { whey: true, ... } }
+  durations: {}, // { "w1-sun": seconds } — how long the workout took
+  runSessions: [], // [{ date, dayId, week, distanceMi, durationSec, topMph, avgMph }]
 };
 
 function uid() {
@@ -216,6 +218,30 @@ export function StoreProvider({ children }) {
         s.runLogs[key] = s.runLogs[key] || { intervals: [] };
         const list = s.runLogs[key].intervals;
         list[idx] = { ...(list[idx] || {}), ...patch };
+      }),
+
+    setRunField: (week, dayId, patch) =>
+      update((s) => {
+        const key = `w${week}-${dayId}`;
+        s.runLogs[key] = s.runLogs[key] || { intervals: [] };
+        Object.assign(s.runLogs[key], patch);
+      }),
+
+    setDuration: (week, dayId, seconds) =>
+      update((s) => {
+        s.durations = s.durations || {};
+        s.durations[`w${week}-${dayId}`] = seconds;
+      }),
+
+    logRunSession: (rec) =>
+      update((s) => {
+        s.runSessions = s.runSessions || [];
+        const id = `${rec.date}-${rec.dayId}`;
+        const i = s.runSessions.findIndex((r) => `${r.date}-${r.dayId}` === id);
+        const entry = { ...rec };
+        if (i >= 0) s.runSessions[i] = entry;
+        else s.runSessions.push(entry);
+        s.runSessions.sort((a, b) => a.date.localeCompare(b.date));
       }),
 
     addInterval: (week, dayId) =>

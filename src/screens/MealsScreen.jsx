@@ -106,7 +106,7 @@ export default function MealsScreen() {
       </header>
 
       <main className="content">
-        <CoachCard msg={nutritionCoach(state, { dateKey: selected, isToday })} />
+        <CoachCard msg={{ name: "Nutrition Coach", ...nutritionCoach(state, { dateKey: selected, isToday }) }} />
 
         {/* weekly summary */}
         <div className="mini-stats">
