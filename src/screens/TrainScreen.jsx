@@ -10,6 +10,7 @@ import {
 import { IconPlay } from "../components/icons.jsx";
 import NumField from "../components/NumField.jsx";
 import ExerciseSheet from "../components/ExerciseSheet.jsx";
+import BrandLogo from "../components/BrandLogo.jsx";
 
 const FEELS = ["😩", "😕", "🙂", "💪", "🔥"];
 
@@ -32,9 +33,7 @@ export default function TrainScreen() {
     <div className="scroll">
       <header className="train-head">
         <div className="brandrow">
-          <span className="eyebrow">
-            <span className="dot" /> Us vs Them
-          </span>
+          <BrandLogo height={24} />
           <span className={`mode-badge ${mode === "cloud" ? "cloud" : ""}`}>
             <span className="d" />
             {mode === "cloud" ? "Synced" : "On this device"}

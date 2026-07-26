@@ -1,6 +1,7 @@
 import { useStore } from "../store.jsx";
 import { signOut, isCloud } from "../lib/firebase.js";
 import { TRAINING_DAY_COUNT } from "../data/plan.js";
+import BrandLogo from "../components/BrandLogo.jsx";
 
 export default function MoreScreen() {
   const { state, mode, user, actions } = useStore();
@@ -14,9 +15,7 @@ export default function MoreScreen() {
     <div className="scroll">
       <header className="train-head">
         <div className="brandrow">
-          <span className="eyebrow">
-            <span className="dot" /> Us vs Them
-          </span>
+          <BrandLogo height={24} />
         </div>
         <div className="h-title">
           <div className="kicker">Profile</div>

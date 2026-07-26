@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { loginGoogle, loginApple, loginEmail } from "../lib/firebase.js";
+import BrandLogo from "../components/BrandLogo.jsx";
 
 export default function Login() {
   const [mode, setMode] = useState("signin"); // signin | signup
@@ -25,18 +26,9 @@ export default function Login() {
   return (
     <div className="login-screen">
       <div className="beams" />
-      <div className="crest">
-        <svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="#06122B" strokeWidth="2.2" strokeLinecap="round">
-          <rect x="5" y="5" width="14" height="14" rx="3.5" />
-          <path d="M3 8h2M19 8h2M3 16h2M19 16h2M9 12h6" />
-        </svg>
-      </div>
 
-      <div>
-        <span className="eyebrow">
-          <span className="dot" /> Welcome back, Coach
-        </span>
-        <h1>Us vs Them</h1>
+      <div className="login-brand">
+        <BrandLogo height={62} style={{ height: "auto", width: "min(78%, 320px)" }} />
         <p className="tagline">Your training plan, meals and weight — synced on every device.</p>
       </div>
 

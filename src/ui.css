@@ -364,8 +364,11 @@
   width: 72px; height: 72px; border-radius: 20px; background: var(--ac);
   display: flex; align-items: center; justify-content: center; box-shadow: 0 14px 34px -8px var(--ac-glow);
 }
+.login-brand { display: flex; flex-direction: column; gap: 14px; margin-bottom: 4px; }
+.login-brand img { filter: drop-shadow(0 8px 24px rgba(0, 0, 0, 0.5)); }
 .login-screen h1 { font-size: 40px; margin-top: 12px; letter-spacing: -0.02em; }
 .login-screen .tagline { color: var(--tx-2); font-size: 15px; max-width: 34ch; }
+.brandrow img { filter: drop-shadow(0 2px 6px rgba(0, 0, 0, 0.4)); }
 .oauth-btn {
   display: flex; align-items: center; justify-content: center; gap: 10px;
   background: var(--panel); border: 1px solid var(--line); border-radius: 14px; padding: 14px;

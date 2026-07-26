@@ -10,6 +10,7 @@ import { MEAL_SLOTS } from "../data/foods.js";
 import Ring from "../components/Ring.jsx";
 import AddFoodSheet from "../components/AddFoodSheet.jsx";
 import { IconChevron } from "../components/icons.jsx";
+import BrandLogo from "../components/BrandLogo.jsx";
 
 export default function MealsScreen() {
   const { state, actions } = useStore();
@@ -33,9 +34,7 @@ export default function MealsScreen() {
     <div className="scroll">
       <header className="train-head">
         <div className="brandrow">
-          <span className="eyebrow">
-            <span className="dot" /> Nutrition
-          </span>
+          <BrandLogo height={24} />
           <span className="mode-badge">
             {new Date().toLocaleDateString(undefined, { weekday: "short", month: "short", day: "numeric" })}
           </span>

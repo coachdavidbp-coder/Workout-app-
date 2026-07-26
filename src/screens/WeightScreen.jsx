@@ -3,6 +3,7 @@ import { useStore, todayKey } from "../store.jsx";
 import WeightChart from "../components/WeightChart.jsx";
 import Sheet from "../components/Sheet.jsx";
 import NumField from "../components/NumField.jsx";
+import BrandLogo from "../components/BrandLogo.jsx";
 
 const RANGES = [
   { id: "1m", label: "1M", days: 31 },
@@ -42,9 +43,7 @@ export default function WeightScreen() {
     <div className="scroll">
       <header className="train-head">
         <div className="brandrow">
-          <span className="eyebrow">
-            <span className="dot" /> Progress
-          </span>
+          <BrandLogo height={24} />
           <span className="mode-badge">GLP-1 journey</span>
         </div>
         <div className="h-title">

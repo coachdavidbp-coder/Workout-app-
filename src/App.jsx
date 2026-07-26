@@ -11,6 +11,7 @@ import {
   IconWeight,
   IconMore,
 } from "./components/icons.jsx";
+import BrandLogo from "./components/BrandLogo.jsx";
 
 const TABS = [
   { id: "train", label: "Train", Icon: IconTrain, Screen: TrainScreen },
@@ -26,10 +27,8 @@ export default function App() {
   if (mode === "loading") {
     return (
       <div className="app-shell">
-        <div style={{ margin: "auto", textAlign: "center" }}>
-          <div className="eyebrow" style={{ justifyContent: "center" }}>
-            <span className="dot" /> Us vs Them
-          </div>
+        <div style={{ margin: "auto", opacity: 0.9 }}>
+          <BrandLogo height={30} style={{ height: "auto", width: 220 }} />
         </div>
       </div>
     );
