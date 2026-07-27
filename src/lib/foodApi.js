@@ -81,16 +81,31 @@ async function searchOFF(query, signal) {
 }
 
 // ---------- public ----------
+// Query USDA and Open Food Facts in parallel and merge — if one source is
+// down, blocked by CORS, or has no match, the other still returns results.
 export async function searchFoods(query, signal) {
-  if (usdaEnabled) {
-    try {
-      const r = await searchUSDA(query, signal);
-      if (r.length) return r;
-    } catch (e) {
-      if (e.name === "AbortError") throw e;
+  const jobs = [];
+  if (usdaEnabled) jobs.push(searchUSDA(query, signal).catch((e) => { if (e.name === "AbortError") throw e; return []; }));
+  jobs.push(searchOFF(query, signal).catch((e) => { if (e.name === "AbortError") throw e; return []; }));
+
+  let lists;
+  try {
+    lists = await Promise.all(jobs);
+  } catch (e) {
+    if (e.name === "AbortError") throw e;
+    return [];
+  }
+
+  // merge, USDA first (label-accurate), de-duped by name+calories
+  const seen = new Set();
+  const merged = [];
+  for (const list of lists) {
+    for (const f of list) {
+      const k = `${f.name.toLowerCase()}|${f.cal}`;
+      if (!seen.has(k)) { seen.add(k); merged.push(f); }
     }
   }
-  return searchOFF(query, signal);
+  return merged;
 }
 
 export async function lookupBarcode(code, signal) {
