@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useStore, todayKey, weekDates } from "../store.jsx";
-import { targetsFor, MEAL_IDEAS, GROCERY, GLP1_NOTES } from "../data/plan.js";
+import { targetsFor, dietFor } from "../data/plan.js";
 import { MEAL_SLOTS } from "../data/foods.js";
 import Ring from "../components/Ring.jsx";
 import AddFoodSheet from "../components/AddFoodSheet.jsx";
@@ -33,6 +33,7 @@ export default function MealsScreen() {
   const [adding, setAdding] = useState(false);
   const [showRef, setShowRef] = useState(false);
   const MEAL_TARGETS = targetsFor(state.profile);
+  const diet = dietFor(state.profile);
 
   const week = weekDates(anchor);
   const totals = dayTotals(state.meals, selected);
@@ -207,12 +208,12 @@ export default function MealsScreen() {
 
         {/* reference content */}
         <button className={`collapse-head ${showRef ? "open" : ""}`} onClick={() => setShowRef((v) => !v)}>
-          Meal ideas & grocery list
+          {diet.name} ideas &amp; grocery list
           <span className="chev"><IconChevron width="18" height="18" /></span>
         </button>
         {showRef && (
           <div className="ref-list">
-            {MEAL_IDEAS.map((sec) => (
+            {diet.ideas.map((sec) => (
               <div key={sec.title}>
                 <div className="ref-cat">{sec.title}</div>
                 <div className="card">
@@ -223,10 +224,10 @@ export default function MealsScreen() {
               </div>
             ))}
             <div className="ref-cat">One-Trip Grocery List</div>
-            <div className="card"><div className="ref-item">{GROCERY}</div></div>
-            <div className="ref-cat">GLP-1 Training Notes</div>
+            <div className="card"><div className="ref-item">{diet.grocery}</div></div>
+            <div className="ref-cat">Nutrition Notes</div>
             <div className="card">
-              {GLP1_NOTES.map((n) => (
+              {diet.notes.map((n) => (
                 <div className="ref-item" key={n}>{n}</div>
               ))}
             </div>

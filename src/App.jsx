@@ -18,6 +18,7 @@ import {
   IconMore,
 } from "./components/icons.jsx";
 import BrandLogo from "./components/BrandLogo.jsx";
+import { setVoiceName } from "./lib/voice.js";
 
 const TABS = [
   { id: "home", label: "Home", Icon: IconHome, Screen: HomeScreen },
@@ -31,6 +32,9 @@ export default function App() {
   const { mode, state } = useStore();
   const [tab, setTab] = useState("home");
   const theme = state?.settings?.theme || "system";
+  const voiceName = state?.settings?.voiceName || null;
+
+  useEffect(() => { setVoiceName(voiceName); }, [voiceName]);
 
   // apply theme to <html>: explicit light/dark, or follow the system when "system"
   useEffect(() => {

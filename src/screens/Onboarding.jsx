@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useStore, todayKey } from "../store.jsx";
 import { PLAN_LIST, DAY_NAMES } from "../data/plans.js";
-import { defaultTargets } from "../data/plan.js";
+import { defaultTargets, DIETS } from "../data/plan.js";
 import BrandLogo from "../components/BrandLogo.jsx";
 import { haptic } from "../lib/fx.js";
 
@@ -17,7 +17,7 @@ export default function Onboarding() {
   const [step, setStep] = useState(0);
   const [f, setF] = useState({
     name: "", sex: "", heightFt: "", heightIn: "", currentWeight: "",
-    goalWeight: "", goal: "lose", planId: "gridiron",
+    goalWeight: "", goal: "lose", diet: "balanced", planId: "gridiron",
   });
   const set = (k, v) => setF((p) => ({ ...p, [k]: v }));
 
@@ -29,7 +29,7 @@ export default function Onboarding() {
   const finish = () => {
     const weight = parseFloat(f.currentWeight) || 0;
     const heightIn = (parseInt(f.heightFt) || 0) * 12 + (parseInt(f.heightIn) || 0);
-    const t = defaultTargets({ weight: weight || 180, goal: f.goal, sex: f.sex });
+    const t = defaultTargets({ weight: weight || 180, goal: f.goal, sex: f.sex, diet: f.diet });
     actions.setProfile({
       name: f.name.trim(),
       sex: f.sex,
@@ -37,6 +37,7 @@ export default function Onboarding() {
       startWeight: weight,
       goalWeight: parseFloat(f.goalWeight) || 0,
       goal: f.goal,
+      diet: f.diet,
       planId: f.planId,
       proteinGoal: t.protein,
       calorieGoal: t.calories,
@@ -99,6 +100,12 @@ export default function Onboarding() {
                 <button key={g.id} className={`week-pill ${f.goal === g.id ? "on" : ""}`} onClick={() => set("goal", g.id)}>{g.label}</button>
               ))}
             </div>
+            <label className="onb-label">Eating style</label>
+            <div className="row gap-2" style={{ flexWrap: "wrap" }}>
+              {Object.values(DIETS).map((d) => (
+                <button key={d.id} className={`week-pill ${f.diet === d.id ? "on" : ""}`} onClick={() => set("diet", d.id)}>{d.name}</button>
+              ))}
+            </div>
           </>
         )}
 
@@ -121,6 +128,15 @@ export default function Onboarding() {
                   </div>
                 </button>
               ))}
+              <button className={`plan-card ${f.planId === "custom" ? "on" : ""}`} onClick={() => { set("planId", "custom"); haptic(); }}>
+                <div className="plan-top">
+                  <span className="plan-emoji">⚙️</span>
+                  <span className="plan-name">Build your own</span>
+                  {f.planId === "custom" && <span className="plan-check">✓</span>}
+                </div>
+                <div className="plan-tag">Design a plan you actually like</div>
+                <div className="plan-focus">Start from a template, then edit days, exercises &amp; intervals in Profile → Program.</div>
+              </button>
             </div>
           </>
         )}

@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { speak, randomEncouragement } from "../lib/voice.js";
+import { speak, randomEncouragement, workLine, restLine, LAST_ROUND_LINES, HALFWAY_LINES, DONE_LINES, pickNoRepeat } from "../lib/voice.js";
 
 // Interval countdown for the day's protocol: N rounds of work + rest.
 // Short beeps (Web Audio) duck background music rather than stopping it,
@@ -46,22 +46,29 @@ export default function IntervalTimer({ rounds, work, rest, workLabel = "Work", 
   voiceRef.current = voice;
   let sinceVoice = useRef(0);
 
-  const cue = (kind) => {
+  // `phase` optionally lets us tailor the line to round position.
+  const cue = (kind, phase) => {
     if (kind === "work") {
       beep(880); buzz([0, 80, 60, 80]);
       if (voiceRef.current) {
-        // vary the line so it doesn't feel robotic
         sinceVoice.current++;
-        const line = sinceVoice.current % 3 === 0 ? randomEncouragement() : (workLabel === "Sprint" ? "Sprint! Go!" : "Run! Push!");
+        const r = phase?.round;
+        let line;
+        if (r === rounds) line = pickNoRepeat(LAST_ROUND_LINES);
+        else if (r && r === Math.ceil(rounds / 2)) line = pickNoRepeat(HALFWAY_LINES);
+        else if (sinceVoice.current % 3 === 0) line = randomEncouragement();
+        else line = workLine(workLabel);
         speak(line);
       }
     } else if (kind === "rest") {
       beep(440); buzz(120);
-      if (voiceRef.current) speak("Recover.");
+      if (voiceRef.current) speak(restLine());
     } else if (kind === "end") {
       beep(660, 0.5); buzz([0, 200, 100, 200]);
-      if (voiceRef.current) speak("Done! Great work.");
-    } else beep(600, 0.05);
+      if (voiceRef.current) speak(pickNoRepeat(DONE_LINES));
+    } else if (kind === "count") {
+      beep(600, 0.05);
+    }
   };
 
   async function ensureAudio() {
@@ -82,7 +89,10 @@ export default function IntervalTimer({ rounds, work, rest, workLabel = "Work", 
       remRef.current -= 1;
       if (remRef.current > 0) {
         setRemaining(remRef.current);
-        if (remRef.current <= 3) cue("count");
+        if (remRef.current <= 3) {
+          cue("count");
+          if (voiceRef.current) speak(String(remRef.current), { rate: 1.1 });
+        }
         return;
       }
       // advance
@@ -100,7 +110,7 @@ export default function IntervalTimer({ rounds, work, rest, workLabel = "Work", 
       remRef.current = phases[next].dur;
       setIdx(next);
       setRemaining(phases[next].dur);
-      cue(phases[next].kind);
+      cue(phases[next].kind, phases[next]);
     }, 1000);
     return () => clearInterval(tick.current);
   }, [running]); // eslint-disable-line react-hooks/exhaustive-deps
@@ -111,7 +121,7 @@ export default function IntervalTimer({ rounds, work, rest, workLabel = "Work", 
     await ensureAudio();
     await requestWake();
     if (done) reset();
-    cue(cur.kind);
+    cue(cur.kind, cur);
     setRunning(true);
   };
   const pause = () => { setRunning(false); releaseWake(); };

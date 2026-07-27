@@ -48,6 +48,8 @@ export const DEFAULT_STATE = {
     startWeight: 0,
     goalWeight: 0,
     goal: "lose", // lose | maintain | strength | faster
+    diet: "balanced", // balanced | high_protein | lower_carb | vegetarian | glp1
+    customPlan: null, // built via the custom plan builder (used when planId === "custom")
     proteinGoal: 0,
     calorieGoal: 0,
     waterGoal: 0,
@@ -65,7 +67,7 @@ export const DEFAULT_STATE = {
   runSessions: [], // [{ date, dayId, week, distanceMi, durationSec, topMph, avgMph }]
   activityLog: {}, // { "2026-07-26": { workouts: 1, calories: 320 } }
   game: { claimedDays: {}, profileIcon: null }, // daily rewards claimed + chosen icon
-  settings: { voice: true, theme: "system" }, // voice cues + light/dark ("system" | "light" | "dark")
+  settings: { voice: true, theme: "system", voiceName: null }, // coach voice, light/dark, chosen TTS voice
 };
 
 function uid() {

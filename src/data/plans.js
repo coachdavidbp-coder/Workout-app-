@@ -195,10 +195,56 @@ export const PLANS = {
 export const PLAN_LIST = Object.values(PLANS);
 export const DEFAULT_PLAN_ID = "gridiron";
 
+// helper to make a 4-week identical interval protocol
+export function mkProto(rounds, seconds, rest, label) {
+  return [1, 2, 3, 4].map((week) => ({
+    week,
+    label: label || `${rounds} × ${seconds}-sec effort, ${rest}-sec rest`,
+    rounds, seconds, rest,
+  }));
+}
+
+// A sensible starter for "build your own" — fully editable.
+export function starterCustomPlan() {
+  const day = (id, label, name, type, extra) => ({ id, label, name, type, warmup: "5 min easy warm-up", note: "", ...extra });
+  return {
+    id: "custom", name: "My Program", accent: "⚙️", tagline: "Your custom plan",
+    equipment: ["Your gear"], focus: "Custom",
+    days: [
+      day("sun", "Sun", "Full Body A", "lift", { exercises: [
+        { name: "Goblet Squat", sets: r("3×12"), video: null, q: "goblet squat form" },
+        { name: "Push-Up", sets: r("3×Max"), video: null, q: "push up form" },
+        { name: "DB Row", sets: r("3×12"), video: null, q: "dumbbell row form" },
+      ] }),
+      day("mon", "Mon", "Cardio", "cardio", { protocol: mkProto(8, 20, 60) }),
+      day("tue", "Tue", "Full Body B", "lift", { exercises: [
+        { name: "DB Romanian Deadlift", sets: r("3×12"), video: null, q: "dumbbell romanian deadlift form" },
+        { name: "DB Overhead Press", sets: r("3×12"), video: null, q: "dumbbell overhead press form" },
+        { name: "Plank", sets: r("3×45s"), video: null, q: "plank form" },
+      ] }),
+      day("wed", "Wed", "Rest", "rest", {}),
+      day("thu", "Thu", "Full Body C", "lift", { exercises: [
+        { name: "DB Walking Lunge", sets: r("3×10/leg"), video: null, q: "dumbbell walking lunge form" },
+        { name: "DB Floor Press", sets: r("3×12"), video: null, q: "dumbbell floor press form" },
+        { name: "DB Bicep Curl", sets: r("3×12"), video: null, q: "dumbbell bicep curl form" },
+      ] }),
+      day("fri", "Fri", "Cardio", "cardio", { protocol: mkProto(6, 15, 60) }),
+      day("sat", "Sat", "Rest", "rest", {}),
+    ],
+  };
+}
+function r(scheme) { return [scheme, scheme, scheme, scheme]; }
+
+function normalizeCustom(cp) {
+  if (!cp || !Array.isArray(cp.days) || cp.days.length !== 7) return starterCustomPlan();
+  return cp;
+}
+
 export function getPlan(id) {
   return PLANS[id] || PLANS[DEFAULT_PLAN_ID];
 }
 export function planFor(state) {
+  if (state?.profile?.planId === "custom") return normalizeCustom(state?.profile?.customPlan);
   return getPlan(state?.profile?.planId);
 }
 export function daysOf(state) {

@@ -1,15 +1,27 @@
-import { useRef } from "react";
+import { useRef, useState } from "react";
 import { useStore, todayKey } from "../store.jsx";
+import CustomPlanBuilder from "./CustomPlanBuilder.jsx";
 import { signOut } from "../lib/firebase.js";
 import BrandLogo from "../components/BrandLogo.jsx";
 import { haptic } from "../lib/fx.js";
-import { speak } from "../lib/voice.js";
+import { speak, listVoices, setVoiceName, randomEncouragement } from "../lib/voice.js";
 import { toast } from "../lib/toast.js";
 import { PLAN_LIST, getPlan } from "../data/plans.js";
+import { DIETS, defaultTargets } from "../data/plan.js";
 
 function speakTest() {
   speak("Coach voice on. Let's get to work.");
 }
+function dietBlurb(id) {
+  return (DIETS[id] || DIETS.balanced).blurb;
+}
+const VOICE_SAMPLES = [
+  "Let's get to work — us versus them.",
+  "Last one. Leave nothing on the floor!",
+  "Halfway there. Keep pushing!",
+  "Sprint! Go go go!",
+  "That's a new personal best. Proud of that.",
+];
 import {
   totalXP, levelInfo, streak, badges, profileIcons, currentIcon,
   totals, activeDates,
@@ -18,6 +30,7 @@ import {
 export default function MoreScreen() {
   const { state, mode, user, actions } = useStore();
   const fileRef = useRef(null);
+  const [building, setBuilding] = useState(false);
 
   const exportData = () => {
     try {
@@ -171,6 +184,28 @@ export default function MoreScreen() {
               <span className="knob" />
             </button>
           </div>
+          {state.settings?.voice !== false && (
+            <div className="setting-row" style={{ flexWrap: "wrap", gap: 10 }}>
+              <div className="lab" style={{ flexBasis: "100%" }}>Coach's voice<small>Pick a voice, then preview it</small></div>
+              <select
+                className="login-input"
+                style={{ flex: 1, minWidth: 0 }}
+                value={state.settings?.voiceName || ""}
+                onChange={(e) => { const n = e.target.value || null; actions.setSetting("voiceName", n); setVoiceName(n); }}
+              >
+                <option value="">Auto (device default)</option>
+                {listVoices().map((v) => (
+                  <option key={v.name} value={v.name}>{v.name} ({v.lang})</option>
+                ))}
+              </select>
+              <button
+                className="btn"
+                onClick={() => { setVoiceName(state.settings?.voiceName || null); speak(VOICE_SAMPLES[Math.floor(Math.random() * VOICE_SAMPLES.length)]); }}
+              >
+                ▶ Preview
+              </button>
+            </div>
+          )}
           <div className="setting-row" style={{ flexWrap: "wrap", gap: 10 }}>
             <div className="lab">Appearance<small>Light, dark, or follow your device</small></div>
             <div className="row gap-2">
@@ -207,13 +242,44 @@ export default function MoreScreen() {
               </div>
             </button>
           ))}
+          <button className={`plan-card ${state.profile.planId === "custom" ? "on" : ""}`} onClick={() => setBuilding(true)}>
+            <div className="plan-top">
+              <span className="plan-emoji">⚙️</span>
+              <span className="plan-name">Build your own</span>
+              {state.profile.planId === "custom" && <span className="plan-check">✓</span>}
+            </div>
+            <div className="plan-tag">Create a program you actually like</div>
+            <div className="plan-focus">Set your own days, exercises, sets &amp; intervals →</div>
+          </button>
+        </div>
+
+        {/* nutrition style */}
+        <div className="section-title">Eating style</div>
+        <div className="card" style={{ padding: 14 }}>
+          <div className="row gap-2" style={{ flexWrap: "wrap" }}>
+            {Object.values(DIETS).map((d) => (
+              <button
+                key={d.id}
+                className={`week-pill ${(state.profile.diet || "balanced") === d.id ? "on" : ""}`}
+                onClick={() => {
+                  const t = defaultTargets({ weight: state.profile.startWeight || 180, goal: state.profile.goal, sex: state.profile.sex, diet: d.id });
+                  actions.setProfile({ diet: d.id, proteinGoal: t.protein, calorieGoal: t.calories, waterGoal: t.waterOz });
+                  haptic();
+                  toast({ emoji: "🥗", title: "Eating style updated", sub: d.name, tone: "good" });
+                }}
+              >
+                {d.name}
+              </button>
+            ))}
+          </div>
+          <p className="summary-note" style={{ marginTop: 10 }}>{dietBlurb(state.profile.diet)} · Meal ideas &amp; protein target update to match.</p>
         </div>
 
         {/* goals */}
         <div className="section-title">Goals</div>
         <div className="card">
           <div className="setting-row">
-            <div className="lab">Start weight<small>Your GLP-1 journey starting point</small></div>
+            <div className="lab">Start weight<small>Where your journey started</small></div>
             <input type="number" value={state.profile.startWeight} onChange={(e) => actions.setProfile({ startWeight: parseFloat(e.target.value) || 0 })} />
           </div>
           <div className="setting-row">
@@ -243,8 +309,10 @@ export default function MoreScreen() {
         {mode === "cloud" && (
           <button className="btn btn-block" onClick={() => signOut()}>Sign Out</button>
         )}
-        <p className="login-foot">US vs Them · 4-week football training · v2</p>
+        <p className="login-foot">US vs Them · train hard · v2</p>
       </main>
+
+      {building && <CustomPlanBuilder onClose={() => setBuilding(false)} />}
     </div>
   );
 }
