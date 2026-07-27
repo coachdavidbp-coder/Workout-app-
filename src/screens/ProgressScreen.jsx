@@ -5,7 +5,7 @@ import TrendChart from "../components/TrendChart.jsx";
 import Sheet from "../components/Sheet.jsx";
 import NumField from "../components/NumField.jsx";
 import BrandLogo from "../components/BrandLogo.jsx";
-import { strengthSummary, runningSummary, fmtPace } from "../lib/progress.js";
+import { strengthSummary, runningSummary, personalBests, fmtPace } from "../lib/progress.js";
 
 const SEGMENTS = [
   { id: "weight", label: "Weight" },
@@ -37,12 +37,42 @@ export default function ProgressScreen() {
       </header>
 
       <main className="content">
+        <PersonalBests />
         {seg === "weight" && <WeightBody />}
         {seg === "strength" && <StrengthBody />}
         {seg === "running" && <RunningBody />}
       </main>
     </div>
   );
+}
+
+/* ------------------ PERSONAL BESTS ------------------ */
+function PersonalBests() {
+  const { state } = useStore();
+  const pb = personalBests(state);
+  const items = [
+    { k: pb.heaviest ? `${pb.heaviest.last} lb` : "—", l: pb.heaviest ? shortName(pb.heaviest.name) : "Heaviest lift", emoji: "🏋️" },
+    { k: pb.topSpeed ? `${pb.topSpeed.toFixed(1)}` : "—", l: "Top mph", emoji: "💨" },
+    { k: pb.bestPace ? fmtPace(pb.bestPace).replace("/mi", "") : "—", l: "Best pace", emoji: "⏱️" },
+    { k: pb.longestRun ? `${pb.longestRun}` : "—", l: "Longest run (mi)", emoji: "🏃" },
+  ];
+  return (
+    <div>
+      <div className="section-title">Personal bests</div>
+      <div className="pb-grid">
+        {items.map((it, i) => (
+          <div className="pb-card glass" key={i}>
+            <span className="pb-emoji">{it.emoji}</span>
+            <div className="pb-k">{it.k}</div>
+            <div className="pb-l">{it.l}</div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+function shortName(n) {
+  return n.replace(/^DB /, "").replace(/ \(.*\)$/, "");
 }
 
 /* ------------------ WEIGHT ------------------ */

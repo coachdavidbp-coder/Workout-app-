@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useStore } from "./store.jsx";
 import HomeScreen from "./screens/HomeScreen.jsx";
 import TrainScreen from "./screens/TrainScreen.jsx";
@@ -25,8 +25,18 @@ const TABS = [
 ];
 
 export default function App() {
-  const { mode } = useStore();
+  const { mode, state } = useStore();
   const [tab, setTab] = useState("home");
+  const theme = state?.settings?.theme || "system";
+
+  // apply theme to <html>: explicit light/dark, or follow the system when "system"
+  useEffect(() => {
+    const root = document.documentElement;
+    if (theme === "system") root.removeAttribute("data-theme");
+    else root.setAttribute("data-theme", theme);
+    const meta = document.querySelector('meta[name="theme-color"]');
+    if (meta) meta.setAttribute("content", getComputedStyle(root).getPropertyValue("--g").trim() || "#0A1020");
+  }, [theme]);
 
   if (mode === "loading") {
     return (

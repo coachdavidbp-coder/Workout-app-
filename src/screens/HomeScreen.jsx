@@ -1,7 +1,9 @@
 import { useStore, todayKey, weekDates, currentDayId } from "../store.jsx";
 import { DAYS, DAY_NAMES, TRAINING_DAY_COUNT, MEAL_TARGETS } from "../data/plan.js";
 import Ring from "../components/Ring.jsx";
+import TrendChart from "../components/TrendChart.jsx";
 import BrandLogo from "../components/BrandLogo.jsx";
+import { weeklyActivity } from "../lib/progress.js";
 import {
   totalXP, levelInfo, streak, dailyChallenge, quoteOfDay,
   recentActivity, continueDay, currentIcon, activeDates,
@@ -132,6 +134,21 @@ export default function HomeScreen({ go }) {
             )}
           </div>
         </div>
+
+        {/* monthly trend */}
+        {(() => {
+          const wk = weeklyActivity(state, 8);
+          const any = wk.some((w) => w.value > 0);
+          return any ? (
+            <>
+              <div className="section-title">Last 8 weeks</div>
+              <div className="chart-card">
+                <div className="section-label" style={{ margin: "0 0 8px" }}>Workouts per week</div>
+                <TrendChart points={wk} color="var(--ac)" valueFmt={(v) => v} />
+              </div>
+            </>
+          ) : null;
+        })()}
 
         {/* quote */}
         <div className="quote-card glass">“{quoteOfDay()}”</div>

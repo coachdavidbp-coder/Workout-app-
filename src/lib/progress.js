@@ -91,6 +91,50 @@ export function runningSummary(state) {
   return { runs, withPace, totalDistance, topSpeed, bestPace, faster, hasData: runs.length > 0 };
 }
 
+// ---------------- personal bests ----------------
+export function personalBests(state) {
+  const lifts = liftProgress(state);
+  const heaviest = lifts.length
+    ? lifts.reduce((a, b) => (b.last > a.last ? b : a))
+    : null;
+  const rs = runningSummary(state);
+  const longestRun = (state.runSessions || []).reduce((a, r) => Math.max(a, parseFloat(r.distanceMi) || 0), 0);
+  const bestWeekVol = weeklyStrength(state).reduce((a, w) => Math.max(a, w.volume), 0);
+  return {
+    heaviest, // {name, last}
+    topSpeed: rs.topSpeed || 0,
+    bestPace: rs.bestPace,
+    longestRun,
+    bestWeekVol,
+  };
+}
+
+// ---------------- weekly activity (calendar) ----------------
+// last `n` weeks of completed workouts, oldest→newest.
+export function weeklyActivity(state, n = 8) {
+  const out = [];
+  const base = new Date();
+  base.setHours(12, 0, 0, 0);
+  base.setDate(base.getDate() - base.getDay()); // this Sunday
+  for (let i = n - 1; i >= 0; i--) {
+    const start = new Date(base);
+    start.setDate(base.getDate() - i * 7);
+    let workouts = 0;
+    for (let d = 0; d < 7; d++) {
+      const day = new Date(start);
+      day.setDate(start.getDate() + d);
+      const key = ymd(day);
+      workouts += state.activityLog?.[key]?.workouts || 0;
+    }
+    out.push({ label: `${start.getMonth() + 1}/${start.getDate()}`, value: workouts });
+  }
+  return out;
+}
+
+function ymd(d) {
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+}
+
 // ---------------- formatting ----------------
 export function fmtDuration(sec) {
   sec = Math.max(0, Math.round(sec || 0));

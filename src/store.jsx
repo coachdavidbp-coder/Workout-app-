@@ -57,7 +57,7 @@ export const DEFAULT_STATE = {
   runSessions: [], // [{ date, dayId, week, distanceMi, durationSec, topMph, avgMph }]
   activityLog: {}, // { "2026-07-26": { workouts: 1, calories: 320 } }
   game: { claimedDays: {}, profileIcon: null }, // daily rewards claimed + chosen icon
-  settings: { voice: true }, // coach voice cues (on-device speech, free)
+  settings: { voice: true, theme: "system" }, // voice cues + light/dark ("system" | "light" | "dark")
 };
 
 function uid() {

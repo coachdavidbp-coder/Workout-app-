@@ -34,6 +34,14 @@
   --tx-2: #B9C3DA;       /* secondary text */
   --mu: #8792AD;         /* muted */
 
+  /* ---- themeable surfaces (overridden in light mode) ---- */
+  --header-fade: rgba(10, 16, 32, 0.85);
+  --nav-bg: rgba(14, 21, 38, 0.92);
+  --glass-1: rgba(124, 174, 255, 0.10);
+  --glass-2: rgba(20, 28, 51, 0.5);
+  --glass-border: rgba(255, 255, 255, 0.08);
+  --logo-shadow: 0 2px 6px rgba(0, 0, 0, 0.4);
+
   --font-display: "Archivo Variable", "Archivo", system-ui, -apple-system, sans-serif;
   --font-body: "Inter Variable", "Inter", system-ui, -apple-system, "Segoe UI", sans-serif;
 
@@ -49,6 +57,38 @@
 
   --shadow: 0 18px 40px -18px rgba(0, 0, 0, 0.7);
   --shadow-lg: 0 -24px 60px -12px rgba(0, 0, 0, 0.7);
+}
+
+/* ---- LIGHT THEME tokens (explicit toggle OR system when no override) ---- */
+:root[data-theme="light"] {
+  color-scheme: light;
+  --g: #F4F6F2; --g-2: #ECEFEA; --panel: #FFFFFF; --panel-2: #F1F4EE; --panel-3: #E7EBE4;
+  --line: #E0E3DB; --line-soft: #EBEEE8;
+  --ac: #2F6EDE; --ac-hi: #1E5FCF; --ac-dim: rgba(47, 110, 222, 0.10); --ac-glow: rgba(47, 110, 222, 0.35); --on-ac: #FFFFFF;
+  --teal: #0E8F82; --good: #1F9D57; --live: #E0384A; --amber: #B9770A;
+  --tx: #141A22; --tx-2: #414A56; --mu: #6B7480;
+  --header-fade: rgba(244, 246, 242, 0.86);
+  --nav-bg: rgba(255, 255, 255, 0.9);
+  --glass-1: rgba(47, 110, 222, 0.08); --glass-2: rgba(255, 255, 255, 0.55); --glass-border: rgba(20, 28, 45, 0.08);
+  --logo-shadow: 0 1px 2px rgba(20, 30, 60, 0.35);
+  --shadow: 0 18px 40px -18px rgba(20, 30, 60, 0.18);
+  --shadow-lg: 0 -20px 50px -12px rgba(20, 30, 60, 0.18);
+}
+@media (prefers-color-scheme: light) {
+  :root:not([data-theme="dark"]):not([data-theme="light"]) {
+    color-scheme: light;
+    --g: #F4F6F2; --g-2: #ECEFEA; --panel: #FFFFFF; --panel-2: #F1F4EE; --panel-3: #E7EBE4;
+    --line: #E0E3DB; --line-soft: #EBEEE8;
+    --ac: #2F6EDE; --ac-hi: #1E5FCF; --ac-dim: rgba(47, 110, 222, 0.10); --ac-glow: rgba(47, 110, 222, 0.35); --on-ac: #FFFFFF;
+    --teal: #0E8F82; --good: #1F9D57; --live: #E0384A; --amber: #B9770A;
+    --tx: #141A22; --tx-2: #414A56; --mu: #6B7480;
+    --header-fade: rgba(244, 246, 242, 0.86);
+    --nav-bg: rgba(255, 255, 255, 0.9);
+    --glass-1: rgba(47, 110, 222, 0.08); --glass-2: rgba(255, 255, 255, 0.55); --glass-border: rgba(20, 28, 45, 0.08);
+    --logo-shadow: 0 1px 2px rgba(20, 30, 60, 0.35);
+    --shadow: 0 18px 40px -18px rgba(20, 30, 60, 0.18);
+    --shadow-lg: 0 -20px 50px -12px rgba(20, 30, 60, 0.18);
+  }
 }
 
 * { box-sizing: border-box; }

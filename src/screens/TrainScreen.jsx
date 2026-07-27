@@ -28,6 +28,9 @@ export default function TrainScreen() {
   const [dayId, setDayId] = useState(today);
   const [sheetEx, setSheetEx] = useState(null);
   const [timerOpen, setTimerOpen] = useState(false);
+  const [startSignal, setStartSignal] = useState(0);
+  const beginTiming = () => setStartSignal((n) => n + 1);
+  const openEx = (ex) => { setSheetEx(ex); beginTiming(); };
 
   const week = state.week;
   const day = dayById(dayId);
@@ -126,7 +129,7 @@ export default function TrainScreen() {
 
         {day.type !== "rest" && (
           <div className="train-toolbar">
-            <WorkoutTimer week={week} dayId={dayId} voice={voiceOn} />
+            <WorkoutTimer week={week} dayId={dayId} voice={voiceOn} startSignal={startSignal} />
             <MusicButton compact />
           </div>
         )}
@@ -138,7 +141,7 @@ export default function TrainScreen() {
         )}
 
         {day.type === "lift" && (
-          <LiftDay day={day} week={week} log={log} onOpen={setSheetEx} actions={actions} dayId={dayId} />
+          <LiftDay day={day} week={week} log={log} onOpen={openEx} actions={actions} dayId={dayId} />
         )}
 
         {day.type === "cardio" && (
@@ -148,7 +151,7 @@ export default function TrainScreen() {
             runLog={runLog}
             actions={actions}
             dayId={dayId}
-            onStartTimer={() => setTimerOpen(true)}
+            onStartTimer={() => { setTimerOpen(true); beginTiming(); }}
             proto={proto}
           />
         )}
@@ -192,6 +195,9 @@ export default function TrainScreen() {
                   <div className="l">Est. calories</div>
                 </div>
               </div>
+            )}
+            {sessionSec > 0 && (
+              <p className="summary-note">Timer runs automatically once you start a lift · calories estimated from time + bodyweight</p>
             )}
 
             <button

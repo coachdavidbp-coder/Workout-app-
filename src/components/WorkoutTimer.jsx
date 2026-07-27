@@ -4,7 +4,9 @@ import { fmtDuration } from "../lib/progress.js";
 import { speak, randomEncouragement } from "../lib/voice.js";
 
 // Stopwatch that records how long a workout took (saved to state.durations).
-export default function WorkoutTimer({ week, dayId, voice = true }) {
+// `startSignal` — when it increments (e.g. you open a lift), the timer
+// auto-starts so total time + calories capture without tapping Start.
+export default function WorkoutTimer({ week, dayId, voice = true, startSignal = 0 }) {
   const { state, actions } = useStore();
   const key = `w${week}-${dayId}`;
   const saved = state.durations?.[key] || 0;
@@ -20,6 +22,11 @@ export default function WorkoutTimer({ week, dayId, voice = true }) {
     elapsedRef.current = saved;
     setRunning(false);
   }, [key]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // auto-start when the user actually starts working (opens a lift, etc.)
+  useEffect(() => {
+    if (startSignal > 0) setRunning(true);
+  }, [startSignal]);
 
   useEffect(() => {
     if (!running) return;

@@ -132,6 +132,20 @@ export default function MoreScreen() {
               <span className="knob" />
             </button>
           </div>
+          <div className="setting-row" style={{ flexWrap: "wrap", gap: 10 }}>
+            <div className="lab">Appearance<small>Light, dark, or follow your device</small></div>
+            <div className="row gap-2">
+              {["system", "light", "dark"].map((t) => (
+                <button
+                  key={t}
+                  className={`week-pill ${(state.settings?.theme || "system") === t ? "on" : ""}`}
+                  onClick={() => { actions.setSetting("theme", t); haptic(); }}
+                >
+                  {t === "system" ? "Auto" : t === "light" ? "Light" : "Dark"}
+                </button>
+              ))}
+            </div>
+          </div>
         </div>
 
         {/* goals */}
