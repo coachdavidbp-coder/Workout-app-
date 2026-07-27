@@ -5,6 +5,7 @@ import BrandLogo from "../components/BrandLogo.jsx";
 import { haptic } from "../lib/fx.js";
 import { speak } from "../lib/voice.js";
 import { toast } from "../lib/toast.js";
+import { PLAN_LIST, getPlan } from "../data/plans.js";
 
 function speakTest() {
   speak("Coach voice on. Let's get to work.");
@@ -184,6 +185,28 @@ export default function MoreScreen() {
               ))}
             </div>
           </div>
+        </div>
+
+        {/* program */}
+        <div className="section-title">Program</div>
+        <div className="stack gap-2">
+          {PLAN_LIST.map((pl) => (
+            <button
+              key={pl.id}
+              className={`plan-card ${state.profile.planId === pl.id ? "on" : ""}`}
+              onClick={() => { actions.setProfile({ planId: pl.id }); haptic(); toast({ emoji: pl.accent, title: "Program switched", sub: pl.name, tone: "good" }); }}
+            >
+              <div className="plan-top">
+                <span className="plan-emoji">{pl.accent}</span>
+                <span className="plan-name">{pl.name}</span>
+                {state.profile.planId === pl.id && <span className="plan-check">✓</span>}
+              </div>
+              <div className="plan-tag">{pl.tagline}</div>
+              <div className="plan-chips">
+                {pl.equipment.map((eq) => <span key={eq} className="plan-chip">{eq}</span>)}
+              </div>
+            </button>
+          ))}
         </div>
 
         {/* goals */}

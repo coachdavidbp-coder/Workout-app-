@@ -6,6 +6,7 @@ import MealsScreen from "./screens/MealsScreen.jsx";
 import ProgressScreen from "./screens/ProgressScreen.jsx";
 import MoreScreen from "./screens/MoreScreen.jsx";
 import Login from "./screens/Login.jsx";
+import Onboarding from "./screens/Onboarding.jsx";
 import ErrorBoundary from "./components/ErrorBoundary.jsx";
 import Toaster from "./components/Toaster.jsx";
 import AchievementWatcher from "./components/AchievementWatcher.jsx";
@@ -54,6 +55,17 @@ export default function App() {
     return (
       <div className="app-shell">
         <Login />
+      </div>
+    );
+  }
+
+  if (!state?.profile?.onboarded) {
+    return (
+      <div className="app-shell">
+        <Toaster />
+        <ErrorBoundary>
+          <Onboarding />
+        </ErrorBoundary>
       </div>
     );
   }

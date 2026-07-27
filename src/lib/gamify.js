@@ -3,7 +3,8 @@
 // daily reward, calories. All derived from logged data (offline,
 // free). No points are "spent"; everything recomputes from truth.
 // =========================================================
-import { DAYS, TRAINING_DAY_COUNT, MEAL_TARGETS } from "../data/plan.js";
+import { daysOf, trainingCount } from "../data/plans.js";
+import { targetsFor } from "../data/plan.js";
 import { todayKey, currentDayId } from "../store.jsx";
 
 // ---------- calories ----------
@@ -23,9 +24,10 @@ export function bodyweight(state) {
 // ---------- active dates + streak ----------
 function proteinDaysSet(state) {
   const set = new Set();
+  const gp = targetsFor(state.profile).protein;
   for (const date in state.meals || {}) {
     const p = (state.meals[date].items || []).reduce((a, it) => a + (it.p || 0), 0);
-    if (p >= MEAL_TARGETS.protein) set.add(date);
+    if (p >= gp) set.add(date);
   }
   return set;
 }
@@ -120,7 +122,7 @@ export function badges(state) {
   // week sweeps
   let sweeps = 0;
   for (let w = 1; w <= 4; w++) {
-    const all = DAYS.filter((d) => d.type !== "rest").every((d) => state.done[`w${w}-${d.id}`]);
+    const all = daysOf(state).filter((d) => d.type !== "rest").every((d) => state.done[`w${w}-${d.id}`]);
     if (all) sweeps++;
   }
   const list = [
@@ -180,13 +182,14 @@ export function dailyChallenge(state) {
   const todayId = currentDayId();
   const done = !!state.done[`w${state.week}-${todayId}`];
   const activeToday = activeDates(state).has(tk);
+  const T = targetsFor(state.profile);
 
   const pool = [
-    { id: "protein", text: `Hit ${MEAL_TARGETS.protein}g protein today`, xp: 25, done: proteinToday >= MEAL_TARGETS.protein },
+    { id: "protein", text: `Hit ${T.protein}g protein today`, xp: 25, done: proteinToday >= T.protein },
     { id: "workout", text: "Complete today's workout", xp: 50, done },
-    { id: "water", text: `Drink ${MEAL_TARGETS.waterOz} oz of water`, xp: 20, done: water >= MEAL_TARGETS.waterOz },
+    { id: "water", text: `Drink ${T.waterOz} oz of water`, xp: 20, done: water >= T.waterOz },
     { id: "move", text: "Move today — log a lift or a run", xp: 40, done: activeToday },
-    { id: "fuel", text: "Log every meal + hit protein", xp: 30, done: proteinToday >= MEAL_TARGETS.protein && meals.items.length >= 3 },
+    { id: "fuel", text: "Log every meal + hit protein", xp: 30, done: proteinToday >= T.protein && meals.items.length >= 3 },
   ];
   const c = pool[dayOfYear() % pool.length];
   return { ...c, claimed: !!state.game?.claimedDays?.[`${tk}-${c.id}`], todayKey: tk };
@@ -228,7 +231,7 @@ export function recentActivity(state, limit = 6) {
 // ---------- celebration triggers (confetti only for real wins) ----------
 // Did any lift in this day beat its best weight from another week?
 export function strengthPRHit(state, week, dayId) {
-  const day = DAYS.find((d) => d.id === dayId);
+  const day = daysOf(state).find((d) => d.id === dayId);
   if (!day || day.type !== "lift") return false;
   const cur = state.liftLogs[`w${week}-${dayId}`]?.exercises || {};
   for (const ex of day.exercises) {
@@ -271,9 +274,9 @@ export function streakMilestoneHit(state) {
 
 // next incomplete training day this week (or today)
 export function continueDay(state) {
-  const order = DAYS.filter((d) => d.type !== "rest");
+  const order = daysOf(state).filter((d) => d.type !== "rest");
   const todayId = currentDayId();
-  const todayDay = DAYS.find((d) => d.id === todayId);
+  const todayDay = daysOf(state).find((d) => d.id === todayId);
   if (todayDay && todayDay.type !== "rest" && !state.done[`w${state.week}-${todayId}`]) return todayDay;
   return order.find((d) => !state.done[`w${state.week}-${d.id}`]) || todayDay || order[0];
 }

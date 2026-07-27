@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useStore, todayKey, weekDates } from "../store.jsx";
-import { MEAL_TARGETS, MEAL_IDEAS, GROCERY, GLP1_NOTES } from "../data/plan.js";
+import { targetsFor, MEAL_IDEAS, GROCERY, GLP1_NOTES } from "../data/plan.js";
 import { MEAL_SLOTS } from "../data/foods.js";
 import Ring from "../components/Ring.jsx";
 import AddFoodSheet from "../components/AddFoodSheet.jsx";
@@ -32,6 +32,7 @@ export default function MealsScreen() {
   const [anchor, setAnchor] = useState(new Date());
   const [adding, setAdding] = useState(false);
   const [showRef, setShowRef] = useState(false);
+  const MEAL_TARGETS = targetsFor(state.profile);
 
   const week = weekDates(anchor);
   const totals = dayTotals(state.meals, selected);
@@ -77,7 +78,7 @@ export default function MealsScreen() {
           </span>
         </div>
         <div className="h-title">
-          <div className="kicker">GLP-1 · {MEAL_TARGETS.protein}g protein goal</div>
+          <div className="kicker">{MEAL_TARGETS.protein}g protein · {MEAL_TARGETS.waterOz} oz water goal</div>
           <h1>Nutrition</h1>
         </div>
 

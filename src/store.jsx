@@ -41,16 +41,24 @@ const SEED_SUPPS = [
 export const DEFAULT_STATE = {
   version: 1,
   profile: {
-    name: "Coach",
-    startWeight: 315, // GLP-1 journey start
-    goalWeight: 250,
+    name: "",
+    planId: "gridiron",
+    sex: "",
+    heightIn: null,
+    startWeight: 0,
+    goalWeight: 0,
+    goal: "lose", // lose | maintain | strength | faster
+    proteinGoal: 0,
+    calorieGoal: 0,
+    waterGoal: 0,
+    onboarded: false,
   },
   week: 1,
   done: {}, // { "w1-sun": true }
   liftLogs: {}, // { "w1-sun": { feel, bodyweight, exercises: { name: {weight, reps:[], startWt, endWt} } } }
   runLogs: {}, // { "w1-tue": { intervals: [{mph, incline}], done } }
   meals: {}, // { "2026-07-26": { items: [{name, cal, p, qty, slot}], water } }
-  weights: SEED_WEIGHTS, // [{date, weight, bodyFat}]
+  weights: [], // [{date, weight, bodyFat}] — each account logs its own
   supplements: SEED_SUPPS, // [{id, name, dose, freq}]
   suppLog: {}, // { "2026-07-26": { whey: true, ... } }
   durations: {}, // { "w1-sun": seconds } — how long the workout took

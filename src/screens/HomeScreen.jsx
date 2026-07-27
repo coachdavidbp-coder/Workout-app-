@@ -1,5 +1,6 @@
 import { useStore, todayKey, weekDates, currentDayId } from "../store.jsx";
-import { DAYS, DAY_NAMES, TRAINING_DAY_COUNT, MEAL_TARGETS } from "../data/plan.js";
+import { DAY_NAMES, daysOf, trainingCount } from "../data/plans.js";
+import { targetsFor } from "../data/plan.js";
 import Ring from "../components/Ring.jsx";
 import TrendChart from "../components/TrendChart.jsx";
 import BrandLogo from "../components/BrandLogo.jsx";
@@ -21,12 +22,13 @@ export default function HomeScreen({ go }) {
   const active = activeDates(state);
   const todayId = currentDayId();
 
-  const weekDone = DAYS.filter((d) => d.type !== "rest" && state.done[`w${week}-${d.id}`]).length;
+  const T = targetsFor(state.profile);
+  const weekDone = daysOf(state).filter((d) => d.type !== "rest" && state.done[`w${week}-${d.id}`]).length;
   let proteinDaysWk = 0;
   let calWk = 0;
   for (const d of days) {
     const m = state.meals[d.key];
-    if (m && (m.items || []).reduce((a, it) => a + (it.p || 0), 0) >= MEAL_TARGETS.protein) proteinDaysWk++;
+    if (m && (m.items || []).reduce((a, it) => a + (it.p || 0), 0) >= T.protein) proteinDaysWk++;
     calWk += state.activityLog?.[d.key]?.calories || 0;
   }
 
@@ -99,7 +101,7 @@ export default function HomeScreen({ go }) {
         <div className="rings">
           <div className="ring-card">
             <div className="rlab">Workouts</div>
-            <Ring value={weekDone} max={TRAINING_DAY_COUNT} center={`${weekDone}/${TRAINING_DAY_COUNT}`} />
+            <Ring value={weekDone} max={trainingCount(state)} center={`${weekDone}/${trainingCount(state)}`} />
           </div>
           <div className="ring-card">
             <div className="rlab">Protein</div>

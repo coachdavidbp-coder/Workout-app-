@@ -3,10 +3,11 @@
 // reacts to what you actually logged. Pure rules, no network.
 // Returns { tone: "push"|"good"|"neutral", title, body }.
 // =========================================================
-import { DAYS, TRAINING_DAY_COUNT, MEAL_TARGETS } from "../data/plan.js";
+import { daysOf, trainingCount } from "../data/plans.js";
+import { targetsFor } from "../data/plan.js";
 
 function weekDoneCount(state, week) {
-  return DAYS.filter((d) => d.type !== "rest" && state.done[`w${week}-${d.id}`]).length;
+  return daysOf(state).filter((d) => d.type !== "rest" && state.done[`w${week}-${d.id}`]).length;
 }
 
 // Most recent weight logged for an exercise in a week BEFORE `week`.
@@ -32,7 +33,7 @@ function restCoach(state, { week }) {
       tone: "good",
       name: "Coach",
       title: "Recovery is a weapon.",
-      body: `${weekDone}/${TRAINING_DAY_COUNT} banked this week. Rest hard, eat your protein, come back ready.`,
+      body: `${weekDone}/${trainingCount(state)} banked this week. Rest hard, eat your protein, come back ready.`,
     };
   if (weekDone <= 2)
     return {
@@ -138,8 +139,9 @@ export function nutritionCoach(state, { dateKey, isToday }) {
     { cal: 0, p: 0 }
   );
   const water = meals.water || 0;
-  const gp = MEAL_TARGETS.protein;
-  const gw = MEAL_TARGETS.waterOz;
+  const T = targetsFor(state.profile);
+  const gp = T.protein;
+  const gw = T.waterOz;
   const shortP = gp - totals.p;
 
   if (meals.items.length === 0)

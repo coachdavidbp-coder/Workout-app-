@@ -1,12 +1,6 @@
 import { useState } from "react";
 import { useStore, currentDayId, todayKey } from "../store.jsx";
-import {
-  DAYS,
-  DAY_NAMES,
-  WEEKS,
-  TRAINING_DAY_COUNT,
-  dayById,
-} from "../data/plan.js";
+import { DAY_NAMES, WEEKS, daysOf, dayById, trainingCount } from "../data/plans.js";
 import { IconPlay } from "../components/icons.jsx";
 import NumField from "../components/NumField.jsx";
 import ExerciseSheet from "../components/ExerciseSheet.jsx";
@@ -34,11 +28,12 @@ export default function TrainScreen() {
   const openEx = (ex) => { setSheetEx(ex); beginTiming(); };
 
   const week = state.week;
-  const day = dayById(dayId);
+  const day = dayById(state, dayId);
   const doneKey = `w${week}-${dayId}`;
   const log = state.liftLogs[doneKey] || {};
   const runLog = state.runLogs[doneKey] || { intervals: [] };
-  const weekDone = DAYS.filter(
+  const days = daysOf(state);
+  const weekDone = days.filter(
     (d) => d.type !== "rest" && state.done[`w${week}-${d.id}`]
   ).length;
   const coachMsg = trainingCoach(state, { week, dayId, day, todayId: today });
@@ -105,12 +100,12 @@ export default function TrainScreen() {
             </button>
           ))}
           <span className="done-count">
-            <b>{weekDone}</b>/{TRAINING_DAY_COUNT}
+            <b>{weekDone}</b>/{trainingCount(state)}
           </span>
         </div>
 
         <div className="daystrip">
-          {DAYS.map((d) => {
+          {days.map((d) => {
             const active = d.id === dayId;
             const isDone = d.type !== "rest" && state.done[`w${week}-${d.id}`];
             return (
