@@ -4,6 +4,7 @@ import { PLAN_LIST, DAY_NAMES } from "../data/plans.js";
 import { defaultTargets, DIETS } from "../data/plan.js";
 import BrandLogo from "../components/BrandLogo.jsx";
 import { haptic } from "../lib/fx.js";
+import GuidedBuilder from "./GuidedBuilder.jsx";
 
 const GOALS = [
   { id: "lose", label: "Lose fat" },
@@ -15,6 +16,7 @@ const GOALS = [
 export default function Onboarding() {
   const { actions } = useStore();
   const [step, setStep] = useState(0);
+  const [guiding, setGuiding] = useState(false);
   const [f, setF] = useState({
     name: "", sex: "", heightFt: "", heightIn: "", currentWeight: "",
     goalWeight: "", goal: "lose", diet: "balanced", planId: "gridiron",
@@ -46,6 +48,13 @@ export default function Onboarding() {
     });
     if (weight) actions.addWeighIn({ date: todayKey(), weight, bodyFat: null });
     haptic("success");
+  };
+
+  // "Build my plan": if they chose the custom route, run the guided quiz
+  // first (it sets the customPlan), then commit the rest of the profile.
+  const submit = () => {
+    if (f.planId === "custom") setGuiding(true);
+    else finish();
   };
 
   return (
@@ -149,11 +158,13 @@ export default function Onboarding() {
             Continue
           </button>
         ) : (
-          <button className="btn btn-primary" style={{ flex: 1 }} onClick={finish}>
-            Build my plan
+          <button className="btn btn-primary" style={{ flex: 1 }} onClick={submit}>
+            {f.planId === "custom" ? "Build my plan ⚡" : "Build my plan"}
           </button>
         )}
       </div>
+
+      {guiding && <GuidedBuilder onClose={() => { setGuiding(false); finish(); }} />}
     </div>
   );
 }

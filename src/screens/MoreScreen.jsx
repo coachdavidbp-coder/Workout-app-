@@ -1,6 +1,7 @@
 import { useRef, useState } from "react";
 import { useStore, todayKey } from "../store.jsx";
 import CustomPlanBuilder from "./CustomPlanBuilder.jsx";
+import GuidedBuilder from "./GuidedBuilder.jsx";
 import { signOut } from "../lib/firebase.js";
 import BrandLogo from "../components/BrandLogo.jsx";
 import { haptic } from "../lib/fx.js";
@@ -8,6 +9,7 @@ import { speak, listVoices, setVoiceName, randomEncouragement } from "../lib/voi
 import { toast } from "../lib/toast.js";
 import { PLAN_LIST, getPlan } from "../data/plans.js";
 import { DIETS, defaultTargets } from "../data/plan.js";
+import { spotifyEnabled, isSpotifyConnected, connectSpotify, disconnectSpotify } from "../lib/spotify.js";
 
 function speakTest() {
   speak("Coach voice on. Let's get to work.");
@@ -31,6 +33,10 @@ export default function MoreScreen() {
   const { state, mode, user, actions } = useStore();
   const fileRef = useRef(null);
   const [building, setBuilding] = useState(false);
+  const [guiding, setGuiding] = useState(false);
+  const [choosing, setChoosing] = useState(false);
+  const [spTick, setSpTick] = useState(0);
+  const spConnected = isSpotifyConnected();
 
   const exportData = () => {
     try {
@@ -222,6 +228,26 @@ export default function MoreScreen() {
           </div>
         </div>
 
+        {/* music */}
+        {spotifyEnabled && (
+          <>
+            <div className="section-title">Music</div>
+            <div className="card">
+              <div className="setting-row">
+                <div className="lab">
+                  Spotify
+                  <small>{spConnected ? "Connected — see what's playing during workouts" : "Show what you're listening to, right in your workout"}</small>
+                </div>
+                {spConnected ? (
+                  <button className="btn" onClick={() => { disconnectSpotify(); setSpTick((n) => n + 1); haptic(); }}>Disconnect</button>
+                ) : (
+                  <button className="btn btn-primary" onClick={() => { haptic(); connectSpotify(); }}>Connect</button>
+                )}
+              </div>
+            </div>
+          </>
+        )}
+
         {/* program */}
         <div className="section-title">Program</div>
         <div className="stack gap-2">
@@ -242,14 +268,14 @@ export default function MoreScreen() {
               </div>
             </button>
           ))}
-          <button className={`plan-card ${state.profile.planId === "custom" ? "on" : ""}`} onClick={() => setBuilding(true)}>
+          <button className={`plan-card ${state.profile.planId === "custom" ? "on" : ""}`} onClick={() => setChoosing(true)}>
             <div className="plan-top">
               <span className="plan-emoji">⚙️</span>
               <span className="plan-name">Build your own</span>
               {state.profile.planId === "custom" && <span className="plan-check">✓</span>}
             </div>
             <div className="plan-tag">Create a program you actually like</div>
-            <div className="plan-focus">Set your own days, exercises, sets &amp; intervals →</div>
+            <div className="plan-focus">Answer a few questions &amp; we build it — or set every day yourself →</div>
           </button>
         </div>
 
@@ -312,6 +338,31 @@ export default function MoreScreen() {
         <p className="login-foot">US vs Them · train hard · v2</p>
       </main>
 
+      {choosing && (
+        <div className="sheet-scrim" onClick={() => setChoosing(false)}>
+          <div className="sheet" onClick={(e) => e.stopPropagation()}>
+            <div className="sheet-grip" />
+            <div className="sheet-title">Build your own plan</div>
+            <p className="sheet-sub">Pick how you want to create it.</p>
+            <button className="choice-card" onClick={() => { setChoosing(false); setGuiding(true); }}>
+              <span className="choice-emoji">⚡</span>
+              <span className="choice-text">
+                <span className="choice-label">Guided — answer a few questions</span>
+                <span className="choice-sub">Tell us your gear, days &amp; goals and we build the whole plan. Best if you're not sure where to start.</span>
+              </span>
+            </button>
+            <button className="choice-card" onClick={() => { setChoosing(false); setBuilding(true); }}>
+              <span className="choice-emoji">✏️</span>
+              <span className="choice-text">
+                <span className="choice-label">Manual — set every day yourself</span>
+                <span className="choice-sub">Full control over each day's exercises, sets &amp; cardio intervals.</span>
+              </span>
+            </button>
+            <button className="btn btn-block" style={{ marginTop: 6 }} onClick={() => setChoosing(false)}>Cancel</button>
+          </div>
+        </div>
+      )}
+      {guiding && <GuidedBuilder onClose={() => setGuiding(false)} />}
       {building && <CustomPlanBuilder onClose={() => setBuilding(false)} />}
     </div>
   );

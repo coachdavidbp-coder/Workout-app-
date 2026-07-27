@@ -7,7 +7,7 @@ import ExerciseSheet from "../components/ExerciseSheet.jsx";
 import BrandLogo from "../components/BrandLogo.jsx";
 import CoachCard from "../components/CoachCard.jsx";
 import WorkoutTimer from "../components/WorkoutTimer.jsx";
-import MusicButton from "../components/MusicButton.jsx";
+import NowPlaying from "../components/NowPlaying.jsx";
 import IntervalTimer from "../components/IntervalTimer.jsx";
 import { trainingCoach } from "../lib/coach.js";
 import { fmtPace, fmtDuration } from "../lib/progress.js";
@@ -129,7 +129,7 @@ export default function TrainScreen() {
         {day.type !== "rest" && (
           <div className="train-toolbar">
             <WorkoutTimer week={week} dayId={dayId} voice={voiceOn} startSignal={startSignal} />
-            <MusicButton compact />
+            <NowPlaying />
           </div>
         )}
 
