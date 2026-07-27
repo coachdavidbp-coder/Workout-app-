@@ -10,6 +10,9 @@ import {
   signInWithEmailAndPassword,
   createUserWithEmailAndPassword,
   onAuthStateChanged,
+  setPersistence,
+  browserLocalPersistence,
+  browserSessionPersistence,
   signOut as fbSignOut,
 } from "firebase/auth";
 import {
@@ -42,6 +45,17 @@ export const isCloud = () => Boolean(app);
 export function watchAuth(cb) {
   if (!auth) return () => {};
   return onAuthStateChanged(auth, cb);
+}
+
+// "Keep me signed in": local persistence stays across app closes,
+// session persistence signs out when the tab/app is fully closed.
+export async function setRememberMe(remember) {
+  if (!auth) return;
+  try {
+    await setPersistence(auth, remember ? browserLocalPersistence : browserSessionPersistence);
+  } catch (e) {
+    /* non-fatal — default persistence stays */
+  }
 }
 
 export async function loginGoogle() {

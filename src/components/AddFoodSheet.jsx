@@ -96,38 +96,43 @@ export default function AddFoodSheet({ open, onClose, dateKey }) {
     <Sheet open={open} onClose={onClose}>
       {!selected ? (
         <>
-          <h3 className="sheet-title">Add Food</h3>
-          <div className="sheet-sub">Built-in foods + full database search</div>
+          <div className="food-search-head">
+            <h3 className="sheet-title">Add Food</h3>
+            <div className="sheet-sub">Built-in foods + full database search</div>
 
-          <div className="row gap-2" style={{ marginTop: 14, background: "var(--panel)", border: "1px solid var(--line)", borderRadius: 12, padding: "4px 12px" }}>
-            <span style={{ color: "var(--mu)" }}>
-              <IconSearch width="18" height="18" />
-            </span>
-            <input
-              className="login-input"
-              style={{ border: "none", background: "transparent", padding: "12px 6px" }}
-              placeholder="Search food (e.g. chicken, yogurt)…"
-              value={q}
-              onChange={(e) => setQ(e.target.value)}
-              autoFocus
-            />
+            <div className="row gap-2" style={{ marginTop: 12, background: "var(--panel)", border: "1px solid var(--line)", borderRadius: 12, padding: "4px 12px" }}>
+              <span style={{ color: "var(--mu)" }}>
+                <IconSearch width="18" height="18" />
+              </span>
+              <input
+                className="login-input"
+                style={{ border: "none", background: "transparent", padding: "12px 6px" }}
+                placeholder="Search food (e.g. chicken, yogurt)…"
+                value={q}
+                onChange={(e) => setQ(e.target.value)}
+                autoFocus
+              />
+              {q && (
+                <button className="food-clear" onClick={() => setQ("")} aria-label="Clear search">×</button>
+              )}
+            </div>
+
+            {/* barcode */}
+            <div className="row gap-2" style={{ marginTop: 10 }}>
+              <input
+                className="login-input"
+                inputMode="numeric"
+                placeholder="Barcode number"
+                value={barcode}
+                onChange={(e) => setBarcode(e.target.value)}
+              />
+              <button className="btn" onClick={doBarcode}>
+                Look up
+              </button>
+            </div>
+
+            {err && <p className="login-err" style={{ marginTop: 10 }}>{err}</p>}
           </div>
-
-          {/* barcode */}
-          <div className="row gap-2" style={{ marginTop: 10 }}>
-            <input
-              className="login-input"
-              inputMode="numeric"
-              placeholder="Barcode number"
-              value={barcode}
-              onChange={(e) => setBarcode(e.target.value)}
-            />
-            <button className="btn" onClick={doBarcode}>
-              Look up
-            </button>
-          </div>
-
-          {err && <p className="login-err" style={{ marginTop: 10 }}>{err}</p>}
 
           <div className="section-label" style={{ marginTop: 16 }}>
             {q.trim().length >= 3 ? "Database results" : "Common foods"}

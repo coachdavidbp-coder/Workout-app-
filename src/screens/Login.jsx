@@ -1,11 +1,13 @@
 import { useState } from "react";
-import { loginGoogle, loginEmail } from "../lib/firebase.js";
+import { loginGoogle, loginEmail, setRememberMe } from "../lib/firebase.js";
 import BrandLogo from "../components/BrandLogo.jsx";
 
 export default function Login() {
   const [mode, setMode] = useState("signin"); // signin | signup
   const [email, setEmail] = useState("");
   const [pw, setPw] = useState("");
+  const [showPw, setShowPw] = useState(false);
+  const [remember, setRemember] = useState(true);
   const [err, setErr] = useState("");
   const [busy, setBusy] = useState(false);
 
@@ -13,6 +15,7 @@ export default function Login() {
     setErr("");
     setBusy(true);
     try {
+      await setRememberMe(remember);
       await fn();
     } catch (e) {
       setErr(friendly(e));
@@ -46,14 +49,29 @@ export default function Login() {
         value={email}
         onChange={(e) => setEmail(e.target.value)}
       />
-      <input
-        className="login-input"
-        type="password"
-        placeholder="Password"
-        autoComplete={mode === "signup" ? "new-password" : "current-password"}
-        value={pw}
-        onChange={(e) => setPw(e.target.value)}
-      />
+      <div className="pw-field">
+        <input
+          className="login-input"
+          type={showPw ? "text" : "password"}
+          placeholder="Password"
+          autoComplete={mode === "signup" ? "new-password" : "current-password"}
+          value={pw}
+          onChange={(e) => setPw(e.target.value)}
+        />
+        <button
+          type="button"
+          className="pw-toggle"
+          onClick={() => setShowPw((v) => !v)}
+          aria-label={showPw ? "Hide password" : "Show password"}
+        >
+          {showPw ? "Hide" : "Show"}
+        </button>
+      </div>
+
+      <label className="remember-row">
+        <input type="checkbox" checked={remember} onChange={(e) => setRemember(e.target.checked)} />
+        <span>Keep me signed in</span>
+      </label>
 
       {err && <p className="login-err">{err}</p>}
 

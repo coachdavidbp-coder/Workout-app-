@@ -339,11 +339,11 @@ export default function MoreScreen() {
       </main>
 
       {choosing && (
-        <div className="sheet-scrim" onClick={() => setChoosing(false)}>
-          <div className="sheet" onClick={(e) => e.stopPropagation()}>
-            <div className="sheet-grip" />
-            <div className="sheet-title">Build your own plan</div>
-            <p className="sheet-sub">Pick how you want to create it.</p>
+        <div className="pick-scrim" onClick={() => setChoosing(false)}>
+          <div className="pick-sheet" onClick={(e) => e.stopPropagation()}>
+            <div className="pick-grip" />
+            <div className="pick-title">Build your own plan</div>
+            <p className="pick-sub">Pick how you want to create it.</p>
             <button className="choice-card" onClick={() => { setChoosing(false); setGuiding(true); }}>
               <span className="choice-emoji">⚡</span>
               <span className="choice-text">

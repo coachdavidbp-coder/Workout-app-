@@ -127,10 +127,12 @@ export default function TrainScreen() {
         <CoachCard msg={coachMsg} />
 
         {day.type !== "rest" && (
-          <div className="train-toolbar">
-            <WorkoutTimer week={week} dayId={dayId} voice={voiceOn} startSignal={startSignal} />
+          <>
+            <div className="train-toolbar">
+              <WorkoutTimer week={week} dayId={dayId} voice={voiceOn} startSignal={startSignal} />
+            </div>
             <NowPlaying />
-          </div>
+          </>
         )}
 
         {day.warmup && (

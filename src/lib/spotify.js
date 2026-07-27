@@ -11,7 +11,7 @@
 const CLIENT_ID = import.meta.env.VITE_SPOTIFY_CLIENT_ID || "";
 export const spotifyEnabled = !!CLIENT_ID;
 
-const SCOPES = "user-read-currently-playing user-read-playback-state";
+const SCOPES = "user-read-currently-playing user-read-playback-state user-modify-playback-state";
 const LS = {
   access: "svt_sp_access",
   refresh: "svt_sp_refresh",
@@ -129,28 +129,62 @@ async function refreshIfNeeded() {
   }
 }
 
-// Returns { playing, title, artist, art, url } or null when nothing's playing.
+// Returns the full player state:
+//   { active, playing, title, artist, art, url, shuffle, repeat }
+// active:false means nothing is playing on any device right now.
 export async function nowPlaying() {
   if (!isSpotifyConnected()) return null;
   if (!(await refreshIfNeeded())) return null;
   const token = localStorage.getItem(LS.access);
   try {
-    const res = await fetch("https://api.spotify.com/v1/me/player/currently-playing", {
+    const res = await fetch("https://api.spotify.com/v1/me/player", {
       headers: { Authorization: `Bearer ${token}` },
     });
-    if (res.status === 204 || res.status === 202) return { playing: false };
+    if (res.status === 204 || res.status === 202) return { active: false };
     if (res.status === 401) { disconnectSpotify(); return null; }
     if (!res.ok) return null;
     const data = await res.json();
-    if (!data || !data.item) return { playing: false };
+    if (!data || !data.item) return { active: false };
     return {
+      active: true,
       playing: !!data.is_playing,
       title: data.item.name,
       artist: (data.item.artists || []).map((a) => a.name).join(", "),
       art: data.item.album?.images?.[0]?.url || null,
       url: data.item.external_urls?.spotify || "https://open.spotify.com",
+      shuffle: !!data.shuffle_state,
+      repeat: data.repeat_state || "off", // off | context | track
     };
   } catch (e) {
     return null;
+  }
+}
+
+// Playback controls. Returns { ok, premium, noDevice }.
+// Controlling playback needs Spotify Premium + an active device.
+export async function control(action, arg) {
+  if (!isSpotifyConnected()) return { ok: false };
+  if (!(await refreshIfNeeded())) return { ok: false };
+  const token = localStorage.getItem(LS.access);
+  let path, method;
+  switch (action) {
+    case "play": path = "me/player/play"; method = "PUT"; break;
+    case "pause": path = "me/player/pause"; method = "PUT"; break;
+    case "next": path = "me/player/next"; method = "POST"; break;
+    case "previous": path = "me/player/previous"; method = "POST"; break;
+    case "shuffle": path = `me/player/shuffle?state=${arg ? "true" : "false"}`; method = "PUT"; break;
+    case "repeat": path = `me/player/repeat?state=${arg}`; method = "PUT"; break;
+    default: return { ok: false };
+  }
+  try {
+    const res = await fetch(`https://api.spotify.com/v1/${path}`, {
+      method,
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    if (res.status === 403) return { ok: false, premium: true };
+    if (res.status === 404) return { ok: false, noDevice: true };
+    return { ok: res.ok };
+  } catch (e) {
+    return { ok: false };
   }
 }
