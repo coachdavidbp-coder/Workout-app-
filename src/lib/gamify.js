@@ -225,6 +225,50 @@ export function recentActivity(state, limit = 6) {
   return events.sort((a, b) => b.date.localeCompare(a.date)).slice(0, limit);
 }
 
+// ---------- celebration triggers (confetti only for real wins) ----------
+// Did any lift in this day beat its best weight from another week?
+export function strengthPRHit(state, week, dayId) {
+  const day = DAYS.find((d) => d.id === dayId);
+  if (!day || day.type !== "lift") return false;
+  const cur = state.liftLogs[`w${week}-${dayId}`]?.exercises || {};
+  for (const ex of day.exercises) {
+    const now = parseFloat(cur[ex.name]?.weight);
+    if (!now) continue;
+    let prevMax = 0, had = false;
+    for (let w = 1; w <= 4; w++) {
+      if (w === week) continue;
+      const p = parseFloat(state.liftLogs[`w${w}-${dayId}`]?.exercises?.[ex.name]?.weight);
+      if (p) { had = true; prevMax = Math.max(prevMax, p); }
+    }
+    if (had && now > prevMax) return true;
+  }
+  return false;
+}
+
+// Faster top speed or better pace than any previous run.
+export function runPRHit(state, { topMph, pace }) {
+  const runs = state.runSessions || [];
+  if (!runs.length) return false;
+  const bestSpeed = Math.max(...runs.map((r) => parseFloat(r.topMph) || 0));
+  if (topMph && bestSpeed && topMph > bestSpeed) return true;
+  const paces = runs
+    .map((r) => (r.distanceMi && r.durationSec ? r.durationSec / 60 / r.distanceMi : Infinity))
+    .filter((x) => isFinite(x));
+  if (pace && paces.length && pace < Math.min(...paces)) return true;
+  return false;
+}
+
+// Would completing today push the streak onto a milestone?
+export function streakMilestoneHit(state) {
+  const set = activeDates(state);
+  const tk = todayKey();
+  if (set.has(tk)) return false; // already counted today
+  set.add(tk);
+  let n = 0, i = 0;
+  while (set.has(dayOffset(i))) { n++; i++; }
+  return [3, 7, 14, 21, 30, 50, 75, 100].includes(n);
+}
+
 // next incomplete training day this week (or today)
 export function continueDay(state) {
   const order = DAYS.filter((d) => d.type !== "rest");

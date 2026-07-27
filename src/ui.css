@@ -679,3 +679,9 @@
 .summary-stat { flex: 1; background: var(--panel); border: 1px solid var(--line); border-radius: var(--r); padding: 12px; text-align: center; }
 .summary-stat .k { font-family: var(--font-display); font-weight: 800; font-size: 20px; }
 .summary-stat .l { font-size: 10.5px; color: var(--mu); text-transform: uppercase; font-family: var(--font-display); font-weight: 700; letter-spacing: 0.04em; margin-top: 2px; }
+
+/* toggle switch */
+.toggle { width: 50px; height: 30px; border-radius: 100px; border: 1px solid var(--line); background: var(--panel-2); position: relative; transition: background 0.2s ease, border-color 0.2s ease; flex: none; }
+.toggle .knob { position: absolute; top: 3px; left: 3px; width: 22px; height: 22px; border-radius: 50%; background: var(--mu); transition: transform 0.2s ease, background 0.2s ease; }
+.toggle.on { background: var(--ac); border-color: var(--ac); }
+.toggle.on .knob { transform: translateX(20px); background: #fff; }

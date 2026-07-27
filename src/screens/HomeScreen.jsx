@@ -6,7 +6,7 @@ import {
   totalXP, levelInfo, streak, dailyChallenge, quoteOfDay,
   recentActivity, continueDay, currentIcon, activeDates,
 } from "../lib/gamify.js";
-import { fireConfetti, haptic } from "../lib/fx.js";
+import { haptic } from "../lib/fx.js";
 
 export default function HomeScreen({ go }) {
   const { state, actions } = useStore();
@@ -35,7 +35,6 @@ export default function HomeScreen({ go }) {
   const claim = () => {
     actions.claimReward(`${chal.todayKey}-${chal.id}`);
     haptic("success");
-    fireConfetti();
   };
 
   const hour = new Date().getHours();

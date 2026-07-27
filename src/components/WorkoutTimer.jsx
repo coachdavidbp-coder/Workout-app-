@@ -1,9 +1,10 @@
 import { useEffect, useRef, useState } from "react";
 import { useStore } from "../store.jsx";
 import { fmtDuration } from "../lib/progress.js";
+import { speak, randomEncouragement } from "../lib/voice.js";
 
 // Stopwatch that records how long a workout took (saved to state.durations).
-export default function WorkoutTimer({ week, dayId }) {
+export default function WorkoutTimer({ week, dayId, voice = true }) {
   const { state, actions } = useStore();
   const key = `w${week}-${dayId}`;
   const saved = state.durations?.[key] || 0;
@@ -26,6 +27,10 @@ export default function WorkoutTimer({ week, dayId }) {
       elapsedRef.current += 1;
       setElapsed(elapsedRef.current);
       if (elapsedRef.current % 5 === 0) actions.setDuration(week, dayId, elapsedRef.current);
+      // coach checks in mid-workout every 2.5 min
+      if (voice && elapsedRef.current > 0 && elapsedRef.current % 150 === 0) {
+        speak(randomEncouragement());
+      }
     }, 1000);
     return () => clearInterval(tick.current);
   }, [running]); // eslint-disable-line react-hooks/exhaustive-deps

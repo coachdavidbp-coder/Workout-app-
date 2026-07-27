@@ -57,6 +57,7 @@ export const DEFAULT_STATE = {
   runSessions: [], // [{ date, dayId, week, distanceMi, durationSec, topMph, avgMph }]
   activityLog: {}, // { "2026-07-26": { workouts: 1, calories: 320 } }
   game: { claimedDays: {}, profileIcon: null }, // daily rewards claimed + chosen icon
+  settings: { voice: true }, // coach voice cues (on-device speech, free)
 };
 
 function uid() {
@@ -316,6 +317,12 @@ export function StoreProvider({ children }) {
       update((s) => {
         s.game = s.game || { claimedDays: {}, profileIcon: null };
         s.game.profileIcon = id;
+      }),
+
+    setSetting: (key, val) =>
+      update((s) => {
+        s.settings = s.settings || {};
+        s.settings[key] = val;
       }),
 
     // ---- supplements ----

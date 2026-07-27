@@ -2,6 +2,11 @@ import { useStore, todayKey } from "../store.jsx";
 import { signOut } from "../lib/firebase.js";
 import BrandLogo from "../components/BrandLogo.jsx";
 import { haptic } from "../lib/fx.js";
+import { speak } from "../lib/voice.js";
+
+function speakTest() {
+  speak("Coach voice on. Let's get to work.");
+}
 import {
   totalXP, levelInfo, streak, badges, profileIcons, currentIcon,
   totals, activeDates,
@@ -112,6 +117,22 @@ export default function MoreScreen() {
         {/* activity calendar */}
         <div className="section-title">Activity</div>
         <ActivityCalendar state={state} />
+
+        {/* settings */}
+        <div className="section-title">Settings</div>
+        <div className="card">
+          <div className="setting-row">
+            <div className="lab">Coach voice<small>Spoken cues during workouts (on-device, free)</small></div>
+            <button
+              className={`toggle ${state.settings?.voice !== false ? "on" : ""}`}
+              role="switch"
+              aria-checked={state.settings?.voice !== false}
+              onClick={() => { const nv = !(state.settings?.voice !== false); actions.setSetting("voice", nv); if (nv) speakTest(); }}
+            >
+              <span className="knob" />
+            </button>
+          </div>
+        </div>
 
         {/* goals */}
         <div className="section-title">Goals</div>

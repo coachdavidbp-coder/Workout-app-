@@ -1,9 +1,10 @@
 import { useEffect, useRef, useState } from "react";
+import { speak, randomEncouragement } from "../lib/voice.js";
 
 // Interval countdown for the day's protocol: N rounds of work + rest.
 // Short beeps (Web Audio) duck background music rather than stopping it,
-// plus vibration. Sound is toggleable.
-export default function IntervalTimer({ rounds, work, rest, workLabel = "Work", onClose }) {
+// plus vibration and an optional voice coach. Sound is toggleable.
+export default function IntervalTimer({ rounds, work, rest, workLabel = "Work", voice = true, onClose }) {
   const phases = buildPhases(rounds, work, rest);
   const total = phases.reduce((a, p) => a + p.dur, 0);
 
@@ -41,11 +42,26 @@ export default function IntervalTimer({ rounds, work, rest, workLabel = "Work", 
   };
   const buzz = (ms) => { try { navigator.vibrate?.(ms); } catch (e) { /* ignore */ } };
 
+  const voiceRef = useRef(voice);
+  voiceRef.current = voice;
+  let sinceVoice = useRef(0);
+
   const cue = (kind) => {
-    if (kind === "work") { beep(880); buzz([0, 80, 60, 80]); }
-    else if (kind === "rest") { beep(440); buzz(120); }
-    else if (kind === "end") { beep(660, 0.5); buzz([0, 200, 100, 200]); }
-    else beep(600, 0.05);
+    if (kind === "work") {
+      beep(880); buzz([0, 80, 60, 80]);
+      if (voiceRef.current) {
+        // vary the line so it doesn't feel robotic
+        sinceVoice.current++;
+        const line = sinceVoice.current % 3 === 0 ? randomEncouragement() : (workLabel === "Sprint" ? "Sprint! Go!" : "Run! Push!");
+        speak(line);
+      }
+    } else if (kind === "rest") {
+      beep(440); buzz(120);
+      if (voiceRef.current) speak("Recover.");
+    } else if (kind === "end") {
+      beep(660, 0.5); buzz([0, 200, 100, 200]);
+      if (voiceRef.current) speak("Done! Great work.");
+    } else beep(600, 0.05);
   };
 
   async function ensureAudio() {

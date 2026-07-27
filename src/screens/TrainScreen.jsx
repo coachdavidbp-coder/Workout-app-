@@ -17,7 +17,7 @@ import MusicButton from "../components/MusicButton.jsx";
 import IntervalTimer from "../components/IntervalTimer.jsx";
 import { trainingCoach } from "../lib/coach.js";
 import { fmtPace, fmtDuration } from "../lib/progress.js";
-import { caloriesForSession, bodyweight } from "../lib/gamify.js";
+import { caloriesForSession, bodyweight, strengthPRHit, runPRHit, streakMilestoneHit } from "../lib/gamify.js";
 import { fireConfetti, haptic } from "../lib/fx.js";
 
 const FEELS = ["😩", "😕", "🙂", "💪", "🔥"];
@@ -43,25 +43,30 @@ export default function TrainScreen() {
   const sessionSec = state.durations?.[doneKey] || 0;
   const estCals = caloriesForSession(sessionSec, day.type, bodyweight(state));
 
+  const voiceOn = state.settings?.voice !== false;
+
   const completeDay = () => {
     const turningOn = !state.done[doneKey];
-    if (day.type === "cardio" && turningOn) {
-      const speeds = (runLog.intervals || []).map((i) => parseFloat(i.mph)).filter((n) => !isNaN(n));
-      const rdur = (parseInt(runLog.durMin) || 0) * 60 + (parseInt(runLog.durSec) || 0);
-      actions.logRunSession({
-        date: todayKey(),
-        dayId,
-        week,
-        distanceMi: parseFloat(runLog.distanceMi) || null,
-        durationSec: rdur || null,
-        topMph: speeds.length ? Math.max(...speeds) : null,
-        avgMph: speeds.length ? speeds.reduce((a, b) => a + b, 0) / speeds.length : null,
-      });
-    }
     if (turningOn) {
+      let celebrate = false;
+      if (day.type === "lift" && strengthPRHit(state, week, dayId)) celebrate = true;
+      if (day.type === "cardio") {
+        const speeds = (runLog.intervals || []).map((i) => parseFloat(i.mph)).filter((n) => !isNaN(n));
+        const rdur = (parseInt(runLog.durMin) || 0) * 60 + (parseInt(runLog.durSec) || 0);
+        const dist = parseFloat(runLog.distanceMi) || null;
+        const top = speeds.length ? Math.max(...speeds) : null;
+        const pace = dist && rdur ? rdur / 60 / dist : null;
+        if (runPRHit(state, { topMph: top, pace })) celebrate = true;
+        actions.logRunSession({
+          date: todayKey(), dayId, week,
+          distanceMi: dist, durationSec: rdur || null, topMph: top,
+          avgMph: speeds.length ? speeds.reduce((a, b) => a + b, 0) / speeds.length : null,
+        });
+      }
+      if (streakMilestoneHit(state)) celebrate = true;
       actions.logActivity(todayKey(), { workouts: 1, calories: estCals });
       haptic("success");
-      fireConfetti();
+      if (celebrate) fireConfetti(); // only on a PR or streak milestone
     }
     actions.toggleDone(week, dayId);
   };
@@ -121,7 +126,7 @@ export default function TrainScreen() {
 
         {day.type !== "rest" && (
           <div className="train-toolbar">
-            <WorkoutTimer week={week} dayId={dayId} />
+            <WorkoutTimer week={week} dayId={dayId} voice={voiceOn} />
             <MusicButton compact />
           </div>
         )}
@@ -214,6 +219,7 @@ export default function TrainScreen() {
             work={proto.seconds}
             rest={proto.rest}
             workLabel={dayId === "tue" ? "Sprint" : "Run"}
+            voice={voiceOn}
             onClose={() => setTimerOpen(false)}
           />
         </div>
