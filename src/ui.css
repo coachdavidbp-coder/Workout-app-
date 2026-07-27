@@ -377,7 +377,6 @@
 }
 .oauth-btn:active { background: var(--panel-3); }
 .oauth-btn.g-btn { background: #fff; color: #1a1a1a; border-color: #fff; }
-.oauth-btn.apple-btn { background: #000; color: #fff; border-color: #333; }
 .login-divider { display: flex; align-items: center; gap: 10px; color: var(--mu); font-size: 12px; margin: 4px 0; }
 .login-divider::before, .login-divider::after { content: ""; flex: 1; height: 1px; background: var(--line); }
 .login-input { width: 100%; background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 13px 14px; color: var(--tx); font-size: 15px; }

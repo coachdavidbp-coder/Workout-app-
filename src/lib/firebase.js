@@ -6,7 +6,6 @@ import { initializeApp } from "firebase/app";
 import {
   getAuth,
   GoogleAuthProvider,
-  OAuthProvider,
   signInWithPopup,
   signInWithEmailAndPassword,
   createUserWithEmailAndPassword,
@@ -47,14 +46,6 @@ export function watchAuth(cb) {
 
 export async function loginGoogle() {
   const provider = new GoogleAuthProvider();
-  const res = await signInWithPopup(auth, provider);
-  return res.user;
-}
-
-export async function loginApple() {
-  const provider = new OAuthProvider("apple.com");
-  provider.addScope("email");
-  provider.addScope("name");
   const res = await signInWithPopup(auth, provider);
   return res.user;
 }

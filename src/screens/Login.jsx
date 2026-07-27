@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { loginGoogle, loginApple, loginEmail } from "../lib/firebase.js";
+import { loginGoogle, loginEmail } from "../lib/firebase.js";
 import BrandLogo from "../components/BrandLogo.jsx";
 
 export default function Login() {
@@ -34,9 +34,6 @@ export default function Login() {
 
       <button className="oauth-btn g-btn" onClick={wrap(loginGoogle)} disabled={busy}>
         <GoogleG /> Continue with Google
-      </button>
-      <button className="oauth-btn apple-btn" onClick={wrap(loginApple)} disabled={busy}>
-         Continue with Apple
       </button>
 
       <div className="login-divider">or use email</div>
