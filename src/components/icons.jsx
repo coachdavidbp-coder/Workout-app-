@@ -52,6 +52,12 @@ export const IconMore = (p) => (
   </svg>
 );
 
+export const IconPrep = (p) => (
+  <svg viewBox="0 0 24 24" {...base} {...p}>
+    <path d="M7 2v7M10 2v7M4 2v5a3 3 0 003 3v12M17 2c-1.5 0-3 1.8-3 5.5S15.5 13 17 13v9" />
+  </svg>
+);
+
 export const IconPlay = (p) => (
   <svg viewBox="0 0 24 24" fill="currentColor" stroke="none" {...p}>
     <path d="M7 5.5v13l11-6.5z" />

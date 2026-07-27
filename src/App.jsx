@@ -3,6 +3,7 @@ import { useStore } from "./store.jsx";
 import HomeScreen from "./screens/HomeScreen.jsx";
 import TrainScreen from "./screens/TrainScreen.jsx";
 import MealsScreen from "./screens/MealsScreen.jsx";
+import MealPrepScreen from "./screens/MealPrepScreen.jsx";
 import ProgressScreen from "./screens/ProgressScreen.jsx";
 import MoreScreen from "./screens/MoreScreen.jsx";
 import Login from "./screens/Login.jsx";
@@ -16,6 +17,7 @@ import {
   IconMeals,
   IconWeight,
   IconMore,
+  IconPrep,
 } from "./components/icons.jsx";
 import BrandLogo from "./components/BrandLogo.jsx";
 import { setVoiceName } from "./lib/voice.js";
@@ -25,6 +27,7 @@ const TABS = [
   { id: "home", label: "Home", Icon: IconHome, Screen: HomeScreen },
   { id: "train", label: "Train", Icon: IconTrain, Screen: TrainScreen },
   { id: "meals", label: "Nutrition", Icon: IconMeals, Screen: MealsScreen },
+  { id: "prep", label: "Prep", Icon: IconPrep, Screen: MealPrepScreen },
   { id: "weight", label: "Progress", Icon: IconWeight, Screen: ProgressScreen },
   { id: "more", label: "You", Icon: IconMore, Screen: MoreScreen },
 ];

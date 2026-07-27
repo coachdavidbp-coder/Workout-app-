@@ -67,6 +67,7 @@ export const DEFAULT_STATE = {
   runSessions: [], // [{ date, dayId, week, distanceMi, durationSec, topMph, avgMph }]
   activityLog: {}, // { "2026-07-26": { workouts: 1, calories: 320 } }
   game: { claimedDays: {}, profileIcon: null }, // daily rewards claimed + chosen icon
+  favRecipes: [], // saved Meal Prep recipe ids
   settings: { voice: true, theme: "system", voiceName: null }, // coach voice, light/dark, chosen TTS voice
 };
 
@@ -384,6 +385,14 @@ export function StoreProvider({ children }) {
         s.suppLog = s.suppLog || {};
         s.suppLog[dateKey] = s.suppLog[dateKey] || {};
         s.suppLog[dateKey][id] = !s.suppLog[dateKey][id];
+      }),
+
+    toggleFavRecipe: (id) =>
+      update((s) => {
+        s.favRecipes = s.favRecipes || [];
+        s.favRecipes = s.favRecipes.includes(id)
+          ? s.favRecipes.filter((x) => x !== id)
+          : [...s.favRecipes, id];
       }),
 
     replaceState: (next) => setState({ ...DEFAULT_STATE, ...next }),
