@@ -17,8 +17,9 @@ import MusicButton from "../components/MusicButton.jsx";
 import IntervalTimer from "../components/IntervalTimer.jsx";
 import { trainingCoach } from "../lib/coach.js";
 import { fmtPace, fmtDuration } from "../lib/progress.js";
-import { caloriesForSession, bodyweight, strengthPRHit, runPRHit, streakMilestoneHit } from "../lib/gamify.js";
+import { caloriesForSession, bodyweight, strengthPRHit, runPRHit, streakMilestoneHit, streak } from "../lib/gamify.js";
 import { fireConfetti, haptic } from "../lib/fx.js";
+import { toast } from "../lib/toast.js";
 
 const FEELS = ["😩", "😕", "🙂", "💪", "🔥"];
 
@@ -51,25 +52,28 @@ export default function TrainScreen() {
   const completeDay = () => {
     const turningOn = !state.done[doneKey];
     if (turningOn) {
-      let celebrate = false;
-      if (day.type === "lift" && strengthPRHit(state, week, dayId)) celebrate = true;
+      const wins = [];
+      if (day.type === "lift" && strengthPRHit(state, week, dayId)) wins.push({ emoji: "🏋️", title: "New strength PR!", sub: "You lifted heavier than before" });
       if (day.type === "cardio") {
         const speeds = (runLog.intervals || []).map((i) => parseFloat(i.mph)).filter((n) => !isNaN(n));
         const rdur = (parseInt(runLog.durMin) || 0) * 60 + (parseInt(runLog.durSec) || 0);
         const dist = parseFloat(runLog.distanceMi) || null;
         const top = speeds.length ? Math.max(...speeds) : null;
         const pace = dist && rdur ? rdur / 60 / dist : null;
-        if (runPRHit(state, { topMph: top, pace })) celebrate = true;
+        if (runPRHit(state, { topMph: top, pace })) wins.push({ emoji: "💨", title: "New running PR!", sub: "Faster than any run yet" });
         actions.logRunSession({
           date: todayKey(), dayId, week,
           distanceMi: dist, durationSec: rdur || null, topMph: top,
           avgMph: speeds.length ? speeds.reduce((a, b) => a + b, 0) / speeds.length : null,
         });
       }
-      if (streakMilestoneHit(state)) celebrate = true;
+      if (streakMilestoneHit(state)) wins.push({ emoji: "🔥", title: `${streak(state).current + 1}-day streak!`, sub: "Don't stop now" });
       actions.logActivity(todayKey(), { workouts: 1, calories: estCals });
       haptic("success");
-      if (celebrate) fireConfetti(); // only on a PR or streak milestone
+      if (wins.length) {
+        fireConfetti(); // only on a PR or streak milestone
+        wins.forEach((w) => toast({ ...w, tone: "good" }));
+      }
     }
     actions.toggleDone(week, dayId);
   };

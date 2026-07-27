@@ -7,6 +7,8 @@ import ProgressScreen from "./screens/ProgressScreen.jsx";
 import MoreScreen from "./screens/MoreScreen.jsx";
 import Login from "./screens/Login.jsx";
 import ErrorBoundary from "./components/ErrorBoundary.jsx";
+import Toaster from "./components/Toaster.jsx";
+import AchievementWatcher from "./components/AchievementWatcher.jsx";
 import {
   IconHome,
   IconTrain,
@@ -60,6 +62,8 @@ export default function App() {
 
   return (
     <div className="app-shell">
+      <AchievementWatcher />
+      <Toaster />
       <ErrorBoundary key={tab}>
         <Active go={setTab} />
       </ErrorBoundary>

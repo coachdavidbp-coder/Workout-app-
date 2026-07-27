@@ -695,3 +695,24 @@
 .pb-emoji { font-size: 20px; }
 .pb-k { font-family: var(--font-display); font-weight: 800; font-size: 22px; margin-top: 4px; }
 .pb-l { font-size: 11px; color: var(--mu); text-transform: uppercase; font-family: var(--font-display); font-weight: 700; letter-spacing: 0.03em; margin-top: 2px; }
+
+/* ---------- toasts ---------- */
+.toaster { position: fixed; top: calc(var(--safe-top) + 10px); left: 50%; transform: translateX(-50%); width: min(var(--maxw), 100%); padding: 0 14px; z-index: 9998; display: flex; flex-direction: column; gap: 8px; pointer-events: none; }
+.toast-item { display: flex; align-items: center; gap: 12px; padding: 12px 14px; border-radius: var(--r-lg); animation: toastIn 0.28s cubic-bezier(0.2,0.9,0.3,1) both; }
+.toast-item.good { border-left: 3px solid var(--good); }
+.ti-emoji { font-size: 22px; }
+.ti-title { font-family: var(--font-display); font-weight: 800; font-size: 14px; text-transform: uppercase; letter-spacing: 0.02em; }
+.ti-sub { font-size: 12px; color: var(--mu); margin-top: 1px; }
+@keyframes toastIn { from { opacity: 0; transform: translateY(-14px); } to { opacity: 1; transform: none; } }
+
+/* ---------- streak-at-risk banner ---------- */
+.streak-risk { display: flex; align-items: center; gap: 12px; padding: 14px 16px; border-radius: var(--r-xl); border: 1px solid var(--line); background: linear-gradient(120deg, rgba(255,90,95,0.16), var(--panel)); width: 100%; text-align: left; }
+.streak-risk .sr-flame { font-size: 26px; }
+.streak-risk > span:nth-child(2) { min-width: 0; }
+.streak-risk .sr-k { display: block; font-family: var(--font-display); font-weight: 800; font-size: 15px; text-transform: uppercase; line-height: 1.1; }
+.streak-risk .sr-s { display: block; font-size: 12.5px; color: var(--tx-2); margin-top: 3px; }
+.streak-risk .sr-arrow { margin-left: auto; color: var(--live); font-size: 22px; }
+
+/* ---------- backup buttons ---------- */
+.backup-row { display: flex; gap: 10px; }
+.backup-row .btn { flex: 1; }

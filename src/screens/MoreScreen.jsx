@@ -1,8 +1,10 @@
+import { useRef } from "react";
 import { useStore, todayKey } from "../store.jsx";
 import { signOut } from "../lib/firebase.js";
 import BrandLogo from "../components/BrandLogo.jsx";
 import { haptic } from "../lib/fx.js";
 import { speak } from "../lib/voice.js";
+import { toast } from "../lib/toast.js";
 
 function speakTest() {
   speak("Coach voice on. Let's get to work.");
@@ -14,6 +16,42 @@ import {
 
 export default function MoreScreen() {
   const { state, mode, user, actions } = useStore();
+  const fileRef = useRef(null);
+
+  const exportData = () => {
+    try {
+      const blob = new Blob([JSON.stringify(state, null, 2)], { type: "application/json" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `us-vs-them-backup-${todayKey()}.json`;
+      a.click();
+      URL.revokeObjectURL(url);
+      haptic();
+      toast({ emoji: "💾", title: "Backup saved", sub: "Keep it somewhere safe" });
+    } catch (e) {
+      toast({ emoji: "⚠️", title: "Backup failed", sub: "Try again" });
+    }
+  };
+
+  const importData = (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = () => {
+      try {
+        const data = JSON.parse(reader.result);
+        if (!data || typeof data !== "object") throw new Error("bad file");
+        actions.replaceState(data);
+        haptic("success");
+        toast({ emoji: "✅", title: "Backup restored", sub: "Your data is back", tone: "good" });
+      } catch (err) {
+        toast({ emoji: "⚠️", title: "Couldn't read that file", sub: "Use a US vs Them backup" });
+      }
+    };
+    reader.readAsText(file);
+    e.target.value = "";
+  };
   const xp = totalXP(state);
   const lvl = levelInfo(xp);
   const s = streak(state);
@@ -159,6 +197,19 @@ export default function MoreScreen() {
             <div className="lab">Goal weight<small>Where you're headed</small></div>
             <input type="number" value={state.profile.goalWeight} onChange={(e) => actions.setProfile({ goalWeight: parseFloat(e.target.value) || 0 })} />
           </div>
+        </div>
+
+        {/* backup */}
+        <div className="section-title">Your data</div>
+        <div className="card" style={{ padding: 14 }}>
+          <div className="backup-row">
+            <button className="btn" onClick={exportData}>⬇ Export backup</button>
+            <button className="btn" onClick={() => fileRef.current?.click()}>⬆ Restore</button>
+          </div>
+          <input ref={fileRef} type="file" accept="application/json" onChange={importData} style={{ display: "none" }} />
+          <p className="summary-note" style={{ marginTop: 10 }}>
+            Your data lives on this device. Export a backup file to keep it safe or move to another device.
+          </p>
         </div>
 
         {mode !== "cloud" && (

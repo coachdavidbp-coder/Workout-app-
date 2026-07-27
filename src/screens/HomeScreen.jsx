@@ -70,6 +70,18 @@ export default function HomeScreen({ go }) {
           <div className="xp-cap"><span>{lvl.into} / {lvl.span} XP</span><span>{lvl.toNext} to Level {lvl.level + 1}</span></div>
         </div>
 
+        {/* streak at risk */}
+        {s.current >= 2 && !active.has(todayKey()) && (
+          <button className="streak-risk" onClick={() => { haptic("warning"); go?.("train"); }}>
+            <span className="sr-flame">🔥</span>
+            <span>
+              <span className="sr-k">Don't break your {s.current}-day streak</span>
+              <span className="sr-s">You haven't logged anything today. Get a workout in.</span>
+            </span>
+            <span className="sr-arrow">›</span>
+          </button>
+        )}
+
         {/* continue */}
         {cont && (
           <button className="continue-card" onClick={() => { haptic(); go?.("train"); }}>

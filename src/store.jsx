@@ -325,6 +325,14 @@ export function StoreProvider({ children }) {
         s.settings[key] = val;
       }),
 
+    syncSeen: (level, badgeIds) =>
+      update((s) => {
+        s.game = s.game || {};
+        s.game.seenLevel = level;
+        s.game.seenBadges = badgeIds;
+        s.game.seenInit = true;
+      }),
+
     // ---- supplements ----
     addSupplement: ({ name, dose, freq }) =>
       update((s) => {
