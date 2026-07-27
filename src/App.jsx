@@ -1,11 +1,14 @@
 import { useState } from "react";
 import { useStore } from "./store.jsx";
+import HomeScreen from "./screens/HomeScreen.jsx";
 import TrainScreen from "./screens/TrainScreen.jsx";
 import MealsScreen from "./screens/MealsScreen.jsx";
 import ProgressScreen from "./screens/ProgressScreen.jsx";
 import MoreScreen from "./screens/MoreScreen.jsx";
 import Login from "./screens/Login.jsx";
+import ErrorBoundary from "./components/ErrorBoundary.jsx";
 import {
+  IconHome,
   IconTrain,
   IconMeals,
   IconWeight,
@@ -14,6 +17,7 @@ import {
 import BrandLogo from "./components/BrandLogo.jsx";
 
 const TABS = [
+  { id: "home", label: "Home", Icon: IconHome, Screen: HomeScreen },
   { id: "train", label: "Train", Icon: IconTrain, Screen: TrainScreen },
   { id: "meals", label: "Nutrition", Icon: IconMeals, Screen: MealsScreen },
   { id: "weight", label: "Progress", Icon: IconWeight, Screen: ProgressScreen },
@@ -22,7 +26,7 @@ const TABS = [
 
 export default function App() {
   const { mode } = useStore();
-  const [tab, setTab] = useState("train");
+  const [tab, setTab] = useState("home");
 
   if (mode === "loading") {
     return (
@@ -46,7 +50,9 @@ export default function App() {
 
   return (
     <div className="app-shell">
-      <Active />
+      <ErrorBoundary key={tab}>
+        <Active go={setTab} />
+      </ErrorBoundary>
       <nav className="bottom-nav">
         {TABS.map(({ id, label, Icon }) => (
           <button

@@ -16,7 +16,9 @@ import WorkoutTimer from "../components/WorkoutTimer.jsx";
 import MusicButton from "../components/MusicButton.jsx";
 import IntervalTimer from "../components/IntervalTimer.jsx";
 import { trainingCoach } from "../lib/coach.js";
-import { fmtPace } from "../lib/progress.js";
+import { fmtPace, fmtDuration } from "../lib/progress.js";
+import { caloriesForSession, bodyweight } from "../lib/gamify.js";
+import { fireConfetti, haptic } from "../lib/fx.js";
 
 const FEELS = ["😩", "😕", "🙂", "💪", "🔥"];
 
@@ -38,19 +40,28 @@ export default function TrainScreen() {
   const coachMsg = trainingCoach(state, { week, dayId, day, todayId: today });
   const proto = day.protocol?.find((p) => p.week === week);
 
+  const sessionSec = state.durations?.[doneKey] || 0;
+  const estCals = caloriesForSession(sessionSec, day.type, bodyweight(state));
+
   const completeDay = () => {
-    if (day.type === "cardio" && !state.done[doneKey]) {
+    const turningOn = !state.done[doneKey];
+    if (day.type === "cardio" && turningOn) {
       const speeds = (runLog.intervals || []).map((i) => parseFloat(i.mph)).filter((n) => !isNaN(n));
-      const durSec = (parseInt(runLog.durMin) || 0) * 60 + (parseInt(runLog.durSec) || 0);
+      const rdur = (parseInt(runLog.durMin) || 0) * 60 + (parseInt(runLog.durSec) || 0);
       actions.logRunSession({
         date: todayKey(),
         dayId,
         week,
         distanceMi: parseFloat(runLog.distanceMi) || null,
-        durationSec: durSec || null,
+        durationSec: rdur || null,
         topMph: speeds.length ? Math.max(...speeds) : null,
         avgMph: speeds.length ? speeds.reduce((a, b) => a + b, 0) / speeds.length : null,
       });
+    }
+    if (turningOn) {
+      actions.logActivity(todayKey(), { workouts: 1, calories: estCals });
+      haptic("success");
+      fireConfetti();
     }
     actions.toggleDone(week, dayId);
   };
@@ -164,6 +175,19 @@ export default function TrainScreen() {
                 ))}
               </div>
             </div>
+
+            {(sessionSec > 0 || state.done[doneKey]) && (
+              <div className="session-summary">
+                <div className="summary-stat">
+                  <div className="k tnum">{fmtDuration(sessionSec)}</div>
+                  <div className="l">Total time</div>
+                </div>
+                <div className="summary-stat">
+                  <div className="k tnum" style={{ color: "var(--amber)" }}>{estCals}</div>
+                  <div className="l">Est. calories</div>
+                </div>
+              </div>
+            )}
 
             <button
               className={`btn ${state.done[doneKey] ? "btn-good" : "btn-primary"} btn-block complete-btn`}

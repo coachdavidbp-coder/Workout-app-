@@ -55,6 +55,8 @@ export const DEFAULT_STATE = {
   suppLog: {}, // { "2026-07-26": { whey: true, ... } }
   durations: {}, // { "w1-sun": seconds } — how long the workout took
   runSessions: [], // [{ date, dayId, week, distanceMi, durationSec, topMph, avgMph }]
+  activityLog: {}, // { "2026-07-26": { workouts: 1, calories: 320 } }
+  game: { claimedDays: {}, profileIcon: null }, // daily rewards claimed + chosen icon
 };
 
 function uid() {
@@ -292,6 +294,29 @@ export function StoreProvider({ children }) {
       }),
 
     setProfile: (patch) => update((s) => Object.assign(s.profile, patch)),
+
+    // ---- gamification / activity ----
+    logActivity: (dateKey, { workouts = 0, calories = 0 } = {}) =>
+      update((s) => {
+        s.activityLog = s.activityLog || {};
+        const cur = s.activityLog[dateKey] || { workouts: 0, calories: 0 };
+        cur.workouts += workouts;
+        cur.calories += calories;
+        s.activityLog[dateKey] = cur;
+      }),
+
+    claimReward: (dateKey) =>
+      update((s) => {
+        s.game = s.game || { claimedDays: {}, profileIcon: null };
+        s.game.claimedDays = s.game.claimedDays || {};
+        s.game.claimedDays[dateKey] = true;
+      }),
+
+    setProfileIcon: (id) =>
+      update((s) => {
+        s.game = s.game || { claimedDays: {}, profileIcon: null };
+        s.game.profileIcon = id;
+      }),
 
     // ---- supplements ----
     addSupplement: ({ name, dose, freq }) =>
