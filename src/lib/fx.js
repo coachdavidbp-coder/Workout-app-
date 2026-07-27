@@ -1,4 +1,26 @@
-// Lightweight FX: confetti burst + haptics. No dependencies.
+// Lightweight FX: confetti burst + haptics + beeps. No dependencies.
+
+// Short Web-Audio beep (ducks background music instead of stopping it).
+// The AudioContext is created lazily on the first call, which happens from
+// a user gesture (button tap), satisfying autoplay rules.
+let _actx = null;
+export function beep(freq = 880, dur = 0.14, vol = 0.28) {
+  try {
+    _actx = _actx || new (window.AudioContext || window.webkitAudioContext)();
+    if (_actx.state === "suspended") _actx.resume();
+    const ctx = _actx;
+    const o = ctx.createOscillator();
+    const g = ctx.createGain();
+    o.frequency.value = freq;
+    o.type = "sine";
+    g.gain.setValueAtTime(0.0001, ctx.currentTime);
+    g.gain.exponentialRampToValueAtTime(vol, ctx.currentTime + 0.01);
+    g.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + dur);
+    o.connect(g).connect(ctx.destination);
+    o.start();
+    o.stop(ctx.currentTime + dur);
+  } catch (e) { /* ignore */ }
+}
 
 export function haptic(kind = "light") {
   try {

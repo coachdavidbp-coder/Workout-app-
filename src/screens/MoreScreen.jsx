@@ -54,6 +54,21 @@ export default function MoreScreen() {
     }
   };
 
+  const importDeviceData = () => {
+    const c = actions.mergeLocalData();
+    haptic("success");
+    const total = c.weighIns + c.workouts + c.meals;
+    if (total === 0) {
+      toast({ emoji: "🔍", title: "Nothing new to import", sub: "No un-synced data found on this device" });
+    } else {
+      const parts = [];
+      if (c.weighIns) parts.push(`${c.weighIns} weigh-in${c.weighIns > 1 ? "s" : ""}`);
+      if (c.workouts) parts.push(`${c.workouts} workout${c.workouts > 1 ? "s" : ""}`);
+      if (c.meals) parts.push(`${c.meals} day${c.meals > 1 ? "s" : ""} of meals`);
+      toast({ emoji: "✅", title: "Imported to your account", sub: parts.join(" · "), tone: "good" });
+    }
+  };
+
   const importData = (e) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -322,8 +337,19 @@ export default function MoreScreen() {
             <button className="btn" onClick={() => fileRef.current?.click()}>⬆ Restore</button>
           </div>
           <input ref={fileRef} type="file" accept="application/json" onChange={importData} style={{ display: "none" }} />
+          {mode === "cloud" && (
+            <>
+              <button className="btn btn-block" style={{ marginTop: 10 }} onClick={importDeviceData}>
+                ↺ Import this device’s saved data
+              </button>
+              <p className="summary-note" style={{ marginTop: 8 }}>
+                Recovers weigh-ins &amp; workouts you logged on <b>this device</b> before signing in.
+                (It can’t reach data saved on a different phone or computer.)
+              </p>
+            </>
+          )}
           <p className="summary-note" style={{ marginTop: 10 }}>
-            Your data lives on this device. Export a backup file to keep it safe or move to another device.
+            Export a backup file to keep it safe or move it to another device.
           </p>
         </div>
 

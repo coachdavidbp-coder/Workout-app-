@@ -214,6 +214,30 @@ export function StoreProvider({ children }) {
         s.liftLogs[key].bodyweight = bw;
       }),
 
+    // Weigh in before / after the workout. The "before" weight is logged to
+    // the weight trend (progress), and the after is kept to show the delta.
+    setDayWeighIn: (week, dayId, phase, value) =>
+      update((s) => {
+        const key = `w${week}-${dayId}`;
+        s.liftLogs[key] = s.liftLogs[key] || { exercises: {} };
+        if (phase === "before") s.liftLogs[key].bwBefore = value;
+        else s.liftLogs[key].bwAfter = value;
+        // representative bodyweight = the before weight (fasted-ish, pre-work)
+        const beforeVal = phase === "before" ? value : s.liftLogs[key].bwBefore;
+        if (beforeVal) s.liftLogs[key].bodyweight = beforeVal;
+        // log the before weight into the weight trend
+        const wt = parseFloat(beforeVal);
+        if (!isNaN(wt) && wt > 0) {
+          const date = todayKey();
+          const idx = s.weights.findIndex((w) => w.date === date);
+          const bodyFat = idx >= 0 ? s.weights[idx].bodyFat ?? null : null;
+          const entry = { date, weight: wt, bodyFat };
+          if (idx >= 0) s.weights[idx] = entry;
+          else s.weights.push(entry);
+          s.weights.sort((a, b) => a.date.localeCompare(b.date));
+        }
+      }),
+
     setExerciseLog: (week, dayId, exName, patch) =>
       update((s) => {
         const key = `w${week}-${dayId}`;
@@ -363,6 +387,46 @@ export function StoreProvider({ children }) {
       }),
 
     replaceState: (next) => setState({ ...DEFAULT_STATE, ...next }),
+
+    // Pull data saved on THIS device (localStorage) into the current account
+    // and merge it in — recovers weigh-ins / workouts logged before signing in
+    // or in local mode. Only sees data stored on the device you're using.
+    // Returns counts of what was newly added.
+    mergeLocalData: () => {
+      const counts = { weighIns: 0, workouts: 0, meals: 0 };
+      let local;
+      try {
+        const raw = localStorage.getItem(LOCAL_KEY);
+        if (!raw) return counts;
+        local = JSON.parse(raw);
+      } catch (e) {
+        return counts;
+      }
+      // count against current state (for the confirmation message)
+      const haveW = new Set((state.weights || []).map((w) => w.date));
+      (local.weights || []).forEach((w) => { if (w && w.date && !haveW.has(w.date)) counts.weighIns++; });
+      Object.keys(local.done || {}).forEach((k) => { if (local.done[k] && !state.done[k]) counts.workouts++; });
+      Object.keys(local.meals || {}).forEach((k) => { if (!state.meals[k]) counts.meals++; });
+      // merge
+      setState((prev) => {
+        const s = structuredClone(prev);
+        const have = new Set(s.weights.map((w) => w.date));
+        (local.weights || []).forEach((w) => {
+          if (w && w.date && !have.has(w.date)) { s.weights.push(w); have.add(w.date); }
+        });
+        s.weights.sort((a, b) => a.date.localeCompare(b.date));
+        Object.keys(local.done || {}).forEach((k) => { if (local.done[k]) s.done[k] = true; });
+        Object.entries(local.durations || {}).forEach(([k, v]) => { s.durations[k] = Math.max(s.durations[k] || 0, v || 0); });
+        Object.entries(local.liftLogs || {}).forEach(([k, v]) => { if (!s.liftLogs[k]) s.liftLogs[k] = v; });
+        Object.entries(local.runLogs || {}).forEach(([k, v]) => { if (!s.runLogs[k]) s.runLogs[k] = v; });
+        Object.entries(local.meals || {}).forEach(([k, v]) => { if (!s.meals[k]) s.meals[k] = v; });
+        Object.entries(local.activityLog || {}).forEach(([k, v]) => { if (!s.activityLog[k]) s.activityLog[k] = v; });
+        const rk = new Set(s.runSessions.map((r) => `${r.date}|${r.dayId}`));
+        (local.runSessions || []).forEach((r) => { if (r && !rk.has(`${r.date}|${r.dayId}`)) { s.runSessions.push(r); rk.add(`${r.date}|${r.dayId}`); } });
+        return s;
+      });
+      return counts;
+    },
   };
 
   return (

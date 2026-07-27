@@ -240,16 +240,30 @@ function LiftDay({ day, week, log, onOpen, actions, dayId }) {
     <>
       <div className="bw-log">
         <div className="lab">
-          Bodyweight today
-          <small>Optional — logs to your weight trend too</small>
+          Weigh-in
+          <small>Optional — “before” logs to your weight trend; we track the change</small>
         </div>
-        <NumField
-          label=""
-          value={log.bodyweight}
-          placeholder="290"
-          accent
-          onCommit={(v) => actions.setDayBodyweight(week, dayId, v)}
-        />
+        <div className="weighin-row">
+          <NumField
+            label="Before"
+            value={log.bwBefore}
+            placeholder="290"
+            accent
+            onCommit={(v) => actions.setDayWeighIn(week, dayId, "before", v)}
+          />
+          <NumField
+            label="After"
+            value={log.bwAfter}
+            placeholder="289"
+            onCommit={(v) => actions.setDayWeighIn(week, dayId, "after", v)}
+          />
+          {log.bwBefore && log.bwAfter && !isNaN(parseFloat(log.bwBefore)) && !isNaN(parseFloat(log.bwAfter)) && (
+            <div className="weighin-delta">
+              <div className="k">{(parseFloat(log.bwAfter) - parseFloat(log.bwBefore) >= 0 ? "+" : "") + (parseFloat(log.bwAfter) - parseFloat(log.bwBefore)).toFixed(1)}</div>
+              <div className="l">lb</div>
+            </div>
+          )}
+        </div>
       </div>
 
       <div className="ex-card">

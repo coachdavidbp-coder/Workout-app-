@@ -105,8 +105,13 @@
 .warmup b { color: var(--tx-2); font-weight: 600; }
 
 /* body-weight quick log */
+.weighin-row { display: flex; align-items: flex-end; gap: 10px; margin-top: 10px; }
+.weighin-row .numfield { flex: 1; }
+.weighin-delta { display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 0 4px 6px; flex: none; }
+.weighin-delta .k { font-family: var(--font-display); font-weight: 800; font-size: 18px; color: var(--ac-hi); line-height: 1; }
+.weighin-delta .l { font-size: 10px; color: var(--mu); text-transform: uppercase; letter-spacing: 0.05em; }
 .bw-log {
-  display: flex; align-items: center; gap: 12px;
+  display: flex; flex-direction: column; align-items: stretch; gap: 4px;
   background: var(--panel); border: 1px solid var(--line);
   border-radius: var(--r-lg); padding: 12px 14px;
 }
@@ -421,6 +426,12 @@
 .wt-go { border: none; border-radius: 10px; padding: 9px 16px; font-family: var(--font-display); font-weight: 700; text-transform: uppercase; font-size: 12px; letter-spacing: 0.04em; background: var(--ac); color: var(--on-ac); }
 .wt-go.pause { background: var(--panel-3); color: var(--tx); box-shadow: inset 0 0 0 1px var(--line); }
 .wt-reset { width: 36px; height: 36px; border-radius: 10px; border: 1px solid var(--line); background: var(--panel-2); color: var(--mu); font-size: 16px; }
+.wt-mini { border: 1px solid var(--line); border-radius: 10px; padding: 9px 12px; background: var(--panel-2); color: var(--tx-2); font-family: var(--font-display); font-weight: 700; text-transform: uppercase; font-size: 11px; letter-spacing: 0.04em; }
+.wt-mini:active { transform: scale(0.95); }
+.wt-mini.end { color: #ff6b6b; border-color: rgba(255,107,107,0.4); }
+.wtimer.counting { border-color: rgba(76,141,255,0.6); box-shadow: inset 0 0 0 1px rgba(76,141,255,.3); }
+.wtimer.counting .wt-clock { font-size: 40px; color: var(--ac-hi); animation: cdpulse 1s ease-in-out infinite; }
+@keyframes cdpulse { 0%, 100% { transform: scale(1); opacity: 0.85; } 50% { transform: scale(1.12); opacity: 1; } }
 
 .music-btn {
   display: inline-flex; align-items: center; gap: 8px; text-decoration: none;
