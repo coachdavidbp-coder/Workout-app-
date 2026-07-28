@@ -342,10 +342,23 @@ export function StoreProvider({ children }) {
       }),
 
     // ---- mark the current program / phase complete ----
+    // Logs the finished program, then resets the cycle to a fresh Week 1
+    // (clears completion checkmarks + session timers). Logs, PRs, weight,
+    // runs, XP, streak and history are date/keyed elsewhere and kept.
     completeProgram: (record) =>
       update((s) => {
         s.completedPrograms = s.completedPrograms || [];
         s.completedPrograms.push({ ...record, date: todayKey() });
+        s.done = {};
+        s.durations = {};
+        s.week = 1;
+      }),
+
+    // ---- end-of-day recap seen (so it auto-pops at most once/day) ----
+    markRecapSeen: (dateKey) =>
+      update((s) => {
+        s.game = s.game || {};
+        s.game.lastRecap = dateKey;
       }),
 
     // ---- gamification / activity ----

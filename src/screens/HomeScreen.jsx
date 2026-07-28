@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useStore, todayKey, weekDates, currentDayId } from "../store.jsx";
 import { DAY_NAMES, daysOf, trainingCount } from "../data/plans.js";
 import { targetsFor } from "../data/plan.js";
@@ -16,6 +16,17 @@ import { haptic } from "../lib/fx.js";
 export default function HomeScreen({ go }) {
   const { state, actions } = useStore();
   const [recapOpen, setRecapOpen] = useState(false);
+
+  // Auto-pop the recap once per day, the first time you open the app after 8pm.
+  useEffect(() => {
+    if (new Date().getHours() >= 20 && state.game?.lastRecap !== todayKey()) {
+      setRecapOpen(true);
+      actions.markRecapSeen(todayKey());
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  const openRecap = () => { actions.markRecapSeen(todayKey()); setRecapOpen(true); };
   const xp = totalXP(state);
   const lvl = levelInfo(xp);
   const s = streak(state);
@@ -84,7 +95,7 @@ export default function HomeScreen({ go }) {
         </div>
 
         {/* end-of-day recap */}
-        <button className={`recap-launch ${hour >= 18 ? "evening" : ""}`} onClick={() => { haptic(); setRecapOpen(true); }}>
+        <button className={`recap-launch ${hour >= 18 ? "evening" : ""}`} onClick={() => { haptic(); openRecap(); }}>
           <span className="rl-ico">🌙</span>
           <span className="rl-txt">
             <span className="rl-k">{hour >= 18 ? "How did today go?" : "End-of-day recap"}</span>

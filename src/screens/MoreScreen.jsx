@@ -382,14 +382,16 @@ export default function MoreScreen() {
                 className="btn btn-good btn-block"
                 style={{ marginTop: 10 }}
                 onClick={() => {
+                  if (!window.confirm(`Complete ${plan.name}? This logs the phase and starts you fresh at Week 1 (your logs, PRs, weight and history are kept).`)) return;
                   actions.completeProgram({ planId: plan.id, name: plan.name, accent: plan.accent || "🏆", trainingDays: done });
                   fireConfetti();
                   haptic("success");
-                  toast({ emoji: plan.accent || "🏆", title: `${plan.name} complete!`, sub: "Phase logged. Pick your next program above.", tone: "good" });
+                  toast({ emoji: plan.accent || "🏆", title: `${plan.name} complete!`, sub: "Reset to a fresh Week 1 — pick your next program above.", tone: "good" });
                 }}
               >
                 ✓ Complete this program / phase
               </button>
+              <div className="pc-note">Completing logs the phase and resets checkmarks to a clean Week 1. Your strength, running, weight and XP history stay.</div>
               {(state.completedPrograms || []).length > 0 && (
                 <div className="pc-history">
                   {[...state.completedPrograms].reverse().slice(0, 6).map((c, i) => (

@@ -573,6 +573,7 @@
 .pc-history { margin-top: 12px; border-top: 1px solid var(--line-soft); padding-top: 8px; }
 .pc-hist-row { display: flex; justify-content: space-between; font-size: 12.5px; padding: 5px 0; }
 .pc-date { color: var(--mu); font-family: var(--font-display); font-weight: 700; }
+.pc-note { font-size: 11px; color: var(--mu); line-height: 1.45; margin-top: 8px; }
 
 /* end-of-day recap launcher */
 .recap-launch { width: 100%; display: flex; align-items: center; gap: 12px; text-align: left; background: var(--panel); border: 1px solid var(--line); border-radius: var(--r); padding: 13px 14px; margin-bottom: 14px; }
