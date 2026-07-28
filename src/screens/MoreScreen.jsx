@@ -5,7 +5,7 @@ import GuidedBuilder from "./GuidedBuilder.jsx";
 import { signOut } from "../lib/firebase.js";
 import BrandLogo from "../components/BrandLogo.jsx";
 import { haptic } from "../lib/fx.js";
-import { speak, listVoices, setVoiceName, randomEncouragement } from "../lib/voice.js";
+import { speak, listVoices, setVoiceName, setCoachStyle, COACH_STYLES, randomEncouragement } from "../lib/voice.js";
 import { toast } from "../lib/toast.js";
 import { PLAN_LIST, getPlan } from "../data/plans.js";
 import { DIETS, defaultTargets } from "../data/plan.js";
@@ -205,28 +205,74 @@ export default function MoreScreen() {
               <span className="knob" />
             </button>
           </div>
-          {state.settings?.voice !== false && (
-            <div className="setting-row" style={{ flexWrap: "wrap", gap: 10 }}>
-              <div className="lab" style={{ flexBasis: "100%" }}>Coach's voice<small>Pick a voice, then preview it</small></div>
-              <select
-                className="login-input"
-                style={{ flex: 1, minWidth: 0 }}
-                value={state.settings?.voiceName || ""}
-                onChange={(e) => { const n = e.target.value || null; actions.setSetting("voiceName", n); setVoiceName(n); }}
-              >
-                <option value="">Auto (device default)</option>
-                {listVoices().map((v) => (
-                  <option key={v.name} value={v.name}>{v.name} ({v.lang})</option>
-                ))}
-              </select>
-              <button
-                className="btn"
-                onClick={() => { setVoiceName(state.settings?.voiceName || null); speak(VOICE_SAMPLES[Math.floor(Math.random() * VOICE_SAMPLES.length)]); }}
-              >
-                ▶ Preview
-              </button>
-            </div>
-          )}
+          {state.settings?.voice !== false && (() => {
+            const voices = listVoices();
+            const recommended = voices.filter((v) => v.recommended);
+            const others = voices.filter((v) => !v.recommended);
+            const style = state.settings?.coachStyle || "balanced";
+            return (
+              <>
+                <div className="setting-row" style={{ flexWrap: "wrap", gap: 10 }}>
+                  <div className="lab" style={{ flexBasis: "100%" }}>Coach's voice<small>Best-sounding voices first, then preview it</small></div>
+                  <select
+                    className="login-input"
+                    style={{ flex: 1, minWidth: 0 }}
+                    value={state.settings?.voiceName || ""}
+                    onChange={(e) => { const n = e.target.value || null; actions.setSetting("voiceName", n); setVoiceName(n); }}
+                  >
+                    <option value="">Auto (best available)</option>
+                    {recommended.length > 0 && (
+                      <optgroup label="★ Recommended">
+                        {recommended.map((v) => (
+                          <option key={v.name} value={v.name}>
+                            {v.name}{v.tier >= 3 ? " — Enhanced" : ""} ({v.lang})
+                          </option>
+                        ))}
+                      </optgroup>
+                    )}
+                    {others.length > 0 && (
+                      <optgroup label="Other voices">
+                        {others.map((v) => (
+                          <option key={v.name} value={v.name}>{v.name} ({v.lang})</option>
+                        ))}
+                      </optgroup>
+                    )}
+                  </select>
+                  <button
+                    className="btn"
+                    onClick={() => { setVoiceName(state.settings?.voiceName || null); setCoachStyle(style); speak(VOICE_SAMPLES[Math.floor(Math.random() * VOICE_SAMPLES.length)]); }}
+                  >
+                    ▶ Preview
+                  </button>
+                </div>
+
+                <div className="setting-row" style={{ flexWrap: "wrap", gap: 10 }}>
+                  <div className="lab" style={{ flexBasis: "100%" }}>Coach style<small>How the coach delivers it</small></div>
+                  <div className="row gap-2" style={{ flexWrap: "wrap" }}>
+                    {Object.entries(COACH_STYLES).map(([key, s]) => (
+                      <button
+                        key={key}
+                        className={`week-pill ${style === key ? "on" : ""}`}
+                        onClick={() => {
+                          actions.setSetting("coachStyle", key);
+                          setCoachStyle(key);
+                          setVoiceName(state.settings?.voiceName || null);
+                          speak(VOICE_SAMPLES[Math.floor(Math.random() * VOICE_SAMPLES.length)]);
+                          haptic();
+                        }}
+                      >
+                        {s.label}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="setting-hint">
+                  🎧 iPhone: for studio-quality voices, open <b>Settings › Accessibility › Spoken Content › Voices › English</b>, download an <b>Enhanced</b> or <b>Premium</b> voice (e.g. Aaron, Nathan, Ava), then reopen this app and pick it above.
+                </div>
+              </>
+            );
+          })()}
           <div className="setting-row" style={{ flexWrap: "wrap", gap: 10 }}>
             <div className="lab">Appearance<small>Light, dark, or follow your device</small></div>
             <div className="row gap-2">

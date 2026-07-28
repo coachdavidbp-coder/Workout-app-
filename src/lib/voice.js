@@ -9,15 +9,41 @@ function allVoices() {
   return window.speechSynthesis.getVoices() || [];
 }
 
+// Novelty / robotic system voices (mostly macOS/iOS) — never worth coaching with.
+const NOVELTY = /Albert|Bad News|Bahh|Bells|Boing|Bubbles|Cellos|Wobble|Good News|Jester|Organ|Superstar|Trinoids|Whisper|Zarvox|Fred|Ralph|Kathy|Junior|Deranged|Hysterical|Bruce|Agnes|Grandma|Grandpa|Reed|Rocko|Sandy|Shelley|Flo|Eddy|Rishi\b|Sandy|novelty/i;
+// Named voices that sound clearly better than the compact defaults.
+const GOOD = /Siri|Samantha|Alex|Aaron|Nicky|Ava|Allison|Susan|Tom|Zoe|Nathan|Evan|Karen|Daniel|Serena|Moira|Google/i;
+
+// Quality tier for a voice: 3 = enhanced/premium, 2 = known-good, 1 = ok, 0 = skip.
+function tierOf(v) {
+  if (NOVELTY.test(v.name)) return 0;
+  if (/enhanced|premium|neural|siri/i.test(v.name)) return 3;
+  if (GOOD.test(v.name) || !v.localService) return 2; // network (Google) voices sound better
+  return 1;
+}
+
+// English voices, best-first, novelty voices dropped. Each: {name, lang, tier, recommended}.
+export function listVoices() {
+  const seen = new Set();
+  return allVoices()
+    .filter((v) => /^en/i.test(v.lang))
+    .map((v) => ({ name: v.name, lang: v.lang, tier: tierOf(v) }))
+    .filter((v) => v.tier > 0 && !seen.has(v.name) && seen.add(v.name))
+    .map((v) => ({ ...v, recommended: v.tier >= 2 }))
+    .sort((a, b) => {
+      const us = (x) => (/en[-_]US/i.test(x.lang) ? 1 : 0);
+      return b.tier - a.tier || us(b) - us(a) || a.name.localeCompare(b.name);
+    });
+}
+
 function autoPick() {
+  const ranked = listVoices();
+  if (ranked.length) {
+    const best = ranked[0];
+    return allVoices().find((v) => v.name === best.name) || null;
+  }
   const voices = allVoices();
-  if (!voices.length) return null;
-  return (
-    voices.find((v) => /en-US/i.test(v.lang) && /Samantha|Google US|Aaron|Nathan|Zoe/i.test(v.name)) ||
-    voices.find((v) => /en-US/i.test(v.lang)) ||
-    voices.find((v) => /^en/i.test(v.lang)) ||
-    voices[0]
-  );
+  return voices.find((v) => /^en/i.test(v.lang)) || voices[0] || null;
 }
 
 function resolve() {
@@ -35,20 +61,29 @@ if ("speechSynthesis" in window) {
   preferred = autoPick();
 }
 
-// English voices the device offers (for the picker).
-export function listVoices() {
-  return allVoices()
-    .filter((v) => /^en/i.test(v.lang))
-    .map((v) => ({ name: v.name, lang: v.lang }));
-}
-
 export function setVoiceName(name) {
   preferredName = name || null;
+  preferred = autoPick();
 }
 
-export function speak(text, { rate = 1.03, pitch = 1, volume = 1 } = {}) {
+// ---------------- coach delivery styles ----------------
+// Same voice, different energy — tune rate/pitch to give the coach character.
+export const COACH_STYLES = {
+  hype:     { rate: 1.14, pitch: 1.06, label: "Hype",     blurb: "Fast, fired-up" },
+  balanced: { rate: 1.03, pitch: 1.0,  label: "Balanced", blurb: "Natural pace" },
+  calm:     { rate: 0.94, pitch: 0.96, label: "Calm",     blurb: "Steady, composed" },
+  drill:    { rate: 1.08, pitch: 0.9,  label: "Drill Sgt", blurb: "Deep, commanding" },
+};
+let styleKey = "balanced";
+export function setCoachStyle(key) {
+  if (COACH_STYLES[key]) styleKey = key;
+}
+
+export function speak(text, opts = {}) {
   try {
     if (!("speechSynthesis" in window)) return;
+    const s = COACH_STYLES[styleKey] || COACH_STYLES.balanced;
+    const { rate = s.rate, pitch = s.pitch, volume = 1 } = opts;
     const u = new SpeechSynthesisUtterance(text);
     const v = resolve();
     if (v) u.voice = v;

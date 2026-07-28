@@ -20,7 +20,7 @@ import {
   IconPrep,
 } from "./components/icons.jsx";
 import BrandLogo from "./components/BrandLogo.jsx";
-import { setVoiceName } from "./lib/voice.js";
+import { setVoiceName, setCoachStyle } from "./lib/voice.js";
 import { handleSpotifyRedirect } from "./lib/spotify.js";
 
 const TABS = [
@@ -37,8 +37,10 @@ export default function App() {
   const [tab, setTab] = useState("home");
   const theme = state?.settings?.theme || "system";
   const voiceName = state?.settings?.voiceName || null;
+  const coachStyle = state?.settings?.coachStyle || "balanced";
 
   useEffect(() => { setVoiceName(voiceName); }, [voiceName]);
+  useEffect(() => { setCoachStyle(coachStyle); }, [coachStyle]);
 
   // If we returned from a Spotify auth redirect, finish the handshake once.
   useEffect(() => { handleSpotifyRedirect(); }, []);
