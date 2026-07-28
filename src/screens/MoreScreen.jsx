@@ -218,6 +218,7 @@ export default function MoreScreen() {
                   <div className="voice-guide ok">
                     ✅ <b>Human voice ready.</b> Pick a <b>Premium</b> or <b>Enhanced</b> voice below (they're real human recordings), then preview.
                     {cur.name && !cur.human && <div className="vg-note">You're currently on “{cur.name}” — switch to a Premium/Enhanced one below for the human sound.</div>}
+                    <div className="vg-note">Love Siri's voice? Apps can't use Siri directly (Apple keeps it private) — but <b>Aaron</b> and <b>Nathan (Premium)</b> are the same voice family and sound nearly identical.</div>
                   </div>
                 ) : (
                   <div className="voice-guide">
@@ -225,10 +226,10 @@ export default function MoreScreen() {
                     <ol className="vg-steps">
                       <li>Open iPhone <b>Settings</b> → <b>Accessibility</b></li>
                       <li>Tap <b>Spoken Content</b> → <b>Voices</b> → <b>English</b></li>
-                      <li>Pick <b>Aaron</b>, <b>Nathan</b>, or <b>Ava</b> → tap the cloud to download the <b>Premium</b> (or Enhanced) version</li>
+                      <li>Pick <b>Aaron</b> or <b>Nathan</b> → tap the cloud to download the <b>Premium</b> version</li>
                       <li>Come back here and choose it below</li>
                     </ol>
-                    <div className="vg-note">These are real human-recorded Apple voices. A web app can't install them for you, but once downloaded they show up here automatically.</div>
+                    <div className="vg-note">Like Siri's voice? Apps can't use Siri directly — but <b>Aaron</b> and <b>Nathan (Premium)</b> are the same neural voice family and sound nearly identical. Once downloaded they show up here automatically.</div>
                   </div>
                 )}
 
