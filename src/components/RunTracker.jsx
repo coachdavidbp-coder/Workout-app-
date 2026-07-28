@@ -6,9 +6,30 @@ import { useStore, todayKey } from "../store.jsx";
 import { fmtDuration, fmtPace } from "../lib/progress.js";
 import { bodyweight } from "../lib/gamify.js";
 import { beep, haptic } from "../lib/fx.js";
+import { speak } from "../lib/voice.js";
 import { toast } from "../lib/toast.js";
 
 const M_PER_MI = 1609.344;
+const STOP_AFTER = 10;      // seconds without moving → auto-pause
+const MOVING_MS = 0.7;      // m/s that counts as "moving again"
+
+// "9 minutes 40" style spoken time for mile callouts.
+function spokenTime(sec) {
+  const m = Math.floor(sec / 60);
+  const s = sec % 60;
+  if (m <= 0) return `${s} second${s === 1 ? "" : "s"}`;
+  return `${m} minute${m === 1 ? "" : "s"} ${s}`;
+}
+
+// Trim a route to at most `max` points so it stays light in storage.
+function downsample(pts, max = 300) {
+  if (pts.length <= max) return pts;
+  const step = pts.length / max;
+  const out = [];
+  for (let i = 0; i < pts.length; i += step) out.push(pts[Math.floor(i)]);
+  if (out[out.length - 1] !== pts[pts.length - 1]) out.push(pts[pts.length - 1]);
+  return out;
+}
 
 function haversine(a, b) {
   const R = 6371000;
@@ -39,10 +60,16 @@ export default function RunTracker({ onClose }) {
   const durRef = useRef(0);       // seconds
   const maxSpeedRef = useRef(0);  // mph
   const splitRef = useRef({ nextMi: 1, lastT: 0 });
+  const routeRef = useRef([]);    // [[lat,lng], ...] accepted points
+  const lastMoveRef = useRef(0);  // ts of last real movement
+  const autoPausedRef = useRef(false);
   const statusRef = useRef("idle");
+
+  const voiceOn = state.settings?.voice !== false;
 
   const [mode, setMode] = useState("Run");   // Run | Walk
   const [status, setStatus] = useState("idle"); // idle | tracking | paused | done
+  const [autoPaused, setAutoPaused] = useState(false);
   const [dist, setDist] = useState(0);
   const [dur, setDur] = useState(0);
   const [speed, setSpeed] = useState(0);
@@ -80,10 +107,19 @@ export default function RunTracker({ onClose }) {
     return () => { if (watchRef.current != null) navigator.geolocation.clearWatch(watchRef.current); };
   }, []);
 
-  // ---- duration timer ----
+  // ---- duration timer + auto-pause watchdog ----
   useEffect(() => {
     tick.current = setInterval(() => {
-      if (statusRef.current === "tracking") { durRef.current += 1; setDur(durRef.current); }
+      if (statusRef.current !== "tracking") return;
+      if (autoPausedRef.current) return; // stopped — don't count time
+      durRef.current += 1;
+      setDur(durRef.current);
+      // no movement for a while → auto-pause the clock
+      if (Date.now() - lastMoveRef.current > STOP_AFTER * 1000) {
+        autoPausedRef.current = true;
+        setAutoPaused(true);
+        beep(420, 0.1); haptic("light");
+      }
     }, 1000);
     return () => clearInterval(tick.current);
   }, []);
@@ -116,6 +152,8 @@ export default function RunTracker({ onClose }) {
       const mph = gpsSpeed * 2.2369;
       setSpeed(mph);
       if (mph > maxSpeedRef.current) maxSpeedRef.current = mph;
+      // GPS reports real speed → treat as moving (fast auto-resume)
+      if (gpsSpeed > MOVING_MS && statusRef.current === "tracking") resumeFromAuto();
     }
 
     if (statusRef.current !== "tracking") { lastRef.current = p; return; }
@@ -125,10 +163,13 @@ export default function RunTracker({ onClose }) {
     if (last) {
       const d = haversine(last, p);
       if (d >= 3 && d < 60) { // ignore <3m jitter and >60m/s teleports
+        resumeFromAuto();               // real movement → un-pause
+        lastMoveRef.current = Date.now();
         distRef.current += d;
         setDist(distRef.current);
+        routeRef.current.push([Math.round(lat * 1e5) / 1e5, Math.round(lng * 1e5) / 1e5]);
         lineRef.current?.addLatLng([lat, lng]);
-        // per-mile splits
+        // per-mile splits (with spoken callout)
         const mi = distRef.current / M_PER_MI;
         while (mi >= splitRef.current.nextMi) {
           const t = durRef.current;
@@ -138,10 +179,19 @@ export default function RunTracker({ onClose }) {
           splitRef.current.lastT = t;
           splitRef.current.nextMi += 1;
           beep(760, 0.12); haptic("success"); // mile buzz
+          if (voiceOn) speak(`Mile ${n}. ${spokenTime(sec)}.`);
         }
       }
     }
     lastRef.current = p;
+  }
+
+  function resumeFromAuto() {
+    if (autoPausedRef.current) {
+      autoPausedRef.current = false;
+      setAutoPaused(false);
+      beep(700, 0.08);
+    }
   }
 
   async function requestWake() {
@@ -151,11 +201,21 @@ export default function RunTracker({ onClose }) {
   const start = async () => {
     await requestWake();
     lastRef.current = null; // start a fresh segment
+    lastMoveRef.current = Date.now();
+    autoPausedRef.current = false; setAutoPaused(false);
     setStatus("tracking");
     beep(720, 0.1); haptic("success");
+    if (voiceOn) speak(mode === "Run" ? "Run started. Let's go." : "Walk started.");
   };
   const pause = () => { setStatus("paused"); beep(440, 0.1); haptic("light"); };
-  const resume = async () => { await requestWake(); lastRef.current = null; setStatus("tracking"); beep(720, 0.1); haptic("light"); };
+  const resume = async () => {
+    await requestWake();
+    lastRef.current = null;
+    lastMoveRef.current = Date.now();
+    autoPausedRef.current = false; setAutoPaused(false);
+    setStatus("tracking");
+    beep(720, 0.1); haptic("light");
+  };
 
   const finish = () => {
     setStatus("done");
@@ -179,9 +239,11 @@ export default function RunTracker({ onClose }) {
         avgMph: avg ? Math.round(avg * 10) / 10 : null,
         outdoor: true,
         mode,
+        route: downsample(routeRef.current),
       });
       actions.logActivity(todayKey(), { workouts: 1, calories: cals });
       toast({ emoji: mode === "Run" ? "🏃" : "🚶", title: `${mode} saved`, sub: `${mi.toFixed(2)} mi · ${fmtDuration(durationSec)}`, tone: "good" });
+      if (voiceOn) speak(`Nice work. ${mi.toFixed(2)} miles in ${spokenTime(durationSec)}.`);
     }
   };
 
@@ -215,6 +277,9 @@ export default function RunTracker({ onClose }) {
       )}
 
       <div className="rt-panel">
+        {autoPaused && status === "tracking" && (
+          <div className="rt-autopause">⏸ Auto-paused — move to resume</div>
+        )}
         <div className="rt-stats">
           <div className="rt-stat big">
             <div className="k tnum">{miles.toFixed(2)}</div>

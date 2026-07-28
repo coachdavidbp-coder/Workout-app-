@@ -594,6 +594,11 @@
 .rt-controls { display: flex; gap: 10px; margin-top: 16px; }
 .rt-controls .btn { flex: 1; padding: 16px 0; font-size: 15px; }
 .rt-controls .rt-main { flex: 1.7; }
+.rt-autopause { text-align: center; background: var(--amber); color: #1a1200; font-family: var(--font-display); font-weight: 800; font-size: 12px; border-radius: 100px; padding: 6px 12px; margin: 0 auto 12px; width: fit-content; }
+.run-mini-map { height: 150px; width: 100%; border-radius: 12px; overflow: hidden; margin-top: 8px; border: 1px solid var(--line); background: var(--panel-2); }
+.run-mini-map .leaflet-control-attribution { display: none; }
+.log-row.has-route { cursor: pointer; }
+.run-badge { font-size: 10px; font-family: var(--font-display); font-weight: 800; text-transform: uppercase; letter-spacing: 0.04em; color: var(--ac-hi); background: var(--ac-dim); border-radius: 100px; padding: 2px 7px; margin-left: 6px; }
 
 /* progress delta tags */
 .prog-tag { font-family: var(--font-display); font-weight: 800; font-size: 15px; font-variant-numeric: tabular-nums; padding: 4px 10px; border-radius: 8px; }
