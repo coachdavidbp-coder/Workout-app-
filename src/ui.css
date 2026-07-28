@@ -349,6 +349,8 @@
   transition: color 0.15s ease;
 }
 .nav-item svg { width: 20px; height: 20px; }
+.nav-img { width: 28px; height: 28px; object-fit: contain; opacity: 0.5; transition: opacity 0.15s ease, transform 0.15s ease, filter 0.15s ease; }
+.nav-item.on .nav-img { opacity: 1; transform: translateY(-1px); filter: drop-shadow(0 0 7px rgba(76,141,255,0.6)); }
 .nav-item.on { color: var(--ac); }
 
 /* ---------- bottom sheet ---------- */

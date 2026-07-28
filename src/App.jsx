@@ -12,27 +12,18 @@ import Onboarding from "./screens/Onboarding.jsx";
 import ErrorBoundary from "./components/ErrorBoundary.jsx";
 import Toaster from "./components/Toaster.jsx";
 import AchievementWatcher from "./components/AchievementWatcher.jsx";
-import {
-  IconHome,
-  IconTrain,
-  IconRun,
-  IconMeals,
-  IconWeight,
-  IconMore,
-  IconPrep,
-} from "./components/icons.jsx";
 import BrandLogo from "./components/BrandLogo.jsx";
 import { setVoiceName, setCoachStyle } from "./lib/voice.js";
 import { handleSpotifyRedirect } from "./lib/spotify.js";
 
 const TABS = [
-  { id: "home", label: "Home", Icon: IconHome, Screen: HomeScreen },
-  { id: "train", label: "Train", Icon: IconTrain, Screen: TrainScreen },
-  { id: "run", label: "Run", Icon: IconRun, Screen: RunScreen },
-  { id: "meals", label: "Nutrition", Icon: IconMeals, Screen: MealsScreen },
-  { id: "prep", label: "Prep", Icon: IconPrep, Screen: MealPrepScreen },
-  { id: "weight", label: "Progress", Icon: IconWeight, Screen: ProgressScreen },
-  { id: "more", label: "You", Icon: IconMore, Screen: MoreScreen },
+  { id: "home", label: "Home", img: "/icons/nav-home.png", Screen: HomeScreen },
+  { id: "train", label: "Train", img: "/icons/nav-train.png", Screen: TrainScreen },
+  { id: "run", label: "Run", img: "/icons/nav-run.png", Screen: RunScreen },
+  { id: "meals", label: "Nutrition", img: "/icons/nav-nutrition.png", Screen: MealsScreen },
+  { id: "prep", label: "Prep", img: "/icons/nav-prep.png", Screen: MealPrepScreen },
+  { id: "weight", label: "Progress", img: "/icons/nav-progress.png", Screen: ProgressScreen },
+  { id: "more", label: "You", img: "/icons/nav-you.png", Screen: MoreScreen },
 ];
 
 export default function App() {
@@ -96,14 +87,14 @@ export default function App() {
         <Active go={setTab} />
       </ErrorBoundary>
       <nav className="bottom-nav">
-        {TABS.map(({ id, label, Icon }) => (
+        {TABS.map(({ id, label, img }) => (
           <button
             key={id}
             className={`nav-item ${tab === id ? "on" : ""}`}
             onClick={() => setTab(id)}
             aria-current={tab === id ? "page" : undefined}
           >
-            <Icon />
+            <img className="nav-img" src={img} alt="" aria-hidden="true" />
             {label}
           </button>
         ))}
