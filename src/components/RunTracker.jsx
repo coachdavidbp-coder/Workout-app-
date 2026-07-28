@@ -332,6 +332,10 @@ export default function RunTracker({ onClose }) {
             <button className="btn btn-primary rt-main" onClick={onClose}>Done</button>
           )}
         </div>
+
+        {status !== "done" && (
+          <button className="rt-exit-bottom" onClick={close}>‹ Exit run</button>
+        )}
       </div>
     </div>,
     document.body

@@ -635,6 +635,8 @@
 .rt-controls { display: flex; gap: 10px; margin-top: 16px; }
 .rt-controls .btn { flex: 1; padding: 16px 0; font-size: 15px; }
 .rt-controls .rt-main { flex: 1.7; }
+.rt-exit-bottom { display: block; width: 100%; margin-top: 12px; background: none; border: none; color: var(--mu); font-family: var(--font-display); font-weight: 700; font-size: 14px; padding: 8px; }
+.rt-exit-bottom:active { color: var(--tx); }
 .rt-autopause { text-align: center; background: var(--amber); color: #1a1200; font-family: var(--font-display); font-weight: 800; font-size: 12px; border-radius: 100px; padding: 6px 12px; margin: 0 auto 12px; width: fit-content; }
 .run-mini-map { height: 150px; width: 100%; border-radius: 12px; overflow: hidden; margin-top: 8px; border: 1px solid var(--line); background: var(--panel-2); }
 .run-mini-map .leaflet-control-attribution { display: none; }
