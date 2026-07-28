@@ -58,6 +58,15 @@ export const IconPrep = (p) => (
   </svg>
 );
 
+export const IconRun = (p) => (
+  <svg viewBox="0 0 24 24" {...base} {...p}>
+    <circle cx="16" cy="4.5" r="1.6" />
+    <path d="M6 21l3-5 3.5-2.5-2-4.5-3.5 2.5-1.5 3" />
+    <path d="M12.5 9l2 3 3.5 1" />
+    <path d="M10 13.5l2.5 3 .5 4.5" />
+  </svg>
+);
+
 export const IconPlay = (p) => (
   <svg viewBox="0 0 24 24" fill="currentColor" stroke="none" {...p}>
     <path d="M7 5.5v13l11-6.5z" />

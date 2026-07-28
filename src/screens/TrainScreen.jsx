@@ -11,7 +11,6 @@ import NowPlaying from "../components/NowPlaying.jsx";
 import IntervalTimer from "../components/IntervalTimer.jsx";
 import CountdownTimer from "../components/CountdownTimer.jsx";
 import WorkoutSummarySheet from "../components/WorkoutSummarySheet.jsx";
-import RunTracker from "../components/RunTracker.jsx";
 import { trainingCoach } from "../lib/coach.js";
 import { fmtPace, fmtDuration } from "../lib/progress.js";
 import { caloriesForSession, bodyweight, strengthPRHit, runPRHit, streakMilestoneHit, streak } from "../lib/gamify.js";
@@ -35,7 +34,6 @@ export default function TrainScreen() {
   const [timerOpen, setTimerOpen] = useState(false);
   const [warmupSec, setWarmupSec] = useState(null);
   const [summaryOpen, setSummaryOpen] = useState(false);
-  const [runOpen, setRunOpen] = useState(false);
   const [startSignal, setStartSignal] = useState(0);
   const beginTiming = () => setStartSignal((n) => n + 1);
   const openEx = (ex) => { setSheetEx(ex); beginTiming(); };
@@ -138,10 +136,6 @@ export default function TrainScreen() {
 
       <main className="content">
         <CoachCard msg={coachMsg} />
-
-        <button className="btn btn-block outdoor-run-btn" onClick={() => { haptic(); setRunOpen(true); }}>
-          🏃 Track outdoor run / walk · live GPS map
-        </button>
 
         {day.type !== "rest" && (
           <>
@@ -287,8 +281,6 @@ export default function TrainScreen() {
         sessionSec={sessionSec}
         estCals={estCals}
       />
-
-      {runOpen && <RunTracker onClose={() => setRunOpen(false)} />}
     </div>
   );
 }

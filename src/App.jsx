@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { useStore } from "./store.jsx";
 import HomeScreen from "./screens/HomeScreen.jsx";
 import TrainScreen from "./screens/TrainScreen.jsx";
+import RunScreen from "./screens/RunScreen.jsx";
 import MealsScreen from "./screens/MealsScreen.jsx";
 import MealPrepScreen from "./screens/MealPrepScreen.jsx";
 import ProgressScreen from "./screens/ProgressScreen.jsx";
@@ -14,6 +15,7 @@ import AchievementWatcher from "./components/AchievementWatcher.jsx";
 import {
   IconHome,
   IconTrain,
+  IconRun,
   IconMeals,
   IconWeight,
   IconMore,
@@ -26,6 +28,7 @@ import { handleSpotifyRedirect } from "./lib/spotify.js";
 const TABS = [
   { id: "home", label: "Home", Icon: IconHome, Screen: HomeScreen },
   { id: "train", label: "Train", Icon: IconTrain, Screen: TrainScreen },
+  { id: "run", label: "Run", Icon: IconRun, Screen: RunScreen },
   { id: "meals", label: "Nutrition", Icon: IconMeals, Screen: MealsScreen },
   { id: "prep", label: "Prep", Icon: IconPrep, Screen: MealPrepScreen },
   { id: "weight", label: "Progress", Icon: IconWeight, Screen: ProgressScreen },
