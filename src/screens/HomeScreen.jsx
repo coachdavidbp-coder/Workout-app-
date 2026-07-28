@@ -1,9 +1,11 @@
+import { useState } from "react";
 import { useStore, todayKey, weekDates, currentDayId } from "../store.jsx";
 import { DAY_NAMES, daysOf, trainingCount } from "../data/plans.js";
 import { targetsFor } from "../data/plan.js";
 import Ring from "../components/Ring.jsx";
 import TrendChart from "../components/TrendChart.jsx";
 import BrandLogo from "../components/BrandLogo.jsx";
+import DayRecapSheet from "../components/DayRecapSheet.jsx";
 import { weeklyActivity } from "../lib/progress.js";
 import {
   totalXP, levelInfo, streak, dailyChallenge, quoteOfDay, coachQuoteOfDay,
@@ -13,6 +15,7 @@ import { haptic } from "../lib/fx.js";
 
 export default function HomeScreen({ go }) {
   const { state, actions } = useStore();
+  const [recapOpen, setRecapOpen] = useState(false);
   const xp = totalXP(state);
   const lvl = levelInfo(xp);
   const s = streak(state);
@@ -79,6 +82,16 @@ export default function HomeScreen({ go }) {
           <div className="xp-track"><div className="xp-fill" style={{ width: `${lvl.pct * 100}%` }} /></div>
           <div className="xp-cap"><span>{lvl.into} / {lvl.span} XP</span><span>{lvl.toNext} to Level {lvl.level + 1}</span></div>
         </div>
+
+        {/* end-of-day recap */}
+        <button className={`recap-launch ${hour >= 18 ? "evening" : ""}`} onClick={() => { haptic(); setRecapOpen(true); }}>
+          <span className="rl-ico">🌙</span>
+          <span className="rl-txt">
+            <span className="rl-k">{hour >= 18 ? "How did today go?" : "End-of-day recap"}</span>
+            <span className="rl-s">Training, food, movement & streak for today</span>
+          </span>
+          <span className="rl-arrow">›</span>
+        </button>
 
         {/* streak at risk */}
         {s.current >= 2 && !active.has(todayKey()) && (
@@ -191,6 +204,8 @@ export default function HomeScreen({ go }) {
           </>
         )}
       </main>
+
+      <DayRecapSheet open={recapOpen} onClose={() => setRecapOpen(false)} />
     </div>
   );
 }

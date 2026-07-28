@@ -68,6 +68,8 @@ export const DEFAULT_STATE = {
   activityLog: {}, // { "2026-07-26": { workouts: 1, calories: 320 } }
   game: { claimedDays: {}, profileIcon: null }, // daily rewards claimed + chosen icon
   favRecipes: [], // saved Meal Prep recipe ids
+  missed: {}, // { "2026-07-28": true } — days the user reported not working out
+  completedPrograms: [], // [{ planId, name, accent, date, trainingDays }]
   settings: { voice: true, theme: "system", voiceName: null }, // coach voice, light/dark, chosen TTS voice
 };
 
@@ -330,6 +332,21 @@ export function StoreProvider({ children }) {
       }),
 
     setProfile: (patch) => update((s) => Object.assign(s.profile, patch)),
+
+    // ---- report a day with no workout ----
+    reportMissed: (dateKey, val = true) =>
+      update((s) => {
+        s.missed = s.missed || {};
+        if (val) s.missed[dateKey] = true;
+        else delete s.missed[dateKey];
+      }),
+
+    // ---- mark the current program / phase complete ----
+    completeProgram: (record) =>
+      update((s) => {
+        s.completedPrograms = s.completedPrograms || [];
+        s.completedPrograms.push({ ...record, date: todayKey() });
+      }),
 
     // ---- gamification / activity ----
     logActivity: (dateKey, { workouts = 0, calories = 0 } = {}) =>

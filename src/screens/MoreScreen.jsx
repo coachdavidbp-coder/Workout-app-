@@ -4,15 +4,19 @@ import CustomPlanBuilder from "./CustomPlanBuilder.jsx";
 import GuidedBuilder from "./GuidedBuilder.jsx";
 import { signOut } from "../lib/firebase.js";
 import BrandLogo from "../components/BrandLogo.jsx";
-import { haptic } from "../lib/fx.js";
+import { fireConfetti, haptic } from "../lib/fx.js";
 import { speak, listVoices, setVoiceName, setCoachStyle, COACH_STYLES, hasHumanVoice, currentVoiceInfo, randomEncouragement } from "../lib/voice.js";
 import { toast } from "../lib/toast.js";
-import { PLAN_LIST, getPlan } from "../data/plans.js";
+import { PLAN_LIST, getPlan, planFor, trainingCount, WEEKS } from "../data/plans.js";
 import { DIETS, defaultTargets } from "../data/plan.js";
 import { spotifyEnabled, isSpotifyConnected, connectSpotify, disconnectSpotify } from "../lib/spotify.js";
 
 function speakTest() {
   speak("Coach voice on. Let's get to work.");
+}
+function fmtShort(d) {
+  try { return new Date(d + "T00:00").toLocaleDateString(undefined, { month: "short", day: "numeric" }); }
+  catch (e) { return d; }
 }
 function dietBlurb(id) {
   return (DIETS[id] || DIETS.balanced).blurb;
@@ -357,6 +361,48 @@ export default function MoreScreen() {
             <div className="plan-focus">Answer a few questions &amp; we build it — or set every day yourself →</div>
           </button>
         </div>
+
+        {(() => {
+          const plan = planFor(state);
+          const trainDays = trainingCount(state);
+          const weeksDone = WEEKS.filter((w) =>
+            plan.days.filter((d) => d.type !== "rest").every((d) => state.done[`w${w}-${d.id}`])
+          ).length;
+          const done = weeksDone * trainDays + WEEKS.filter((w) => !plan.days.filter((d) => d.type !== "rest").every((d) => state.done[`w${w}-${d.id}`]))
+            .reduce((a, w) => a + plan.days.filter((d) => d.type !== "rest" && state.done[`w${w}-${d.id}`]).length, 0);
+          const total = trainDays * WEEKS.length;
+          return (
+            <div className="phase-complete">
+              <div className="pc-row">
+                <span>Progress on <b>{plan.name}</b></span>
+                <span className="tnum">{weeksDone}/{WEEKS.length} weeks</span>
+              </div>
+              <div className="pc-track"><span style={{ width: `${total ? (done / total) * 100 : 0}%` }} /></div>
+              <button
+                className="btn btn-good btn-block"
+                style={{ marginTop: 10 }}
+                onClick={() => {
+                  actions.completeProgram({ planId: plan.id, name: plan.name, accent: plan.accent || "🏆", trainingDays: done });
+                  fireConfetti();
+                  haptic("success");
+                  toast({ emoji: plan.accent || "🏆", title: `${plan.name} complete!`, sub: "Phase logged. Pick your next program above.", tone: "good" });
+                }}
+              >
+                ✓ Complete this program / phase
+              </button>
+              {(state.completedPrograms || []).length > 0 && (
+                <div className="pc-history">
+                  {[...state.completedPrograms].reverse().slice(0, 6).map((c, i) => (
+                    <div className="pc-hist-row" key={i}>
+                      <span>{c.accent} {c.name}</span>
+                      <span className="pc-date">{fmtShort(c.date)}</span>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          );
+        })()}
 
         {/* nutrition style */}
         <div className="section-title">Eating style</div>

@@ -234,6 +234,23 @@ export default function TrainScreen() {
                 📋 Summarize this workout
               </button>
             )}
+
+            {dayId === today && !state.done[doneKey] && (
+              <button
+                className={`btn btn-block missed-btn ${state.missed?.[todayKey()] ? "on" : ""}`}
+                style={{ marginTop: 10 }}
+                onClick={() => {
+                  const now = !state.missed?.[todayKey()];
+                  actions.reportMissed(todayKey(), now);
+                  haptic(now ? "warning" : "light");
+                  toast(now
+                    ? { emoji: "🛌", title: "Logged as a rest day", sub: "No workout today — that's on the record.", tone: "neutral" }
+                    : { emoji: "↩️", title: "Undone", sub: "Removed the no-workout note.", tone: "neutral" });
+                }}
+              >
+                {state.missed?.[todayKey()] ? "✓ Marked: didn't work out today (tap to undo)" : "I didn't work out today"}
+              </button>
+            )}
           </>
         )}
       </main>
