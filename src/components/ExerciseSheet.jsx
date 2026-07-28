@@ -1,12 +1,14 @@
-import { useEffect, useRef, useState } from "react";
+import { useState } from "react";
 import Sheet from "./Sheet.jsx";
 import NumField from "./NumField.jsx";
+import CountdownTimer from "./CountdownTimer.jsx";
 import { useStore } from "../store.jsx";
-import { haptic } from "../lib/fx.js";
+import { beep, haptic } from "../lib/fx.js";
 
 // How-to video + set logging for a single exercise.
 export default function ExerciseSheet({ open, onClose, week, dayId, exercise }) {
   const { state, actions } = useStore();
+  const [restSec, setRestSec] = useState(null);
   if (!exercise) return null;
 
   const key = `w${week}-${dayId}`;
@@ -102,63 +104,31 @@ export default function ExerciseSheet({ open, onClose, week, dayId, exercise }) 
       </div>
 
       <div className="section-label" style={{ marginTop: 18 }}>Rest timer</div>
-      <RestTimer />
+      <div className="rest-timer">
+        {[60, 90, 120].map((sec) => (
+          <button
+            key={sec}
+            className="rt-preset"
+            onClick={() => { beep(600, 0.05); haptic(); setRestSec(sec); }}
+          >
+            {sec}s
+          </button>
+        ))}
+      </div>
 
       <button className="btn btn-primary btn-block" style={{ marginTop: 18 }} onClick={onClose}>
         Done
       </button>
+
+      {restSec != null && (
+        <CountdownTimer
+          label="Rest"
+          seconds={restSec}
+          accent="rest"
+          doneLabel="Back to it"
+          onClose={() => setRestSec(null)}
+        />
+      )}
     </Sheet>
-  );
-}
-
-// Between-set rest countdown with presets. Beeps + buzzes at zero.
-function RestTimer() {
-  const [preset, setPreset] = useState(90);
-  const [remaining, setRemaining] = useState(0);
-  const [running, setRunning] = useState(false);
-  const tick = useRef(null);
-
-  useEffect(() => {
-    if (!running) return;
-    tick.current = setInterval(() => {
-      setRemaining((r) => {
-        if (r <= 1) {
-          clearInterval(tick.current);
-          setRunning(false);
-          haptic("success");
-          try {
-            const AC = window.AudioContext || window.webkitAudioContext;
-            const ctx = new AC();
-            const o = ctx.createOscillator(); const g = ctx.createGain();
-            o.frequency.value = 660; o.connect(g).connect(ctx.destination);
-            g.gain.setValueAtTime(0.25, ctx.currentTime);
-            g.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + 0.4);
-            o.start(); o.stop(ctx.currentTime + 0.4);
-          } catch (e) { /* ignore */ }
-          return 0;
-        }
-        return r - 1;
-      });
-    }, 1000);
-    return () => clearInterval(tick.current);
-  }, [running]);
-
-  const startRest = (sec) => { setPreset(sec); setRemaining(sec); setRunning(true); haptic(); };
-
-  return (
-    <div className="rest-timer">
-      {[60, 90, 120].map((sec) => (
-        <button
-          key={sec}
-          className={`rt-preset ${running && preset === sec ? "on" : ""}`}
-          onClick={() => startRest(sec)}
-        >
-          {sec}s
-        </button>
-      ))}
-      <span className="rt-clock">
-        {running || remaining ? `${Math.floor(remaining / 60)}:${String(remaining % 60).padStart(2, "0")}` : "–:––"}
-      </span>
-    </div>
   );
 }

@@ -127,6 +127,10 @@
 .day-title h2 { font-size: 22px; }
 .warmup { color: var(--mu); font-size: 14px; margin-top: -6px; }
 .warmup b { color: var(--tx-2); font-weight: 600; }
+.warmup-card { background: var(--panel); border: 1px solid var(--line); border-radius: var(--r); padding: 12px 14px; }
+.warmup-txt { color: var(--mu); font-size: 13px; line-height: 1.4; }
+.warmup-txt b { color: var(--amber); font-family: var(--font-display); font-weight: 800; text-transform: uppercase; letter-spacing: 0.05em; font-size: 12px; }
+.warmup-btn { margin-top: 10px; width: 100%; border-color: var(--amber); color: var(--amber); font-weight: 800; }
 
 /* body-weight quick log */
 .weighin-row { display: flex; align-items: flex-end; gap: 10px; margin-top: 10px; }
@@ -529,7 +533,10 @@
 }
 .itimer.work { background: radial-gradient(120% 60% at 50% 30%, rgba(255,90,95,0.22), transparent 60%), var(--g); }
 .itimer.rest { background: radial-gradient(120% 60% at 50% 30%, rgba(53,208,192,0.20), transparent 60%), var(--g); }
+.itimer.warmup { background: radial-gradient(120% 60% at 50% 30%, rgba(255,194,76,0.20), transparent 60%), var(--g); }
 .itimer.done { background: radial-gradient(120% 60% at 50% 30%, rgba(53,194,107,0.22), transparent 60%), var(--g); }
+.itimer.warmup .it-phase { color: var(--amber); }
+.itimer.warmup .it-progress span { background: var(--amber); }
 .it-top { position: absolute; top: calc(var(--safe-top) + 16px); left: 0; right: 0; display: flex; align-items: center; justify-content: space-between; padding: 0 20px; }
 .it-close, .it-sound { background: none; border: none; color: var(--tx-2); font-size: 20px; width: 40px; height: 40px; }
 .it-round { font-family: var(--font-display); font-weight: 800; text-transform: uppercase; letter-spacing: 0.1em; font-size: 15px; color: var(--tx); }
@@ -785,6 +792,11 @@
 .toggle.on .knob { transform: translateX(20px); background: #fff; }
 
 .summary-note { font-size: 11px; color: var(--mu); text-align: center; margin-top: -4px; line-height: 1.4; }
+.summary-ex { display: flex; justify-content: space-between; align-items: center; gap: 12px; padding: 11px 4px; border-top: 1px solid var(--line-soft); }
+.summary-ex:first-child { border-top: none; }
+.se-name { font-size: 13px; font-weight: 600; }
+.se-val { font-size: 12px; color: var(--mu); font-family: var(--font-display); font-weight: 700; font-variant-numeric: tabular-nums; text-align: right; }
+.summary-closing { font-size: 12.5px; color: var(--tx-2); text-align: center; line-height: 1.5; margin-top: 16px; }
 
 /* personal bests */
 .pb-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; }

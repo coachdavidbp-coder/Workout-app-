@@ -9,13 +9,22 @@ import CoachCard from "../components/CoachCard.jsx";
 import WorkoutTimer from "../components/WorkoutTimer.jsx";
 import NowPlaying from "../components/NowPlaying.jsx";
 import IntervalTimer from "../components/IntervalTimer.jsx";
+import CountdownTimer from "../components/CountdownTimer.jsx";
+import WorkoutSummarySheet from "../components/WorkoutSummarySheet.jsx";
 import { trainingCoach } from "../lib/coach.js";
 import { fmtPace, fmtDuration } from "../lib/progress.js";
 import { caloriesForSession, bodyweight, strengthPRHit, runPRHit, streakMilestoneHit, streak } from "../lib/gamify.js";
-import { fireConfetti, haptic } from "../lib/fx.js";
+import { fireConfetti, beep, haptic } from "../lib/fx.js";
 import { toast } from "../lib/toast.js";
 
 const FEELS = ["😩", "😕", "🙂", "💪", "🔥"];
+
+// Pull a warm-up length out of the plan text ("5 min ..." → 300s); default 5 min.
+function warmupSeconds(text) {
+  const m = String(text || "").match(/(\d+)\s*min/i);
+  return m ? parseInt(m[1], 10) * 60 : 300;
+}
+function clock(s) { return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, "0")}`; }
 
 export default function TrainScreen() {
   const { state, mode, actions } = useStore();
@@ -23,6 +32,8 @@ export default function TrainScreen() {
   const [dayId, setDayId] = useState(today);
   const [sheetEx, setSheetEx] = useState(null);
   const [timerOpen, setTimerOpen] = useState(false);
+  const [warmupSec, setWarmupSec] = useState(null);
+  const [summaryOpen, setSummaryOpen] = useState(false);
   const [startSignal, setStartSignal] = useState(0);
   const beginTiming = () => setStartSignal((n) => n + 1);
   const openEx = (ex) => { setSheetEx(ex); beginTiming(); };
@@ -136,9 +147,15 @@ export default function TrainScreen() {
         )}
 
         {day.warmup && (
-          <p className="warmup">
-            <b>Warm-up:</b> {day.warmup}
-          </p>
+          <div className="warmup-card">
+            <div className="warmup-txt"><b>Warm-up</b> · {day.warmup}</div>
+            <button
+              className="btn warmup-btn"
+              onClick={() => { beep(600, 0.05); haptic(); setWarmupSec(warmupSeconds(day.warmup)); }}
+            >
+              ▶ Start warm-up · {clock(warmupSeconds(day.warmup))}
+            </button>
+          </div>
         )}
 
         {day.type === "lift" && (
@@ -207,6 +224,16 @@ export default function TrainScreen() {
             >
               {state.done[doneKey] ? "✓ Workout Complete" : "Mark Workout Complete"}
             </button>
+
+            {(state.done[doneKey] || sessionSec > 0) && (
+              <button
+                className="btn btn-ghost btn-block"
+                style={{ marginTop: 10 }}
+                onClick={() => { haptic(); setSummaryOpen(true); }}
+              >
+                📋 Summarize this workout
+              </button>
+            )}
           </>
         )}
       </main>
@@ -231,6 +258,29 @@ export default function TrainScreen() {
           />
         </div>
       )}
+
+      {warmupSec != null && (
+        <CountdownTimer
+          label="Warm-up"
+          seconds={warmupSec}
+          accent="warmup"
+          voice={voiceOn}
+          doneLabel="Start workout ▶"
+          onComplete={beginTiming}
+          onClose={() => setWarmupSec(null)}
+        />
+      )}
+
+      <WorkoutSummarySheet
+        open={summaryOpen}
+        onClose={() => setSummaryOpen(false)}
+        state={state}
+        week={week}
+        dayId={dayId}
+        day={day}
+        sessionSec={sessionSec}
+        estCals={estCals}
+      />
     </div>
   );
 }
