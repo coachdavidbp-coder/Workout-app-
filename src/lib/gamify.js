@@ -212,6 +212,21 @@ export function quoteOfDay() {
   return QUOTES[dayOfYear() % QUOTES.length];
 }
 
+// ---------- coach: Dan Lanning (Oregon Ducks HC) ----------
+const LANNING_QUOTES = [
+  "They're fighting for clicks. We're fighting for wins. There's a difference.",
+  "Rooted in substance, not flash.",
+  "This game ain't gonna be played in Hollywood. It's played on the grass.",
+  "It never hurts when somebody pours gasoline on the fire.",
+  "It's not gonna be on your tombstone how many games you won. People remember the dash in between.",
+  "Hammer the iron that lies on your anvil instead of daydreaming about working silver.",
+  "Win the day.",
+  "Go be violent with your effort. Nothing casual.",
+];
+export function lanningQuoteOfDay() {
+  return LANNING_QUOTES[dayOfYear() % LANNING_QUOTES.length];
+}
+
 // ---------- recent activity ----------
 export function recentActivity(state, limit = 6) {
   const events = [];
