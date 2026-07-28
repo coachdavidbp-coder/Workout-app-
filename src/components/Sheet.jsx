@@ -1,8 +1,12 @@
 import { useEffect } from "react";
+import { createPortal } from "react-dom";
 
 // Bottom sheet modal. Click scrim or Esc to close.
 // Tracks the iOS on-screen keyboard via visualViewport so the sheet resizes
 // to sit ABOVE the keyboard (search field + results stay visible).
+// Rendered via a portal on <body> so it escapes each screen's `.scroll`
+// stacking context and overlays the fixed bottom nav (otherwise the nav
+// covers the sheet's action button).
 export default function Sheet({ open, onClose, children }) {
   useEffect(() => {
     if (!open) return;
@@ -29,12 +33,13 @@ export default function Sheet({ open, onClose, children }) {
   }, [open, onClose]);
 
   if (!open) return null;
-  return (
+  return createPortal(
     <div className="scrim" onClick={onClose} role="dialog" aria-modal="true">
       <div className="sheet" onClick={(e) => e.stopPropagation()}>
         <div className="sheet-handle" />
         {children}
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }
