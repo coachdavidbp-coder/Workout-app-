@@ -259,7 +259,7 @@ export default function RunTracker({ onClose }) {
   return createPortal(
     <div className="run-tracker">
       <div className="rt-top">
-        <button className="rt-x" onClick={close} aria-label="Close">✕</button>
+        <button className="rt-x" onClick={close} aria-label="Exit run">‹ Exit</button>
         <div className="rt-mode">
           {["Run", "Walk"].map((m) => (
             <button key={m} className={`rt-mode-btn ${mode === m ? "on" : ""}`} disabled={status !== "idle"} onClick={() => setMode(m)}>
