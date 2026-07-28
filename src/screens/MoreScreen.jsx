@@ -5,7 +5,7 @@ import GuidedBuilder from "./GuidedBuilder.jsx";
 import { signOut } from "../lib/firebase.js";
 import BrandLogo from "../components/BrandLogo.jsx";
 import { haptic } from "../lib/fx.js";
-import { speak, listVoices, setVoiceName, setCoachStyle, COACH_STYLES, randomEncouragement } from "../lib/voice.js";
+import { speak, listVoices, setVoiceName, setCoachStyle, COACH_STYLES, hasHumanVoice, currentVoiceInfo, randomEncouragement } from "../lib/voice.js";
 import { toast } from "../lib/toast.js";
 import { PLAN_LIST, getPlan } from "../data/plans.js";
 import { DIETS, defaultTargets } from "../data/plan.js";
@@ -210,10 +210,30 @@ export default function MoreScreen() {
             const recommended = voices.filter((v) => v.recommended);
             const others = voices.filter((v) => !v.recommended);
             const style = state.settings?.coachStyle || "balanced";
+            const humanReady = hasHumanVoice();
+            const cur = currentVoiceInfo();
             return (
               <>
+                {humanReady ? (
+                  <div className="voice-guide ok">
+                    ✅ <b>Human voice ready.</b> Pick a <b>Premium</b> or <b>Enhanced</b> voice below (they're real human recordings), then preview.
+                    {cur.name && !cur.human && <div className="vg-note">You're currently on “{cur.name}” — switch to a Premium/Enhanced one below for the human sound.</div>}
+                  </div>
+                ) : (
+                  <div className="voice-guide">
+                    <div className="vg-title">🎙️ Make the coach sound human (free, ~30 sec)</div>
+                    <ol className="vg-steps">
+                      <li>Open iPhone <b>Settings</b> → <b>Accessibility</b></li>
+                      <li>Tap <b>Spoken Content</b> → <b>Voices</b> → <b>English</b></li>
+                      <li>Pick <b>Aaron</b>, <b>Nathan</b>, or <b>Ava</b> → tap the cloud to download the <b>Premium</b> (or Enhanced) version</li>
+                      <li>Come back here and choose it below</li>
+                    </ol>
+                    <div className="vg-note">These are real human-recorded Apple voices. A web app can't install them for you, but once downloaded they show up here automatically.</div>
+                  </div>
+                )}
+
                 <div className="setting-row" style={{ flexWrap: "wrap", gap: 10 }}>
-                  <div className="lab" style={{ flexBasis: "100%" }}>Coach's voice<small>Best-sounding voices first, then preview it</small></div>
+                  <div className="lab" style={{ flexBasis: "100%" }}>Coach's voice<small>Human voices first — pick one, then preview</small></div>
                   <select
                     className="login-input"
                     style={{ flex: 1, minWidth: 0 }}
@@ -225,7 +245,7 @@ export default function MoreScreen() {
                       <optgroup label="★ Recommended">
                         {recommended.map((v) => (
                           <option key={v.name} value={v.name}>
-                            {v.name}{v.tier >= 3 ? " — Enhanced" : ""} ({v.lang})
+                            {v.name}{v.tier >= 4 ? " — Premium (human)" : v.tier === 3 ? " — Enhanced (human)" : ""} ({v.lang})
                           </option>
                         ))}
                       </optgroup>
@@ -267,9 +287,6 @@ export default function MoreScreen() {
                   </div>
                 </div>
 
-                <div className="setting-hint">
-                  🎧 iPhone: for studio-quality voices, open <b>Settings › Accessibility › Spoken Content › Voices › English</b>, download an <b>Enhanced</b> or <b>Premium</b> voice (e.g. Aaron, Nathan, Ava), then reopen this app and pick it above.
-                </div>
               </>
             );
           })()}

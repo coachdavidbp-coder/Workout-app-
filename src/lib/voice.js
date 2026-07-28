@@ -14,12 +14,26 @@ const NOVELTY = /Albert|Bad News|Bahh|Bells|Boing|Bubbles|Cellos|Wobble|Good New
 // Named voices that sound clearly better than the compact defaults.
 const GOOD = /Siri|Samantha|Alex|Aaron|Nicky|Ava|Allison|Susan|Tom|Zoe|Nathan|Evan|Karen|Daniel|Serena|Moira|Google/i;
 
-// Quality tier for a voice: 3 = enhanced/premium, 2 = known-good, 1 = ok, 0 = skip.
+// Quality tier: 4 = premium/Siri (most human), 3 = enhanced/neural (human-grade),
+// 2 = known-good, 1 = ok, 0 = skip. tier >= 3 counts as a real "human" voice.
 function tierOf(v) {
   if (NOVELTY.test(v.name)) return 0;
-  if (/enhanced|premium|neural|siri/i.test(v.name)) return 3;
+  if (/premium|siri/i.test(v.name)) return 4;
+  if (/enhanced|neural/i.test(v.name)) return 3;
   if (GOOD.test(v.name) || !v.localService) return 2; // network (Google) voices sound better
   return 1;
+}
+
+// Is a genuinely human-sounding (premium/enhanced) voice installed on this device?
+export function hasHumanVoice() {
+  return listVoices().some((v) => v.tier >= 3);
+}
+
+// The voice that will actually be used right now, and whether it's human-grade.
+export function currentVoiceInfo() {
+  const v = resolve();
+  if (!v) return { name: null, human: false };
+  return { name: v.name, human: tierOf(v) >= 3 };
 }
 
 // English voices, best-first, novelty voices dropped. Each: {name, lang, tier, recommended}.
