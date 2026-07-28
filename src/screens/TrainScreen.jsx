@@ -368,10 +368,13 @@ function CardioDay({ day, week, runLog, actions, dayId, onStartTimer, proto }) {
         </div>
       </div>
 
-      {proto && (
+      {proto && proto.rounds > 1 && (
         <button className="btn btn-primary btn-block interval-launch" onClick={onStartTimer}>
           ▶ Start Interval Timer · {proto.rounds} × {proto.seconds}s
         </button>
+      )}
+      {proto && proto.rounds <= 1 && (
+        <div className="steady-run-hint">🏃 Steady run — open the <b>Run</b> tab to track it live with GPS + map, or log it below.</div>
       )}
 
       {/* run summary */}

@@ -559,6 +559,8 @@
 
 /* ---------- outdoor run tracker ---------- */
 .outdoor-run-btn { border: 1px solid var(--ac); color: var(--ac-hi); background: var(--ac-dim); font-weight: 800; }
+.steady-run-hint { background: var(--ac-dim); border: 1px solid var(--line-soft); border-radius: 12px; padding: 11px 13px; color: var(--tx-2); font-size: 12.5px; line-height: 1.45; }
+.steady-run-hint b { color: var(--ac-hi); font-weight: 800; }
 .run-tracker {
   position: fixed; inset: 0; z-index: 80; background: var(--g);
   display: flex; flex-direction: column; max-width: var(--maxw); margin: 0 auto;
