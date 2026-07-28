@@ -142,7 +142,7 @@ export function badges(state) {
     { id: "lost10", name: "Down 10", desc: "Lose 10 lb", emoji: "⬇️", earned: lost >= 10 },
     { id: "lost25", name: "Down 25", desc: "Lose 25 lb", emoji: "🎯", earned: lost >= 25 },
   ];
-  return list;
+  return list.map((b) => ({ ...b, img: `/icons/badge-${b.id}.png` }));
 }
 
 // ---------- unlockable profile icons ----------
@@ -158,7 +158,7 @@ export function profileIcons(state) {
     { id: "goat", emoji: "🐐", name: "GOAT", unlocked: lvl >= 8 },
     { id: "crown", emoji: "👑", name: "King", unlocked: lvl >= 10 },
     { id: "trophy", emoji: "🏆", name: "Champion", unlocked: earnedBadges.has("program") },
-  ];
+  ].map((i) => ({ ...i, img: `/icons/picon-${i.id}.png` }));
 }
 
 export function currentIcon(state) {

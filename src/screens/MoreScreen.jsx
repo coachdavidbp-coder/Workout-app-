@@ -129,7 +129,7 @@ export default function MoreScreen() {
       <main className="content">
         {/* profile card */}
         <div className="card profile-card glass">
-          <div className="avatar" style={{ fontSize: 26 }}>{icon.emoji}</div>
+          <div className="avatar"><img className="avatar-img" src={icon.img} alt="" /></div>
           <div style={{ flex: 1 }}>
             <div className="pn">{name}</div>
             <div className="pe">{user?.email || (mode === "cloud" ? "Signed in" : "Saved on this device")}</div>
@@ -150,7 +150,7 @@ export default function MoreScreen() {
               onClick={() => { if (ic.unlocked) { actions.setProfileIcon(ic.id); haptic(); } }}
               title={ic.unlocked ? ic.name : "Locked — keep leveling up"}
             >
-              {ic.emoji}
+              <img className="icon-opt-img" src={ic.img} alt="" />
               {!ic.unlocked && <span className="lock">🔒</span>}
             </button>
           ))}
@@ -185,7 +185,7 @@ export default function MoreScreen() {
         <div className="badge-grid">
           {bist(blist).map((b) => (
             <div key={b.id} className={`badge ${b.earned ? "earned" : ""}`} title={b.desc}>
-              <span className="b-emoji">{b.emoji}</span>
+              <img className="b-img" src={b.img} alt="" />
               <span className="b-name">{b.name}</span>
             </div>
           ))}

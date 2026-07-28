@@ -52,10 +52,10 @@ function PersonalBests() {
   const { state } = useStore();
   const pb = personalBests(state);
   const items = [
-    { k: pb.heaviest ? `${pb.heaviest.last} lb` : "—", l: pb.heaviest ? shortName(pb.heaviest.name) : "Heaviest lift", emoji: "🏋️" },
-    { k: pb.topSpeed ? `${pb.topSpeed.toFixed(1)}` : "—", l: "Top mph", emoji: "💨" },
-    { k: pb.bestPace ? fmtPace(pb.bestPace).replace("/mi", "") : "—", l: "Best pace", emoji: "⏱️" },
-    { k: pb.longestRun ? `${pb.longestRun}` : "—", l: "Longest run (mi)", emoji: "🏃" },
+    { k: pb.heaviest ? `${pb.heaviest.last} lb` : "—", l: pb.heaviest ? shortName(pb.heaviest.name) : "Heaviest lift", img: "/icons/pb-heaviest.png" },
+    { k: pb.topSpeed ? `${pb.topSpeed.toFixed(1)}` : "—", l: "Top mph", img: "/icons/pb-topmph.png" },
+    { k: pb.bestPace ? fmtPace(pb.bestPace).replace("/mi", "") : "—", l: "Best pace", img: "/icons/pb-pace.png" },
+    { k: pb.longestRun ? `${pb.longestRun}` : "—", l: "Longest run (mi)", img: "/icons/pb-longest.png" },
   ];
   return (
     <div>
@@ -63,7 +63,7 @@ function PersonalBests() {
       <div className="pb-grid">
         {items.map((it, i) => (
           <div className="pb-card glass" key={i}>
-            <span className="pb-emoji">{it.emoji}</span>
+            <img className="pb-img" src={it.img} alt="" />
             <div className="pb-k">{it.k}</div>
             <div className="pb-l">{it.l}</div>
           </div>
