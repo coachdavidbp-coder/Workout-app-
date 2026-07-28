@@ -366,7 +366,10 @@
   box-shadow: var(--shadow-lg); animation: sheetUp 0.3s cubic-bezier(0.2, 0.9, 0.3, 1);
 }
 @keyframes sheetUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
-.sheet-handle { width: 42px; height: 5px; border-radius: 3px; background: var(--line); margin: 0 auto 14px; }
+.sheet-grab { display: flex; align-items: center; justify-content: center; padding: 8px 0 14px; margin: -4px 0 2px; touch-action: none; cursor: grab; }
+.sheet-grab:active { cursor: grabbing; }
+.sheet-handle { width: 44px; height: 5px; border-radius: 3px; background: var(--line); transition: background 0.15s ease; }
+.sheet-grab:active .sheet-handle { background: var(--mu); }
 /* keep the food search controls pinned while results scroll under them */
 .food-search-head { position: sticky; top: 0; z-index: 3; background: var(--g-2); padding-bottom: 10px; margin-bottom: 2px; }
 .food-clear { background: none; border: none; color: var(--mu); font-size: 22px; line-height: 1; padding: 0 4px; flex: none; }
