@@ -6,7 +6,7 @@ import TrendChart from "../components/TrendChart.jsx";
 import BrandLogo from "../components/BrandLogo.jsx";
 import { weeklyActivity } from "../lib/progress.js";
 import {
-  totalXP, levelInfo, streak, dailyChallenge, quoteOfDay, lanningQuoteOfDay,
+  totalXP, levelInfo, streak, dailyChallenge, quoteOfDay, coachQuoteOfDay,
   recentActivity, continueDay, currentIcon, activeDates,
 } from "../lib/gamify.js";
 import { haptic } from "../lib/fx.js";
@@ -53,10 +53,15 @@ export default function HomeScreen({ go }) {
         </div>
         <div className="h-title">
           <div className="kicker">{greet}, {state.profile?.name || "Coach"}</div>
-          <blockquote className="coach-quote">
-            <p>{lanningQuoteOfDay()}</p>
-            <cite>— Dan Lanning · Oregon Ducks</cite>
-          </blockquote>
+          {(() => {
+            const cq = coachQuoteOfDay();
+            return (
+              <blockquote className="coach-quote">
+                <p>{cq.text}</p>
+                <cite>— {cq.coach} · {cq.team}</cite>
+              </blockquote>
+            );
+          })()}
         </div>
       </header>
 

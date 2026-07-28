@@ -3,8 +3,7 @@
 // tagged by diet so we can match each user's eating style.
 //   diet tags map to DIETS ids in data/plan.js:
 //     balanced | high_protein | lower_carb | vegetarian | glp1
-//   img = keywords → a real food photo (loremflickr), with a graceful
-//         emoji fallback if the network image can't load.
+//   emoji = shown on each card's dish tile (see dishGradient below).
 //   yt  = a YouTube "how-to" search query (opened on tap).
 // =========================================================
 
@@ -310,9 +309,15 @@ export const RECIPES = [
 
 export const RECIPE_TAGS = ["High-Protein", "Low-Carb", "Vegetarian", "Meal-Prep", "Quick", "No-Cook"];
 
-// Photo URL for a recipe — a real food photo by keyword, sized for the card.
-export function recipePhoto(recipe, w = 640, h = 420) {
-  return `https://loremflickr.com/${w}/${h}/${encodeURIComponent(recipe.img)}`;
+// Deterministic dish tile: a food emoji on a unique gradient derived from the
+// recipe id. No network photos — so every card always matches its dish (real
+// photo services return random / broken images, which is why they were dropped).
+export function dishGradient(recipe) {
+  const s = recipe?.id || recipe?.name || "meal";
+  let h = 0;
+  for (let i = 0; i < s.length; i++) h = (h * 31 + s.charCodeAt(i)) % 360;
+  const h2 = (h + 32) % 360;
+  return { background: `linear-gradient(140deg, hsl(${h} 58% 34%), hsl(${h2} 64% 17%))` };
 }
 
 // Filter + search. `diet` narrows to the user's eating style (or "all").

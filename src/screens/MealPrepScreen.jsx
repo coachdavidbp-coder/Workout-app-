@@ -1,6 +1,6 @@
 import { useMemo, useState } from "react";
 import { useStore, todayKey } from "../store.jsx";
-import { RECIPES, findRecipes, recipePhoto } from "../data/recipes.js";
+import { RECIPES, findRecipes, dishGradient } from "../data/recipes.js";
 import { DIETS } from "../data/plan.js";
 import { MEAL_SLOTS } from "../data/foods.js";
 import BrandLogo from "../components/BrandLogo.jsx";
@@ -8,20 +8,13 @@ import { IconSearch, IconChevron } from "../components/icons.jsx";
 import { haptic } from "../lib/fx.js";
 import { toast } from "../lib/toast.js";
 
-// Real food photo with a graceful emoji-gradient fallback if it can't load.
+// Dish tile: a food emoji on a unique per-dish gradient. Deterministic and
+// offline, so every card always matches its recipe.
 function RecipeImg({ recipe, className }) {
-  const [failed, setFailed] = useState(false);
-  if (failed) {
-    return <div className={`recipe-img fallback ${className || ""}`}><span>{recipe.emoji}</span></div>;
-  }
   return (
-    <img
-      className={`recipe-img ${className || ""}`}
-      src={recipePhoto(recipe)}
-      alt={recipe.name}
-      loading="lazy"
-      onError={() => setFailed(true)}
-    />
+    <div className={`recipe-img tile ${className || ""}`} style={dishGradient(recipe)}>
+      <span>{recipe.emoji}</span>
+    </div>
   );
 }
 

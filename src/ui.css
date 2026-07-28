@@ -933,6 +933,13 @@
 .recipe-img.fallback { display: flex; align-items: center; justify-content: center; background: linear-gradient(150deg, var(--ac-dim), var(--panel-3)); }
 .recipe-img.fallback span { font-size: 46px; }
 .recipe-img.hero.fallback span { font-size: 84px; }
+.recipe-img.tile { position: relative; display: flex; align-items: center; justify-content: center; }
+.recipe-img.tile::before {
+  content: ""; position: absolute; inset: 0;
+  background: radial-gradient(120% 90% at 28% 18%, rgba(255,255,255,0.20), transparent 62%);
+}
+.recipe-img.tile span { position: relative; font-size: 48px; filter: drop-shadow(0 3px 7px rgba(0,0,0,0.38)); }
+.recipe-img.hero.tile span { font-size: 88px; }
 .recipe-fav-dot { position: absolute; top: 8px; right: 8px; color: #ff5a7a; font-size: 16px; text-shadow: 0 1px 4px rgba(0,0,0,0.6); }
 .recipe-card-body { padding: 10px 11px 12px; }
 .recipe-card-name { font-family: var(--font-display); font-weight: 800; font-size: 13px; line-height: 1.2; }

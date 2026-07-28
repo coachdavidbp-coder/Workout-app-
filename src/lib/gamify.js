@@ -212,19 +212,41 @@ export function quoteOfDay() {
   return QUOTES[dayOfYear() % QUOTES.length];
 }
 
-// ---------- coach: Dan Lanning (Oregon Ducks HC) ----------
-const LANNING_QUOTES = [
-  "They're fighting for clicks. We're fighting for wins. There's a difference.",
-  "Rooted in substance, not flash.",
-  "This game ain't gonna be played in Hollywood. It's played on the grass.",
-  "It never hurts when somebody pours gasoline on the fire.",
-  "It's not gonna be on your tombstone how many games you won. People remember the dash in between.",
-  "Hammer the iron that lies on your anvil instead of daydreaming about working silver.",
-  "Win the day.",
-  "Go be violent with your effort. Nothing casual.",
+// ---------- coach motivation (college football head coaches) ----------
+const COACH_QUOTES = [
+  // Dan Lanning · Oregon
+  { text: "They're fighting for clicks. We're fighting for wins. There's a difference.", coach: "Dan Lanning", team: "Oregon" },
+  { text: "Rooted in substance, not flash.", coach: "Dan Lanning", team: "Oregon" },
+  { text: "It never hurts when somebody pours gasoline on the fire.", coach: "Dan Lanning", team: "Oregon" },
+  { text: "It's not gonna be on your tombstone how many games you won. People remember the dash in between.", coach: "Dan Lanning", team: "Oregon" },
+  { text: "Win the day.", coach: "Dan Lanning", team: "Oregon" },
+  // Nick Saban · Alabama
+  { text: "Don't waste a failure. Learn from it and get better.", coach: "Nick Saban", team: "Alabama" },
+  { text: "The process is what you do day in and day out to be successful.", coach: "Nick Saban", team: "Alabama" },
+  { text: "Mediocre people don't like high achievers, and high achievers don't like mediocre people.", coach: "Nick Saban", team: "Alabama" },
+  // Bear Bryant · Alabama
+  { text: "It's not the will to win that matters — everyone has that. It's the will to prepare to win that matters.", coach: "Bear Bryant", team: "Alabama" },
+  { text: "If you believe in yourself and never quit, you'll be a winner.", coach: "Bear Bryant", team: "Alabama" },
+  // Lou Holtz · Notre Dame
+  { text: "Ability is what you're capable of doing. Motivation determines what you do. Attitude determines how well you do it.", coach: "Lou Holtz", team: "Notre Dame" },
+  { text: "It's not the load that breaks you down, it's the way you carry it.", coach: "Lou Holtz", team: "Notre Dame" },
+  // Deion Sanders · Colorado
+  { text: "You've got to believe. If you don't believe, you can't achieve.", coach: "Deion Sanders", team: "Colorado" },
+  { text: "I'm coming — and I'm bringing my luggage with me.", coach: "Deion Sanders", team: "Colorado" },
+  // Dabo Swinney · Clemson
+  { text: "Bloom where you're planted.", coach: "Dabo Swinney", team: "Clemson" },
+  { text: "The best is yet to come.", coach: "Dabo Swinney", team: "Clemson" },
+  // Kirby Smart · Georgia
+  { text: "Trust your preparation, then cut it loose.", coach: "Kirby Smart", team: "Georgia" },
+  // Urban Meyer · Ohio State
+  { text: "The team that plays best together always wins.", coach: "Urban Meyer", team: "Ohio State" },
+  // Marcus Freeman · Notre Dame
+  { text: "Standards, not feelings.", coach: "Marcus Freeman", team: "Notre Dame" },
+  // Pete Carroll · USC
+  { text: "Always compete.", coach: "Pete Carroll", team: "USC" },
 ];
-export function lanningQuoteOfDay() {
-  return LANNING_QUOTES[dayOfYear() % LANNING_QUOTES.length];
+export function coachQuoteOfDay() {
+  return COACH_QUOTES[dayOfYear() % COACH_QUOTES.length];
 }
 
 // ---------- recent activity ----------
