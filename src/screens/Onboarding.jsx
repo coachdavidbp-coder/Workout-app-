@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useStore, todayKey } from "../store.jsx";
-import { PLAN_LIST, DAY_NAMES } from "../data/plans.js";
+import { PLAN_LIST, DAY_NAMES, DURATION_OPTIONS, planMeta } from "../data/plans.js";
 import { defaultTargets, DIETS } from "../data/plan.js";
 import BrandLogo from "../components/BrandLogo.jsx";
 import { haptic } from "../lib/fx.js";
@@ -19,7 +19,7 @@ export default function Onboarding() {
   const [guiding, setGuiding] = useState(false);
   const [f, setF] = useState({
     name: "", sex: "", heightFt: "", heightIn: "", currentWeight: "",
-    goalWeight: "", goal: "lose", diet: "balanced", planId: "gridiron",
+    goalWeight: "", goal: "lose", diet: "balanced", planId: "gridiron", programWeeks: 4,
   });
   const set = (k, v) => setF((p) => ({ ...p, [k]: v }));
 
@@ -41,6 +41,7 @@ export default function Onboarding() {
       goal: f.goal,
       diet: f.diet,
       planId: f.planId,
+      programWeeks: f.programWeeks,
       proteinGoal: t.protein,
       calorieGoal: t.calories,
       waterGoal: t.waterOz,
@@ -122,29 +123,61 @@ export default function Onboarding() {
           <>
             <h1 className="onb-title">Pick your program</h1>
             <p className="onb-sub">You can change this later in your profile.</p>
-            <div className="stack gap-3">
-              {PLAN_LIST.map((pl) => (
-                <button key={pl.id} className={`plan-card ${f.planId === pl.id ? "on" : ""}`} onClick={() => { set("planId", pl.id); haptic(); }}>
-                  <div className="plan-top">
-                    <span className="plan-emoji">{pl.accent}</span>
-                    <span className="plan-name">{pl.name}</span>
-                    {f.planId === pl.id && <span className="plan-check">✓</span>}
-                  </div>
-                  <div className="plan-tag">{pl.tagline}</div>
-                  <div className="plan-focus">{pl.focus}</div>
-                  <div className="plan-chips">
-                    {pl.equipment.map((e) => <span key={e} className="plan-chip">{e}</span>)}
-                  </div>
-                </button>
-              ))}
-              <button className={`plan-card ${f.planId === "custom" ? "on" : ""}`} onClick={() => { set("planId", "custom"); haptic(); }}>
-                <div className="plan-top">
-                  <span className="plan-emoji">⚙️</span>
-                  <span className="plan-name">Build your own</span>
-                  {f.planId === "custom" && <span className="plan-check">✓</span>}
+
+            <div className="dur-card">
+              <div className="dur-lab">How long?<small>Weeks past 4 repeat the block — same days, heavier</small></div>
+              <div className="dur-chips">
+                {DURATION_OPTIONS.map((n) => (
+                  <button
+                    key={n}
+                    className={`dur-chip ${f.programWeeks === n ? "on" : ""}`}
+                    onClick={() => { set("programWeeks", n); haptic(); }}
+                  >
+                    {n} wk
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <div className="plan-list">
+              {PLAN_LIST.map((pl) => {
+                const meta = planMeta(pl);
+                const on = f.planId === pl.id;
+                const [g1, g2] = pl.grad || ["#334155", "#64748B"];
+                return (
+                  <button
+                    key={pl.id}
+                    className={`plan-hero ${on ? "on" : ""}`}
+                    style={{ backgroundImage: `linear-gradient(135deg, ${g1} 0%, ${g2} 100%)` }}
+                    onClick={() => { set("planId", pl.id); haptic(); }}
+                  >
+                    <div className="ph-head">
+                      <span className="ph-name">{pl.name}</span>
+                      <span className="ph-emoji">{pl.accent}</span>
+                    </div>
+                    <div className="ph-focus">{pl.focus}</div>
+                    <div className="ph-meta">
+                      {f.programWeeks} WEEKS · {meta.trainingDays} DAYS/WK · ~{meta.avgMin} MIN/DAY
+                    </div>
+                    <span className={`ph-pill ${on ? "on" : ""}`}>{on ? "✓ Selected" : "Choose this plan"}</span>
+                  </button>
+                );
+              })}
+
+              <button
+                className={`plan-hero custom ${f.planId === "custom" ? "on" : ""}`}
+                style={{ backgroundImage: "linear-gradient(135deg, #475569 0%, #94A3B8 100%)" }}
+                onClick={() => { set("planId", "custom"); haptic(); }}
+              >
+                <div className="ph-head">
+                  <span className="ph-name">Build your own</span>
+                  <span className="ph-emoji">⚙️</span>
                 </div>
-                <div className="plan-tag">Design a plan you actually like</div>
-                <div className="plan-focus">Start from a template, then edit days, exercises &amp; intervals in Profile → Program.</div>
+                <div className="ph-focus">A program shaped around what you like and own</div>
+                <div className="ph-meta">{f.programWeeks} WEEKS · YOUR DAYS · YOUR LIFTS</div>
+                <span className={`ph-pill ${f.planId === "custom" ? "on" : ""}`}>
+                  {f.planId === "custom" ? "✓ Selected" : "Build it"}
+                </span>
               </button>
             </div>
           </>
