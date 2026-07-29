@@ -3,6 +3,7 @@ import Sheet from "./Sheet.jsx";
 import NumField from "./NumField.jsx";
 import CountdownTimer from "./CountdownTimer.jsx";
 import { useStore } from "../store.jsx";
+import { setsFor } from "../data/plans.js";
 import { beep, haptic } from "../lib/fx.js";
 
 // How-to video + set logging for a single exercise.
@@ -13,7 +14,7 @@ export default function ExerciseSheet({ open, onClose, week, dayId, exercise }) 
 
   const key = `w${week}-${dayId}`;
   const log = state.liftLogs[key]?.exercises?.[exercise.name] || {};
-  const target = exercise.sets[week - 1];
+  const target = setsFor(exercise, week);
   const reps = log.reps || [];
 
   const setRep = (i, v) => {

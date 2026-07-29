@@ -67,7 +67,9 @@
   color: var(--mu);
 }
 
-.week-tabs { display: flex; gap: 6px; align-items: center; margin-top: 14px; }
+.week-tabs { display: flex; gap: 6px; align-items: center; margin-top: 14px; overflow-x: auto; scrollbar-width: none; -webkit-overflow-scrolling: touch; }
+.week-tabs::-webkit-scrollbar { display: none; }
+.week-tabs > * { flex: none; }
 .week-pill {
   font-family: var(--font-display);
   font-size: 12px;
@@ -632,6 +634,18 @@
 .rt-stat .k { font-family: var(--font-display); font-weight: 800; font-size: 22px; letter-spacing: -0.01em; }
 .rt-stat.big .k { font-size: 30px; color: var(--ac-hi); }
 .rt-stat .l { font-size: 10px; color: var(--mu); text-transform: uppercase; font-family: var(--font-display); font-weight: 700; letter-spacing: 0.05em; margin-top: 2px; }
+
+/* Nike-style run summary: giant hero number + 3-col stat grid */
+.rt-title { font-family: var(--font-display); font-weight: 800; font-size: 17px; letter-spacing: -0.01em; margin-bottom: 6px; }
+.rt-hero { display: flex; align-items: baseline; gap: 12px; }
+.rt-hero-num {
+  font-family: var(--font-display); font-weight: 900; font-size: 68px; line-height: 0.92;
+  letter-spacing: -0.045em; color: var(--tx);
+}
+.rt-hero-lab { font-family: var(--font-display); font-weight: 700; font-size: 14px; color: var(--mu); text-transform: uppercase; letter-spacing: 0.08em; }
+.rt-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px 10px; margin-top: 16px; }
+.rt-cell .k { font-family: var(--font-display); font-weight: 800; font-size: 22px; letter-spacing: -0.02em; line-height: 1.1; }
+.rt-cell .l { font-size: 10.5px; color: var(--mu); text-transform: uppercase; font-family: var(--font-display); font-weight: 700; letter-spacing: 0.06em; margin-top: 3px; }
 .rt-splits { display: flex; gap: 8px; overflow-x: auto; margin-top: 14px; padding-bottom: 2px; }
 .rt-split { flex: none; display: flex; flex-direction: column; align-items: center; gap: 2px; background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 7px 12px; font-size: 12px; }
 .rt-split span:first-child { color: var(--mu); font-size: 10px; text-transform: uppercase; font-weight: 700; font-family: var(--font-display); }
@@ -962,6 +976,61 @@
 .plan-focus { color: var(--tx-2); font-size: 13px; margin-top: 4px; }
 .plan-chips { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px; }
 .plan-chip { font-size: 11px; color: var(--mu); border: 1px solid var(--line); border-radius: 100px; padding: 3px 10px; font-family: var(--font-display); font-weight: 700; text-transform: uppercase; letter-spacing: 0.03em; }
+
+/* ---------- program length + Fitness+ style plan cards ---------- */
+.dur-card { background: var(--panel); border: 1px solid var(--line); border-radius: var(--r); padding: 13px 14px; margin-bottom: 12px; }
+.dur-lab { font-size: 14px; }
+.dur-lab small { display: block; color: var(--mu); font-size: 11px; margin-top: 2px; }
+.dur-chips { display: flex; gap: 8px; margin-top: 10px; }
+.dur-chip { flex: 1; padding: 10px 0; border-radius: 12px; border: 1px solid var(--line); background: var(--panel-2); color: var(--mu); font-family: var(--font-display); font-weight: 800; font-size: 13px; }
+.dur-chip.on { border-color: var(--ac); background: var(--ac); color: var(--on-ac); }
+
+.plan-list { display: flex; flex-direction: column; gap: 12px; }
+.plan-hero {
+  position: relative; width: 100%; text-align: left; border: none;
+  border-radius: 22px; padding: 18px 18px 16px; overflow: hidden;
+  color: #fff; box-shadow: var(--shadow-lg);
+  transition: transform 0.09s ease, box-shadow 0.15s ease;
+}
+.plan-hero::after {
+  content: ""; position: absolute; inset: 0; pointer-events: none;
+  background: radial-gradient(120% 90% at 85% 10%, rgba(255,255,255,0.22), transparent 55%);
+}
+.plan-hero:active { transform: scale(0.985); }
+.plan-hero.on { outline: 2.5px solid var(--ac-hi); outline-offset: 2px; }
+.ph-head { position: relative; z-index: 1; display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+.ph-name { font-family: var(--font-display); font-weight: 900; font-size: 25px; letter-spacing: -0.025em; text-shadow: 0 1px 8px rgba(0,0,0,0.3); }
+.ph-emoji { font-size: 26px; filter: drop-shadow(0 2px 5px rgba(0,0,0,0.4)); }
+.ph-focus { position: relative; z-index: 1; font-size: 13px; line-height: 1.4; margin-top: 5px; color: rgba(255,255,255,0.92); }
+.ph-meta {
+  position: relative; z-index: 1; margin-top: 10px;
+  font-family: var(--font-display); font-weight: 800; font-size: 10.5px;
+  text-transform: uppercase; letter-spacing: 0.07em; color: rgba(255,255,255,0.82);
+}
+.ph-pill {
+  position: relative; z-index: 1; display: inline-block; margin-top: 14px;
+  background: rgba(0,0,0,0.34); border: 1px solid rgba(255,255,255,0.34); border-radius: 100px;
+  padding: 8px 16px; font-family: var(--font-display); font-weight: 800; font-size: 12.5px;
+  backdrop-filter: blur(4px);
+}
+.ph-pill.on { background: #fff; color: #10182B; border-color: #fff; }
+
+/* ---------- Apple-style activity rings ---------- */
+.rings-card { background: var(--panel); border: 1px solid var(--line); border-radius: var(--r-lg); padding: 14px; margin-bottom: 12px; }
+.rings-seg { display: flex; gap: 4px; background: var(--panel-2); border: 1px solid var(--line); border-radius: 100px; padding: 4px; }
+.rseg { flex: 1; padding: 8px 0; border: none; background: none; border-radius: 100px; color: var(--mu); font-family: var(--font-display); font-weight: 800; font-size: 12px; transition: background 0.15s ease, color 0.15s ease; }
+.rseg.on { background: var(--ac); color: var(--on-ac); }
+.rings-body { display: flex; align-items: center; gap: 16px; margin-top: 16px; }
+.triple-ring { width: 146px; height: 146px; flex: none; }
+.triple-ring.glow { filter: drop-shadow(0 0 9px rgba(255, 55, 95, 0.5)); }
+.rings-legend { flex: 1; display: flex; flex-direction: column; gap: 13px; min-width: 0; }
+.rleg-top { display: flex; align-items: center; gap: 6px; }
+.rleg-dot { width: 9px; height: 9px; border-radius: 50%; flex: none; }
+.rleg-label { font-family: var(--font-display); font-weight: 800; font-size: 10.5px; text-transform: uppercase; letter-spacing: 0.07em; color: var(--mu); }
+.rleg-val { font-family: var(--font-display); font-weight: 900; font-size: 21px; letter-spacing: -0.02em; line-height: 1.2; font-variant-numeric: tabular-nums; }
+.rleg-goal { font-size: 12px; font-weight: 700; color: var(--mu); letter-spacing: 0; }
+.rleg-sub { font-size: 10.5px; color: var(--mu); margin-top: 1px; }
+.rings-foot { margin-top: 14px; padding-top: 12px; border-top: 1px solid var(--line-soft); font-size: 11.5px; color: var(--mu); line-height: 1.45; }
 
 /* ---------- custom plan builder ---------- */
 .builder { position: fixed; inset: 0; z-index: 70; background: var(--g); display: flex; flex-direction: column; max-width: var(--maxw); margin: 0 auto; }

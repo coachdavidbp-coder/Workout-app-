@@ -5,7 +5,54 @@
 // `video` = YouTube id (null → the sheet does a search on `q`).
 // =========================================================
 
+// Default block length. Programs can run longer (see programWeeks): the
+// per-week set schemes / interval protocols cycle in repeating blocks.
 export const WEEKS = [1, 2, 3, 4];
+export const DURATION_OPTIONS = [4, 8, 12, 16];
+
+// How many weeks the user's current program runs.
+export function programWeeks(state) {
+  const n = parseInt(state?.profile?.programWeeks, 10);
+  return DURATION_OPTIONS.includes(n) ? n : 4;
+}
+// [1..n] for the active program.
+export function weeksOf(state) {
+  return Array.from({ length: programWeeks(state) }, (_, i) => i + 1);
+}
+// Set scheme for a given week — cycles the plan's block past its length.
+export function setsFor(exercise, week) {
+  const arr = exercise?.sets || [];
+  if (!arr.length) return "";
+  return arr[(Math.max(1, week) - 1) % arr.length];
+}
+// Interval protocol for a given week — exact match first, else cycle.
+export function protoFor(day, week) {
+  const list = day?.protocol || [];
+  if (!list.length) return null;
+  return list.find((p) => p.week === week) || list[(Math.max(1, week) - 1) % list.length];
+}
+// Which block (1-based) a week falls in, and the block length.
+export function blockOf(day_or_len, week) {
+  const len = Array.isArray(day_or_len) ? day_or_len.length : day_or_len || 4;
+  return Math.floor((Math.max(1, week) - 1) / len) + 1;
+}
+
+// Rough per-session length so cards can show "~45 min/day".
+export function planMeta(plan) {
+  const days = (plan?.days || []).filter((d) => d.type !== "rest");
+  if (!days.length) return { trainingDays: 0, avgMin: 0 };
+  let total = 0;
+  for (const d of days) {
+    if (d.type === "cardio") {
+      const p = (d.protocol || [])[0];
+      const workRest = p ? (p.rounds || 1) * ((p.seconds || 0) + (p.rest || 0)) : 0;
+      total += 8 + Math.round(workRest / 60); // warm-up + protocol
+    } else {
+      total += 8 + (d.exercises?.length || 0) * 6; // warm-up + ~6 min/lift
+    }
+  }
+  return { trainingDays: days.length, avgMin: Math.round(total / days.length / 5) * 5 };
+}
 
 export const DAY_NAMES = {
   sun: "Sunday", mon: "Monday", tue: "Tuesday", wed: "Wednesday",
@@ -420,6 +467,7 @@ export const PLANS = {
     equipment: ["Treadmill", "Adjustable dumbbells"],
     focus: "Strength, power & game-day conditioning",
     accent: "🏈",
+    grad: ["#1D4ED8", "#3B82F6"],
     days: GRIDIRON_DAYS,
   },
   sprint_sculpt: {
@@ -429,6 +477,7 @@ export const PLANS = {
     equipment: ["Dumbbells", "Kettlebell", "Treadmill"],
     focus: "Glutes, full-body strength & short sprints",
     accent: "⚡",
+    grad: ["#7C3AED", "#EC4899"],
     days: SPRINT_SCULPT_DAYS,
   },
   trenches: {
@@ -438,6 +487,7 @@ export const PLANS = {
     equipment: ["Adjustable dumbbells", "Treadmill", "Bodyweight"],
     focus: "Mass, max strength & sled-style conditioning",
     accent: "🔨",
+    grad: ["#334155", "#0EA5E9"],
     days: TRENCHES_DAYS,
   },
   skill_speed: {
@@ -447,6 +497,7 @@ export const PLANS = {
     equipment: ["Dumbbells", "Open space", "Treadmill"],
     focus: "Acceleration, agility, plyos & lean strength",
     accent: "💨",
+    grad: ["#0E7490", "#22D3EE"],
     days: SKILL_SPEED_DAYS,
   },
   track_sprint: {
@@ -456,6 +507,7 @@ export const PLANS = {
     equipment: ["Dumbbells", "Track / open space"],
     focus: "Acceleration, top speed, power & plyos",
     accent: "🏁",
+    grad: ["#B91C1C", "#F59E0B"],
     days: TRACK_SPRINT_DAYS,
   },
   distance: {
@@ -465,6 +517,7 @@ export const PLANS = {
     equipment: ["Running route", "Dumbbells"],
     focus: "Aerobic base, tempo, intervals & prehab",
     accent: "🏔️",
+    grad: ["#065F46", "#10B981"],
     days: DISTANCE_DAYS,
   },
 };
@@ -485,7 +538,7 @@ export function mkProto(rounds, seconds, rest, label) {
 export function starterCustomPlan() {
   const day = (id, label, name, type, extra) => ({ id, label, name, type, warmup: "5 min easy warm-up", note: "", ...extra });
   return {
-    id: "custom", name: "My Program", accent: "⚙️", tagline: "Your custom plan",
+    id: "custom", name: "My Program", accent: "⚙️", tagline: "Your custom plan", grad: ["#475569", "#94A3B8"],
     equipment: ["Your gear"], focus: "Custom",
     days: [
       day("sun", "Sun", "Full Body A", "lift", { exercises: [

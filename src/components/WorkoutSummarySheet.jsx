@@ -1,4 +1,5 @@
 import Sheet from "./Sheet.jsx";
+import { setsFor } from "../data/plans.js";
 import { fmtDuration, fmtPace } from "../lib/progress.js";
 
 const FEELS = ["😩", "😕", "🙂", "💪", "🔥"];
@@ -15,7 +16,7 @@ export default function WorkoutSummarySheet({ open, onClose, state, week, dayId,
   const exRows = (day.exercises || []).map((ex) => {
     const l = log.exercises?.[ex.name] || {};
     const reps = (l.reps || []).filter((r) => r !== "" && r != null);
-    return { name: ex.name, target: ex.sets?.[week - 1], weight: l.weight, reps };
+    return { name: ex.name, target: setsFor(ex, week), weight: l.weight, reps };
   });
   const setsLogged = exRows.reduce((a, r) => a + r.reps.length, 0);
   const volume = exRows.reduce(

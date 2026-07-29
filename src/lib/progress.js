@@ -3,7 +3,7 @@
 // Derives strength trends from liftLogs (week-over-week) and
 // running trends from runSessions (date timeline).
 // =========================================================
-import { daysOf, WEEKS } from "../data/plans.js";
+import { daysOf, weeksOf } from "../data/plans.js";
 
 const liftDaysOf = (state) => daysOf(state).filter((d) => d.type === "lift");
 
@@ -13,7 +13,7 @@ function sumReps(reps) {
 
 // total training volume (weight × reps) per week across all lifts
 export function weeklyStrength(state) {
-  return WEEKS.map((w) => {
+  return weeksOf(state).map((w) => {
     let volume = 0;
     let sets = 0;
     for (const day of liftDaysOf(state)) {
@@ -37,7 +37,7 @@ export function liftProgress(state) {
   for (const day of liftDaysOf(state)) {
     for (const ex of day.exercises) {
       const byWeek = {};
-      for (const w of WEEKS) {
+      for (const w of weeksOf(state)) {
         const wt = parseFloat(state.liftLogs[`w${w}-${day.id}`]?.exercises?.[ex.name]?.weight);
         if (wt) byWeek[w] = wt;
       }

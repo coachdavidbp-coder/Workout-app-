@@ -50,6 +50,9 @@ export const DEFAULT_STATE = {
     goal: "lose", // lose | maintain | strength | faster
     diet: "balanced", // balanced | high_protein | lower_carb | vegetarian | glp1
     customPlan: null, // built via the custom plan builder (used when planId === "custom")
+    programWeeks: 4, // program length: 4 | 8 | 12 | 16 (blocks repeat past week 4)
+    moveGoal: 600, // daily calorie-burn ring goal
+    exerciseGoal: 30, // daily training-minutes ring goal
     proteinGoal: 0,
     calorieGoal: 0,
     waterGoal: 0,
@@ -362,12 +365,13 @@ export function StoreProvider({ children }) {
       }),
 
     // ---- gamification / activity ----
-    logActivity: (dateKey, { workouts = 0, calories = 0 } = {}) =>
+    logActivity: (dateKey, { workouts = 0, calories = 0, minutes = 0 } = {}) =>
       update((s) => {
         s.activityLog = s.activityLog || {};
-        const cur = s.activityLog[dateKey] || { workouts: 0, calories: 0 };
+        const cur = s.activityLog[dateKey] || { workouts: 0, calories: 0, minutes: 0 };
         cur.workouts += workouts;
         cur.calories += calories;
+        cur.minutes = (cur.minutes || 0) + minutes;
         s.activityLog[dateKey] = cur;
       }),
 

@@ -3,7 +3,7 @@
 // daily reward, calories. All derived from logged data (offline,
 // free). No points are "spent"; everything recomputes from truth.
 // =========================================================
-import { daysOf, trainingCount } from "../data/plans.js";
+import { daysOf, trainingCount, programWeeks } from "../data/plans.js";
 import { targetsFor } from "../data/plan.js";
 import { todayKey, currentDayId } from "../store.jsx";
 
@@ -121,7 +121,7 @@ export function badges(state) {
   const topSpeed = (state.runSessions || []).reduce((a, r) => Math.max(a, parseFloat(r.topMph) || 0), 0);
   // week sweeps
   let sweeps = 0;
-  for (let w = 1; w <= 4; w++) {
+  for (let w = 1; w <= programWeeks(state); w++) {
     const all = daysOf(state).filter((d) => d.type !== "rest").every((d) => state.done[`w${w}-${d.id}`]);
     if (all) sweeps++;
   }
@@ -275,7 +275,7 @@ export function strengthPRHit(state, week, dayId) {
     const now = parseFloat(cur[ex.name]?.weight);
     if (!now) continue;
     let prevMax = 0, had = false;
-    for (let w = 1; w <= 4; w++) {
+    for (let w = 1; w <= programWeeks(state); w++) {
       if (w === week) continue;
       const p = parseFloat(state.liftLogs[`w${w}-${dayId}`]?.exercises?.[ex.name]?.weight);
       if (p) { had = true; prevMax = Math.max(prevMax, p); }

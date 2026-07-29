@@ -73,6 +73,7 @@ export default function RunTracker({ onClose }) {
   const [dist, setDist] = useState(0);
   const [dur, setDur] = useState(0);
   const [speed, setSpeed] = useState(0);
+  const [topSpeed, setTopSpeed] = useState(0);
   const [splits, setSplits] = useState([]);
   const [err, setErr] = useState("");
   const [gpsReady, setGpsReady] = useState(false);
@@ -81,6 +82,13 @@ export default function RunTracker({ onClose }) {
   const miles = dist / M_PER_MI;
   const pace = miles > 0.01 && dur > 0 ? dur / 60 / miles : null;
   const avgMph = dur > 0 ? miles / (dur / 3600) : 0;
+  const liveCals = Math.round(miles * (bodyweight(state) || 180) * (mode === "Run" ? 0.72 : 0.53));
+  const runTitle = () => {
+    const d = new Date();
+    const h = d.getHours();
+    const part = h < 12 ? "Morning" : h < 17 ? "Afternoon" : "Evening";
+    return `${d.toLocaleDateString(undefined, { weekday: "long" })} ${part} ${mode}`;
+  };
 
   // ---- map init ----
   useEffect(() => {
@@ -151,7 +159,7 @@ export default function RunTracker({ onClose }) {
     if (gpsSpeed != null && gpsSpeed >= 0) {
       const mph = gpsSpeed * 2.2369;
       setSpeed(mph);
-      if (mph > maxSpeedRef.current) maxSpeedRef.current = mph;
+      if (mph > maxSpeedRef.current) { maxSpeedRef.current = mph; setTopSpeed(mph); }
       // GPS reports real speed → treat as moving (fast auto-resume)
       if (gpsSpeed > MOVING_MS && statusRef.current === "tracking") resumeFromAuto();
     }
@@ -241,7 +249,7 @@ export default function RunTracker({ onClose }) {
         mode,
         route: downsample(routeRef.current),
       });
-      actions.logActivity(todayKey(), { workouts: 1, calories: cals });
+      actions.logActivity(todayKey(), { workouts: 1, calories: cals, minutes: Math.round(durationSec / 60) });
       toast({ emoji: mode === "Run" ? "🏃" : "🚶", title: `${mode} saved`, sub: `${mi.toFixed(2)} mi · ${fmtDuration(durationSec)}`, tone: "good" });
       if (voiceOn) speak(`Nice work. ${mi.toFixed(2)} miles in ${spokenTime(durationSec)}.`);
     }
@@ -280,22 +288,37 @@ export default function RunTracker({ onClose }) {
         {autoPaused && status === "tracking" && (
           <div className="rt-autopause">⏸ Auto-paused — move to resume</div>
         )}
-        <div className="rt-stats">
-          <div className="rt-stat big">
-            <div className="k tnum">{miles.toFixed(2)}</div>
-            <div className="l">Miles</div>
+        {status === "done" && <div className="rt-title">{runTitle()}</div>}
+
+        <div className="rt-hero">
+          <div className="rt-hero-num tnum">{miles.toFixed(2)}</div>
+          <div className="rt-hero-lab">Miles</div>
+        </div>
+
+        <div className="rt-grid">
+          <div className="rt-cell">
+            <div className="k tnum">{pace ? fmtPace(pace).replace("/mi", "") : "–:--"}</div>
+            <div className="l">Avg Pace</div>
           </div>
-          <div className="rt-stat">
+          <div className="rt-cell">
             <div className="k tnum">{fmtDuration(dur)}</div>
             <div className="l">Time</div>
           </div>
-          <div className="rt-stat">
-            <div className="k tnum">{pace ? fmtPace(pace).replace("/mi", "") : "–:--"}</div>
-            <div className="l">Pace /mi</div>
+          <div className="rt-cell">
+            <div className="k tnum">{liveCals}</div>
+            <div className="l">Calories</div>
           </div>
-          <div className="rt-stat">
+          <div className="rt-cell">
             <div className="k tnum">{(status === "done" ? avgMph : speed).toFixed(1)}</div>
-            <div className="l">{status === "done" ? "Avg mph" : "Now mph"}</div>
+            <div className="l">{status === "done" ? "Avg MPH" : "Now MPH"}</div>
+          </div>
+          <div className="rt-cell">
+            <div className="k tnum">{topSpeed ? topSpeed.toFixed(1) : "—"}</div>
+            <div className="l">Top MPH</div>
+          </div>
+          <div className="rt-cell">
+            <div className="k tnum">{splits.length}</div>
+            <div className="l">Splits</div>
           </div>
         </div>
 

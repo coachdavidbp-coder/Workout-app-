@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useStore, currentDayId, todayKey } from "../store.jsx";
-import { DAY_NAMES, WEEKS, daysOf, dayById, trainingCount } from "../data/plans.js";
+import { DAY_NAMES, weeksOf, daysOf, dayById, trainingCount, setsFor, protoFor } from "../data/plans.js";
 import { IconPlay } from "../components/icons.jsx";
 import NumField from "../components/NumField.jsx";
 import ExerciseSheet from "../components/ExerciseSheet.jsx";
@@ -48,7 +48,7 @@ export default function TrainScreen() {
     (d) => d.type !== "rest" && state.done[`w${week}-${d.id}`]
   ).length;
   const coachMsg = trainingCoach(state, { week, dayId, day, todayId: today });
-  const proto = day.protocol?.find((p) => p.week === week);
+  const proto = protoFor(day, week);
 
   const sessionSec = state.durations?.[doneKey] || 0;
   const estCals = caloriesForSession(sessionSec, day.type, bodyweight(state));
@@ -74,7 +74,7 @@ export default function TrainScreen() {
         });
       }
       if (streakMilestoneHit(state)) wins.push({ emoji: "🔥", title: `${streak(state).current + 1}-day streak!`, sub: "Don't stop now" });
-      actions.logActivity(todayKey(), { workouts: 1, calories: estCals });
+      actions.logActivity(todayKey(), { workouts: 1, calories: estCals, minutes: Math.round(sessionSec / 60) });
       haptic("success");
       if (wins.length) {
         fireConfetti(); // only on a PR or streak milestone
@@ -101,7 +101,7 @@ export default function TrainScreen() {
         </div>
 
         <div className="week-tabs">
-          {WEEKS.map((w) => (
+          {weeksOf(state).map((w) => (
             <button
               key={w}
               className={`week-pill ${week === w ? "on" : ""}`}
@@ -352,7 +352,7 @@ function LiftDay({ day, week, log, onOpen, actions, dayId }) {
                     {reps.length ? ` · ${reps.join("/")} reps` : ""}
                   </div>
                 </div>
-                <span className="set-pill">{ex.sets[week - 1]}</span>
+                <span className="set-pill">{setsFor(ex, week)}</span>
               </button>
             </div>
           );
@@ -376,8 +376,8 @@ function CardioDay({ day, week, runLog, actions, dayId, onStartTimer, proto }) {
     <>
       <div className="ex-card">
         <div className="protocol">
-          {day.protocol.map((p) => (
-            <div key={p.week} className={`proto-row ${p.week === week ? "on" : ""}`}>
+          {day.protocol.map((p, i) => (
+            <div key={p.week} className={`proto-row ${i === (week - 1) % day.protocol.length ? "on" : ""}`}>
               <span className="wk-tag">Wk {p.week}</span>
               {p.label}
             </div>

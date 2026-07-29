@@ -7,7 +7,8 @@ import BrandLogo from "../components/BrandLogo.jsx";
 import { fireConfetti, haptic } from "../lib/fx.js";
 import { speak, listVoices, setVoiceName, setCoachStyle, COACH_STYLES, hasHumanVoice, currentVoiceInfo, randomEncouragement } from "../lib/voice.js";
 import { toast } from "../lib/toast.js";
-import { PLAN_LIST, getPlan, planFor, trainingCount, WEEKS } from "../data/plans.js";
+import ActivityRings from "../components/ActivityRings.jsx";
+import { PLAN_LIST, getPlan, planFor, trainingCount, weeksOf, programWeeks, DURATION_OPTIONS, planMeta } from "../data/plans.js";
 import { DIETS, defaultTargets } from "../data/plan.js";
 import { spotifyEnabled, isSpotifyConnected, connectSpotify, disconnectSpotify } from "../lib/spotify.js";
 
@@ -191,8 +192,9 @@ export default function MoreScreen() {
           ))}
         </div>
 
-        {/* activity calendar */}
+        {/* activity rings + calendar */}
         <div className="section-title">Activity</div>
+        <ActivityRings />
         <ActivityCalendar state={state} />
 
         {/* settings */}
@@ -295,6 +297,21 @@ export default function MoreScreen() {
               </>
             );
           })()}
+          <div className="setting-row">
+            <div className="lab">Daily ring goals<small>Move (calories) &amp; Exercise (minutes)</small></div>
+            <div className="row gap-2">
+              <input
+                type="number" inputMode="numeric" aria-label="Move goal (calories)"
+                defaultValue={state.profile?.moveGoal ?? 600}
+                onBlur={(e) => actions.setProfile({ moveGoal: Math.max(50, parseInt(e.target.value, 10) || 600) })}
+              />
+              <input
+                type="number" inputMode="numeric" aria-label="Exercise goal (minutes)"
+                defaultValue={state.profile?.exerciseGoal ?? 30}
+                onBlur={(e) => actions.setProfile({ exerciseGoal: Math.max(5, parseInt(e.target.value, 10) || 30) })}
+              />
+            </div>
+          </div>
           <div className="setting-row" style={{ flexWrap: "wrap", gap: 10 }}>
             <div className="lab">Appearance<small>Light, dark, or follow your device</small></div>
             <div className="row gap-2">
@@ -333,49 +350,85 @@ export default function MoreScreen() {
 
         {/* program */}
         <div className="section-title">Program</div>
-        <div className="stack gap-2">
-          {PLAN_LIST.map((pl) => (
-            <button
-              key={pl.id}
-              className={`plan-card ${state.profile.planId === pl.id ? "on" : ""}`}
-              onClick={() => { actions.setProfile({ planId: pl.id }); haptic(); toast({ emoji: pl.accent, title: "Program switched", sub: pl.name, tone: "good" }); }}
-            >
-              <div className="plan-top">
-                <span className="plan-emoji">{pl.accent}</span>
-                <span className="plan-name">{pl.name}</span>
-                {state.profile.planId === pl.id && <span className="plan-check">✓</span>}
-              </div>
-              <div className="plan-tag">{pl.tagline}</div>
-              <div className="plan-chips">
-                {pl.equipment.map((eq) => <span key={eq} className="plan-chip">{eq}</span>)}
-              </div>
-            </button>
-          ))}
-          <button className={`plan-card ${state.profile.planId === "custom" ? "on" : ""}`} onClick={() => setChoosing(true)}>
-            <div className="plan-top">
-              <span className="plan-emoji">⚙️</span>
-              <span className="plan-name">Build your own</span>
-              {state.profile.planId === "custom" && <span className="plan-check">✓</span>}
+
+        {/* length */}
+        <div className="dur-card">
+          <div className="dur-lab">Program length<small>Weeks past 4 repeat the block — same days, heavier</small></div>
+          <div className="dur-chips">
+            {DURATION_OPTIONS.map((n) => (
+              <button
+                key={n}
+                className={`dur-chip ${programWeeks(state) === n ? "on" : ""}`}
+                onClick={() => {
+                  actions.setProfile({ programWeeks: n });
+                  if (state.week > n) actions.setWeek(1);
+                  haptic();
+                  toast({ emoji: "🗓️", title: `${n}-week program`, sub: n > 4 ? `${n / 4} blocks of 4 weeks` : "Classic 4-week block", tone: "good" });
+                }}
+              >
+                {n} wk
+              </button>
+            ))}
+          </div>
+        </div>
+
+        <div className="plan-list">
+          {PLAN_LIST.map((pl) => {
+            const meta = planMeta(pl);
+            const on = state.profile.planId === pl.id;
+            const [g1, g2] = pl.grad || ["#334155", "#64748B"];
+            return (
+              <button
+                key={pl.id}
+                className={`plan-hero ${on ? "on" : ""}`}
+                style={{ backgroundImage: `linear-gradient(135deg, ${g1} 0%, ${g2} 100%)` }}
+                onClick={() => { actions.setProfile({ planId: pl.id }); haptic("success"); toast({ emoji: pl.accent, title: "Program switched", sub: `${pl.name} · ${programWeeks(state)} weeks`, tone: "good" }); }}
+              >
+                <div className="ph-head">
+                  <span className="ph-name">{pl.name}</span>
+                  <span className="ph-emoji">{pl.accent}</span>
+                </div>
+                <div className="ph-focus">{pl.focus}</div>
+                <div className="ph-meta">
+                  {programWeeks(state)} WEEKS · {meta.trainingDays} DAYS/WK · ~{meta.avgMin} MIN/DAY
+                </div>
+                <span className={`ph-pill ${on ? "on" : ""}`}>{on ? "✓ Active plan" : "Start this plan"}</span>
+              </button>
+            );
+          })}
+
+          <button
+            className={`plan-hero custom ${state.profile.planId === "custom" ? "on" : ""}`}
+            style={{ backgroundImage: "linear-gradient(135deg, #475569 0%, #94A3B8 100%)" }}
+            onClick={() => setChoosing(true)}
+          >
+            <div className="ph-head">
+              <span className="ph-name">Build your own</span>
+              <span className="ph-emoji">⚙️</span>
             </div>
-            <div className="plan-tag">Create a program you actually like</div>
-            <div className="plan-focus">Answer a few questions &amp; we build it — or set every day yourself →</div>
+            <div className="ph-focus">A program shaped around what you like and own</div>
+            <div className="ph-meta">{programWeeks(state)} WEEKS · YOUR DAYS · YOUR LIFTS</div>
+            <span className={`ph-pill ${state.profile.planId === "custom" ? "on" : ""}`}>
+              {state.profile.planId === "custom" ? "✓ Active plan" : "Build it"}
+            </span>
           </button>
         </div>
 
         {(() => {
           const plan = planFor(state);
           const trainDays = trainingCount(state);
-          const weeksDone = WEEKS.filter((w) =>
+          const wks = weeksOf(state);
+          const weeksDone = wks.filter((w) =>
             plan.days.filter((d) => d.type !== "rest").every((d) => state.done[`w${w}-${d.id}`])
           ).length;
-          const done = weeksDone * trainDays + WEEKS.filter((w) => !plan.days.filter((d) => d.type !== "rest").every((d) => state.done[`w${w}-${d.id}`]))
+          const done = weeksDone * trainDays + wks.filter((w) => !plan.days.filter((d) => d.type !== "rest").every((d) => state.done[`w${w}-${d.id}`]))
             .reduce((a, w) => a + plan.days.filter((d) => d.type !== "rest" && state.done[`w${w}-${d.id}`]).length, 0);
-          const total = trainDays * WEEKS.length;
+          const total = trainDays * wks.length;
           return (
             <div className="phase-complete">
               <div className="pc-row">
                 <span>Progress on <b>{plan.name}</b></span>
-                <span className="tnum">{weeksDone}/{WEEKS.length} weeks</span>
+                <span className="tnum">{weeksDone}/{wks.length} weeks</span>
               </div>
               <div className="pc-track"><span style={{ width: `${total ? (done / total) * 100 : 0}%` }} /></div>
               <button
