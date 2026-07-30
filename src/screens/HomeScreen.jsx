@@ -4,8 +4,10 @@ import { DAY_NAMES, daysOf, dayById, trainingCount } from "../data/plans.js";
 import BrandLogo from "../components/BrandLogo.jsx";
 import DayRecapSheet from "../components/DayRecapSheet.jsx";
 import SettingsSheet from "../components/SettingsSheet.jsx";
+import EmptyState from "../components/EmptyState.jsx";
 import { TripleRing } from "../components/ActivityRings.jsx";
 import { activityRings } from "../lib/activity.js";
+import { useCountUp } from "../lib/anim.js";
 import {
   totalXP, levelInfo, streak, dailyChallenge, coachQuoteOfDay,
   recentActivity, continueDay, currentIcon, activeDates,
@@ -132,21 +134,9 @@ export default function HomeScreen({ go }) {
 
         {/* ---------- quick stats ---------- */}
         <div className="stat-tiles">
-          <div className="stat-tile">
-            <div className="st-k">{s.current}</div>
-            <div className="st-l">Day streak</div>
-            <div className="st-s">best {s.best}</div>
-          </div>
-          <div className="stat-tile">
-            <div className="st-k">{weekDone}<span className="st-of">/{weekTotal}</span></div>
-            <div className="st-l">This week</div>
-            <div className="st-s">Week {week} · workouts</div>
-          </div>
-          <div className="stat-tile">
-            <div className="st-k">{lvl.level}</div>
-            <div className="st-l">{lvl.title}</div>
-            <div className="st-bar"><span style={{ width: `${lvl.pct * 100}%` }} /></div>
-          </div>
+          <StatTile k={s.current} l="Day streak" s={`best ${s.best}`} />
+          <StatTile k={weekDone} of={weekTotal} l="This week" s={`Week ${week} · workouts`} />
+          <StatTile k={lvl.level} l={lvl.title} bar={lvl.pct} />
         </div>
 
         {/* streak at risk */}
@@ -197,24 +187,42 @@ export default function HomeScreen({ go }) {
         </button>
 
         {/* ---------- recent ---------- */}
-        {recent.length > 0 && (
-          <>
-            <div className="section-title">Recent</div>
-            <div className="recent-list card">
-              {recent.map((e, i) => (
-                <div className="recent-row" key={i}>
-                  <span className="re-emoji">{e.emoji}</span>
-                  <span className="re-label">{e.label}</span>
-                  <span className="re-date">{shortDate(e.date)}</span>
-                </div>
-              ))}
-            </div>
-          </>
+        <div className="section-title">Recent</div>
+        {recent.length > 0 ? (
+          <div className="recent-list card">
+            {recent.map((e, i) => (
+              <div className="recent-row" key={i}>
+                <span className="re-emoji">{e.emoji}</span>
+                <span className="re-label">{e.label}</span>
+                <span className="re-date">{shortDate(e.date)}</span>
+              </div>
+            ))}
+          </div>
+        ) : (
+          <EmptyState
+            icon="🏈"
+            title="Nothing logged yet"
+            body="Finish a workout, log a meal or step on the scale and it'll show up here."
+            action="Go to today's session"
+            onAction={() => { haptic(); go?.("train"); }}
+          />
         )}
       </main>
 
       <DayRecapSheet open={recapOpen} onClose={() => setRecapOpen(false)} />
       <SettingsSheet open={settingsOpen} onClose={() => setSettingsOpen(false)} />
+    </div>
+  );
+}
+
+function StatTile({ k, of, l, s, bar }) {
+  const n = useCountUp(k);
+  return (
+    <div className="stat-tile">
+      <div className="st-k">{n}{of != null && <span className="st-of">/{of}</span>}</div>
+      <div className="st-l">{l}</div>
+      {s && <div className="st-s">{s}</div>}
+      {bar != null && <div className="st-bar"><span style={{ width: `${bar * 100}%` }} /></div>}
     </div>
   );
 }

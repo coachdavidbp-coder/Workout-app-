@@ -20,6 +20,13 @@ export default function TrendChart({ points, color = "var(--ac)", height = 150, 
 
   const line = data.map((d, i) => `${x(i)},${y(d.value)}`).join(" ");
   const area = `${x(0)},${H - padB} ${line} ${x(n - 1)},${H - padB}`;
+  // Path length drives the draw-on animation (CSS reads it as --len).
+  let lineLen = 0;
+  for (let i = 1; i < n; i++) {
+    lineLen += Math.hypot(x(i) - x(i - 1), y(data[i].value) - y(data[i - 1].value));
+  }
+  lineLen = Math.ceil(lineLen) || 1;
+
   const ticks = [max, (max + min) / 2, min];
   const last = n - 1;
   const xIdx = n <= 3 ? data.map((_, i) => i) : [0, Math.floor(n / 2), n - 1];
@@ -38,8 +45,17 @@ export default function TrendChart({ points, color = "var(--ac)", height = 150, 
           <text className="axis-txt" x={padL - 6} y={y(t) + 3} textAnchor="end">{valueFmt(Math.round(t))}</text>
         </g>
       ))}
-      <polygon points={area} fill="url(#tgrad)" />
-      <polyline points={line} fill="none" stroke={color} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
+      <polygon className="area-fade" points={area} fill="url(#tgrad)" />
+      <polyline
+        className="line-draw"
+        points={line}
+        fill="none"
+        stroke={color}
+        strokeWidth="2.5"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        style={{ "--len": lineLen }}
+      />
       {data.map((d, i) => (
         <circle key={i} cx={x(i)} cy={y(d.value)} r={i === last ? 4 : 2.5} fill={i === last ? "var(--good)" : color} stroke="var(--g)" strokeWidth="1.5" />
       ))}

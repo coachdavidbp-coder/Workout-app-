@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useStore } from "../store.jsx";
 import { activityRings, SCOPES } from "../lib/activity.js";
 import GoalWizardSheet from "./GoalWizardSheet.jsx";
+import { useMountedFlag } from "../lib/anim.js";
 import { haptic } from "../lib/fx.js";
 
 // Triple activity ring: Move / Exercise / Workouts, with
@@ -82,6 +83,8 @@ export default function ActivityRings() {
 export function TripleRing({ rings, allClosed, className = "" }) {
   const R = [82, 60, 38];
   const SW = 17;
+  // Fill from empty on mount rather than snapping to the final value.
+  const grown = useMountedFlag();
   return (
     <svg className={`triple-ring ${className} ${allClosed ? "glow" : ""}`} viewBox="0 0 200 200">
       {rings.map((r, i) => {
@@ -94,9 +97,9 @@ export function TripleRing({ rings, allClosed, className = "" }) {
               cx="100" cy="100" r={rad} fill="none"
               stroke={r.color} strokeWidth={SW} strokeLinecap="round"
               strokeDasharray={c}
-              strokeDashoffset={c * (1 - Math.min(1, r.pct))}
+              strokeDashoffset={c * (1 - (grown ? Math.min(1, r.pct) : 0))}
               transform="rotate(-90 100 100)"
-              style={{ transition: "stroke-dashoffset 0.6s cubic-bezier(0.2,0.9,0.3,1)" }}
+              style={{ transition: `stroke-dashoffset .9s cubic-bezier(.2,.9,.3,1) ${i * 0.09}s` }}
             />
           </g>
         );

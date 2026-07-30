@@ -1390,3 +1390,49 @@
 @supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
   :root { --panel: rgba(14, 26, 48, 0.86); --panel-2: rgba(10, 20, 38, 0.8); }
 }
+
+/* =========================================================
+   MOTION — screen entrance, chart draw. All opt-out under
+   prefers-reduced-motion.
+   ========================================================= */
+@media (prefers-reduced-motion: no-preference) {
+  @keyframes riseIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to   { opacity: 1; transform: none; }
+  }
+  .content > * { animation: riseIn .4s cubic-bezier(.2,.9,.3,1) both; }
+  .content > *:nth-child(1) { animation-delay: 0s; }
+  .content > *:nth-child(2) { animation-delay: .04s; }
+  .content > *:nth-child(3) { animation-delay: .08s; }
+  .content > *:nth-child(4) { animation-delay: .12s; }
+  .content > *:nth-child(5) { animation-delay: .16s; }
+  .content > *:nth-child(6) { animation-delay: .2s; }
+  .content > *:nth-child(n+7) { animation-delay: .24s; }
+
+  @keyframes drawLine { from { stroke-dashoffset: var(--len); } to { stroke-dashoffset: 0; } }
+  .wchart .line-draw {
+    stroke-dasharray: var(--len);
+    animation: drawLine 1s cubic-bezier(.3,.8,.4,1) both;
+  }
+  @keyframes fadeUp { from { opacity: 0; } to { opacity: 1; } }
+  .wchart .area-fade, .wchart .pt { animation: fadeUp .5s ease .55s both; }
+}
+
+/* =========================================================
+   EMPTY STATES
+   ========================================================= */
+.empty-state {
+  display: flex; flex-direction: column; align-items: center; text-align: center;
+  gap: 6px; padding: 30px 22px;
+  background: var(--panel); border: 1px dashed var(--line); border-radius: var(--r-lg);
+  -webkit-backdrop-filter: blur(14px) saturate(1.3); backdrop-filter: blur(14px) saturate(1.3);
+}
+.es-ico { font-size: 30px; opacity: .95; }
+.es-title { font-family: var(--font-display); font-weight: 800; font-size: 15px; letter-spacing: -.01em; margin-top: 4px; }
+.es-body { margin: 0; font-size: 12.5px; color: var(--mu); line-height: 1.5; max-width: 34ch; }
+.es-btn {
+  margin-top: 10px; padding: 10px 18px; border-radius: 100px; border: 1px solid var(--ac);
+  background: var(--ac-dim); color: var(--ac-hi);
+  font-family: var(--font-display); font-weight: 800; font-size: 12.5px;
+}
+.es-btn:active { transform: scale(.98); }

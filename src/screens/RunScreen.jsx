@@ -3,6 +3,7 @@ import { useStore } from "../store.jsx";
 import BrandLogo from "../components/BrandLogo.jsx";
 import RunTracker from "../components/RunTracker.jsx";
 import RouteMiniMap from "../components/RouteMiniMap.jsx";
+import EmptyState from "../components/EmptyState.jsx";
 import { fmtDuration, fmtPace, runningSummary } from "../lib/progress.js";
 import { haptic } from "../lib/fx.js";
 
@@ -58,7 +59,13 @@ export default function RunScreen() {
 
         <div className="section-title">Recent outdoor runs</div>
         {outdoor.length === 0 ? (
-          <div className="empty-hint">No outdoor runs yet. Tap <b>Start run / walk</b> and head outside — your route and splits will show up here.</div>
+          <EmptyState
+            icon="🗺️"
+            title="No outdoor runs yet"
+            body="Head outside and hit start — your route, splits and pace land here when you finish."
+            action="Start a run"
+            onAction={() => { haptic("success"); setOpen(true); }}
+          />
         ) : (
           <div className="run-cards">
             {outdoor.slice(0, 8).map((r) => (

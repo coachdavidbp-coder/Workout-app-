@@ -6,6 +6,7 @@ import Sheet from "../components/Sheet.jsx";
 import NumField from "../components/NumField.jsx";
 import BrandLogo from "../components/BrandLogo.jsx";
 import RouteMiniMap from "../components/RouteMiniMap.jsx";
+import EmptyState from "../components/EmptyState.jsx";
 import { strengthSummary, runningSummary, personalBests, fmtPace } from "../lib/progress.js";
 
 const SEGMENTS = [
@@ -166,10 +167,11 @@ function StrengthBody() {
 
   if (!s.hasData)
     return (
-      <div className="card empty-hint">
-        Log the weight you use on your lift days (tap a lift → enter weight & reps).
-        Your strength trend and per-lift progress show up here.
-      </div>
+      <EmptyState
+        icon="🏋️"
+        title="No lifts logged yet"
+        body="Open a lift day, tap an exercise and enter the weight and reps. Your volume trend and per-lift progress build from there."
+      />
     );
 
   const points = s.weekly.map((w) => ({ label: `W${w.week}`, value: w.volume > 0 ? w.volume : null }));
@@ -225,11 +227,11 @@ function RunningBody() {
 
   if (!s.hasData)
     return (
-      <div className="card empty-hint">
-        Run your Speed or Tempo days, then hit <b>Mark Workout Complete</b> — your
-        top speed, pace and mile times build a trend here so you can see yourself
-        getting faster.
-      </div>
+      <EmptyState
+        icon="💨"
+        title="No runs logged yet"
+        body="Track a run on the Run tab, or log your speeds on a cardio day. Top speed, pace and mile splits chart here so you can watch yourself get faster."
+      />
     );
 
   const speedPts = s.runs.map((r) => ({ label: shortDate(r.date), value: r.topMph ? parseFloat(r.topMph) : null }));
