@@ -1,6 +1,7 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useStore, todayKey } from "../store.jsx";
 import { RECIPES, findRecipes, dishGradient, recipeVideoSearch } from "../data/recipes.js";
+import { resolveVideoId, embedUrl, youtubeSearchEnabled } from "../lib/youtube.js";
 import { DIETS } from "../data/plan.js";
 import { MEAL_SLOTS } from "../data/foods.js";
 import BrandLogo from "../components/BrandLogo.jsx";
@@ -107,6 +108,61 @@ export default function MealPrepScreen() {
   );
 }
 
+// Plays the how-to in-app when we can resolve a real video id; otherwise
+// falls back to a card that opens YouTube (so it never shows a dead player).
+function RecipeVideo({ recipe, onOpen }) {
+  const [videoId, setVideoId] = useState(recipe.video || null);
+  const [state, setState] = useState(recipe.video ? "ready" : youtubeSearchEnabled ? "loading" : "link");
+
+  useEffect(() => {
+    setVideoId(recipe.video || null);
+    if (recipe.video) { setState("ready"); return; }
+    if (!youtubeSearchEnabled) { setState("link"); return; }
+    setState("loading");
+    const ctrl = new AbortController();
+    resolveVideoId(recipe.yt || recipe.name, ctrl.signal).then((id) => {
+      if (ctrl.signal.aborted) return;
+      if (id) { setVideoId(id); setState("ready"); }
+      else setState("link");
+    });
+    return () => ctrl.abort();
+  }, [recipe.id]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  if (state === "ready" && videoId) {
+    return (
+      <>
+        <div className="video-wrap">
+          <iframe
+            src={embedUrl(videoId)}
+            title={`${recipe.name} how-to`}
+            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+            allowFullScreen
+          />
+        </div>
+        <button className="video-alt" onClick={onOpen}>Not the right video? Search YouTube ↗</button>
+      </>
+    );
+  }
+
+  if (state === "loading") {
+    return (
+      <div className="video-card loading" style={dishGradient(recipe)}>
+        <span className="vc-txt"><span className="vc-k">Finding a how-to video…</span></span>
+      </div>
+    );
+  }
+
+  return (
+    <button className="video-card" style={dishGradient(recipe)} onClick={onOpen}>
+      <span className="vc-play">▶</span>
+      <span className="vc-txt">
+        <span className="vc-k">Watch how-to on YouTube</span>
+        <span className="vc-s">{recipe.yt}</span>
+      </span>
+    </button>
+  );
+}
+
 function RecipeDetail({ recipe, onBack, fav, actions }) {
   const [slot, setSlot] = useState("Lunch");
   const logMeal = () => {
@@ -153,13 +209,7 @@ function RecipeDetail({ recipe, onBack, fav, actions }) {
         </ol>
 
         <div className="section-label" style={{ marginTop: 18 }}>How-to video</div>
-        <button className="video-card" style={dishGradient(recipe)} onClick={watch}>
-          <span className="vc-play">▶</span>
-          <span className="vc-txt">
-            <span className="vc-k">Watch how-to on YouTube</span>
-            <span className="vc-s">{recipe.yt}</span>
-          </span>
-        </button>
+        <RecipeVideo recipe={recipe} onOpen={watch} />
 
         <div className="section-label" style={{ marginTop: 18 }}>Add to</div>
         <div className="row gap-2" style={{ flexWrap: "wrap" }}>
