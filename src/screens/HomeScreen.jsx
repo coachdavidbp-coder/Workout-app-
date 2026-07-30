@@ -3,6 +3,7 @@ import { useStore, todayKey, weekDates, currentDayId } from "../store.jsx";
 import { DAY_NAMES, daysOf, dayById, trainingCount } from "../data/plans.js";
 import BrandLogo from "../components/BrandLogo.jsx";
 import DayRecapSheet from "../components/DayRecapSheet.jsx";
+import SettingsSheet from "../components/SettingsSheet.jsx";
 import { TripleRing } from "../components/ActivityRings.jsx";
 import { activityRings } from "../lib/activity.js";
 import {
@@ -14,6 +15,7 @@ import { haptic } from "../lib/fx.js";
 export default function HomeScreen({ go }) {
   const { state, actions } = useStore();
   const [recapOpen, setRecapOpen] = useState(false);
+  const [settingsOpen, setSettingsOpen] = useState(false);
 
   // Auto-pop the recap once per day, the first time you open the app after 8pm.
   useEffect(() => {
@@ -81,6 +83,7 @@ export default function HomeScreen({ go }) {
         <div className="brandrow">
           <BrandLogo height={24} />
           <span className="mode-badge">{icon.emoji} Lv {lvl.level}</span>
+          <button className="gear-btn" onClick={() => { haptic(); setSettingsOpen(true); }} aria-label="Settings">⚙︎</button>
         </div>
         <div className="h-title">
           <div className="kicker">{greet}, {state.profile?.name || "Coach"}</div>
@@ -209,6 +212,7 @@ export default function HomeScreen({ go }) {
       </main>
 
       <DayRecapSheet open={recapOpen} onClose={() => setRecapOpen(false)} />
+      <SettingsSheet open={settingsOpen} onClose={() => setSettingsOpen(false)} />
     </div>
   );
 }

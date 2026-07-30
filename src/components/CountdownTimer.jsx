@@ -14,6 +14,8 @@ export default function CountdownTimer({
   accent = "rest",          // rest | warmup
   voice = false,
   doneLabel = "Done",
+  donePhase,                // headline shown at zero (defaults to "Done")
+  doneNote,                 // supporting line shown at zero
   onComplete,               // fired when the done button is tapped
   onClose,
 }) {
@@ -87,8 +89,10 @@ export default function CountdownTimer({
           <span style={{ width: 40 }} />
         </div>
 
-        <div className="it-phase">{done ? "Done" : label}</div>
+        <div className="it-phase">{done ? (donePhase || "Done") : label}</div>
         <div className="it-count tnum">{done ? "✓" : fmt(remaining)}</div>
+
+        {done && doneNote && <div className="it-note">{doneNote}</div>}
 
         <div className="it-progress"><span style={{ width: `${done ? 100 : pct * 100}%` }} /></div>
 

@@ -2,6 +2,7 @@ import { useEffect, useRef, useState, useCallback } from "react";
 import MusicButton from "./MusicButton.jsx";
 import {
   spotifyEnabled, isSpotifyConnected, connectSpotify, nowPlaying, control,
+  myPlaylists, playContext,
 } from "../lib/spotify.js";
 import { haptic } from "../lib/fx.js";
 import { toast } from "../lib/toast.js";
@@ -12,7 +13,47 @@ import { toast } from "../lib/toast.js";
 export default function NowPlaying() {
   const [connected, setConnected] = useState(isSpotifyConnected());
   const [track, setTrack] = useState(null);
+  const [lists, setLists] = useState(null);   // null = not loaded, [] = none
+  const [showLists, setShowLists] = useState(false);
+  const [listErr, setListErr] = useState("");
   const timer = useRef(null);
+
+  const loadLists = async () => {
+    setListErr("");
+    const r = await myPlaylists();
+    if (!r) { setListErr("Couldn't load playlists."); setLists([]); return; }
+    if (r.needsScope) {
+      setListErr("Reconnect Spotify to give the app permission to read your playlists.");
+      setLists([]);
+      return;
+    }
+    setLists(r.items);
+  };
+
+  const openLists = async () => {
+    haptic();
+    const next = !showLists;
+    setShowLists(next);
+    if (next && lists === null) await loadLists();
+  };
+
+  const startList = async (pl) => {
+    haptic();
+    const r = await playContext(pl.uri);
+    if (r.ok) {
+      toast({ emoji: "🎵", title: "Playing", sub: pl.name, tone: "good" });
+      setTimeout(poll, 900);
+      return;
+    }
+    // Free account or no active device → hand off to the Spotify app.
+    toast({
+      emoji: "↗️",
+      title: r.premium ? "Opening Spotify" : "Opening Spotify",
+      sub: r.premium ? "In-app playback needs Premium" : "Start playback there, then come back",
+      tone: "neutral",
+    });
+    window.open(pl.url, "_blank", "noopener");
+  };
 
   const poll = useCallback(async () => {
     const t = await nowPlaying();
@@ -101,6 +142,37 @@ export default function NowPlaying() {
           <IconRepeat one={track?.repeat === "track"} />
         </button>
       </div>
+
+      <button className="np-lists-toggle" onClick={openLists}>
+        {showLists ? "▾ Hide playlists" : "▸ My playlists"}
+      </button>
+
+      {showLists && (
+        <div className="np-lists">
+          {listErr && (
+            <div className="np-list-err">
+              {listErr}
+              {/needs?|permission/i.test(listErr) && (
+                <button className="np-reconnect" onClick={() => connectSpotify()}>Reconnect Spotify</button>
+              )}
+            </div>
+          )}
+          {lists === null && !listErr && <div className="np-list-empty">Loading…</div>}
+          {lists && lists.length === 0 && !listErr && <div className="np-list-empty">No playlists found.</div>}
+          {(lists || []).map((pl) => (
+            <button className="np-list-row" key={pl.id} onClick={() => startList(pl)}>
+              {pl.art
+                ? <img className="np-list-art" src={pl.art} alt="" />
+                : <span className="np-list-art np-list-art-fb">♪</span>}
+              <span className="np-list-txt">
+                <span className="np-list-name">{pl.name}</span>
+                <span className="np-list-sub">{pl.tracks} tracks{pl.owner ? ` · ${pl.owner}` : ""}</span>
+              </span>
+              <span className="np-list-play">▶</span>
+            </button>
+          ))}
+        </div>
+      )}
     </div>
   );
 }

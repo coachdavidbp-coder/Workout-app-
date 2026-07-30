@@ -8,6 +8,8 @@ import { fireConfetti, haptic } from "../lib/fx.js";
 import { speak, listVoices, setVoiceName, setCoachStyle, COACH_STYLES, hasHumanVoice, currentVoiceInfo, randomEncouragement } from "../lib/voice.js";
 import { toast } from "../lib/toast.js";
 import ActivityRings from "../components/ActivityRings.jsx";
+import SettingsSheet from "../components/SettingsSheet.jsx";
+import AvatarPicker from "../components/AvatarPicker.jsx";
 import { PLAN_LIST, getPlan, planFor, trainingCount, weeksOf, programWeeks, DURATION_OPTIONS, planMeta } from "../data/plans.js";
 import { DIETS, defaultTargets } from "../data/plan.js";
 import { spotifyEnabled, isSpotifyConnected, connectSpotify, disconnectSpotify } from "../lib/spotify.js";
@@ -40,6 +42,8 @@ export default function MoreScreen() {
   const [building, setBuilding] = useState(false);
   const [guiding, setGuiding] = useState(false);
   const [choosing, setChoosing] = useState(false);
+  const [settingsOpen, setSettingsOpen] = useState(false);
+  const [avatarOpen, setAvatarOpen] = useState(false);
   const [spTick, setSpTick] = useState(0);
   const spConnected = isSpotifyConnected();
 
@@ -130,7 +134,12 @@ export default function MoreScreen() {
       <main className="content">
         {/* profile card */}
         <div className="card profile-card glass">
-          <div className="avatar"><img className="avatar-img" src={icon.img} alt="" /></div>
+          <button className="avatar avatar-btn" onClick={() => { haptic(); setAvatarOpen(true); }} aria-label="Change profile photo">
+            {state.profile?.avatar
+              ? <img className="avatar-photo" src={state.profile.avatar} alt="" />
+              : <img className="avatar-img" src={icon.img} alt="" />}
+            <span className="avatar-edit">✎</span>
+          </button>
           <div style={{ flex: 1 }}>
             <div className="pn">{name}</div>
             <div className="pe">{user?.email || (mode === "cloud" ? "Signed in" : "Saved on this device")}</div>
@@ -192,141 +201,19 @@ export default function MoreScreen() {
           ))}
         </div>
 
-        {/* activity rings + calendar */}
+        {/* activity rings */}
         <div className="section-title">Activity</div>
         <ActivityRings />
-        <ActivityCalendar state={state} />
 
         {/* settings */}
-        <div className="section-title">Settings</div>
-        <div className="card">
-          <div className="setting-row">
-            <div className="lab">Coach voice<small>Spoken cues during workouts (on-device, free)</small></div>
-            <button
-              className={`toggle ${state.settings?.voice !== false ? "on" : ""}`}
-              role="switch"
-              aria-checked={state.settings?.voice !== false}
-              onClick={() => { const nv = !(state.settings?.voice !== false); actions.setSetting("voice", nv); if (nv) speakTest(); }}
-            >
-              <span className="knob" />
-            </button>
-          </div>
-          {state.settings?.voice !== false && (() => {
-            const voices = listVoices();
-            const recommended = voices.filter((v) => v.recommended);
-            const others = voices.filter((v) => !v.recommended);
-            const style = state.settings?.coachStyle || "balanced";
-            const humanReady = hasHumanVoice();
-            const cur = currentVoiceInfo();
-            return (
-              <>
-                {humanReady ? (
-                  <div className="voice-guide ok">
-                    ✅ <b>Human voice ready.</b> Pick a <b>Premium</b> or <b>Enhanced</b> voice below (they're real human recordings), then preview.
-                    {cur.name && !cur.human && <div className="vg-note">You're currently on “{cur.name}” — switch to a Premium/Enhanced one below for the human sound.</div>}
-                    <div className="vg-note">Love Siri's voice? Apps can't use Siri directly (Apple keeps it private) — but <b>Aaron</b> and <b>Nathan (Premium)</b> are the same voice family and sound nearly identical.</div>
-                  </div>
-                ) : (
-                  <div className="voice-guide">
-                    <div className="vg-title">🎙️ Make the coach sound human (free, ~30 sec)</div>
-                    <ol className="vg-steps">
-                      <li>Open iPhone <b>Settings</b> → <b>Accessibility</b></li>
-                      <li>Tap <b>Spoken Content</b> → <b>Voices</b> → <b>English</b></li>
-                      <li>Pick <b>Aaron</b> or <b>Nathan</b> → tap the cloud to download the <b>Premium</b> version</li>
-                      <li>Come back here and choose it below</li>
-                    </ol>
-                    <div className="vg-note">Like Siri's voice? Apps can't use Siri directly — but <b>Aaron</b> and <b>Nathan (Premium)</b> are the same neural voice family and sound nearly identical. Once downloaded they show up here automatically.</div>
-                  </div>
-                )}
-
-                <div className="setting-row" style={{ flexWrap: "wrap", gap: 10 }}>
-                  <div className="lab" style={{ flexBasis: "100%" }}>Coach's voice<small>Human voices first — pick one, then preview</small></div>
-                  <select
-                    className="login-input"
-                    style={{ flex: 1, minWidth: 0 }}
-                    value={state.settings?.voiceName || ""}
-                    onChange={(e) => { const n = e.target.value || null; actions.setSetting("voiceName", n); setVoiceName(n); }}
-                  >
-                    <option value="">Auto (best available)</option>
-                    {recommended.length > 0 && (
-                      <optgroup label="★ Recommended">
-                        {recommended.map((v) => (
-                          <option key={v.name} value={v.name}>
-                            {v.name}{v.tier >= 4 ? " — Premium (human)" : v.tier === 3 ? " — Enhanced (human)" : ""} ({v.lang})
-                          </option>
-                        ))}
-                      </optgroup>
-                    )}
-                    {others.length > 0 && (
-                      <optgroup label="Other voices">
-                        {others.map((v) => (
-                          <option key={v.name} value={v.name}>{v.name} ({v.lang})</option>
-                        ))}
-                      </optgroup>
-                    )}
-                  </select>
-                  <button
-                    className="btn"
-                    onClick={() => { setVoiceName(state.settings?.voiceName || null); setCoachStyle(style); speak(VOICE_SAMPLES[Math.floor(Math.random() * VOICE_SAMPLES.length)]); }}
-                  >
-                    ▶ Preview
-                  </button>
-                </div>
-
-                <div className="setting-row" style={{ flexWrap: "wrap", gap: 10 }}>
-                  <div className="lab" style={{ flexBasis: "100%" }}>Coach style<small>How the coach delivers it</small></div>
-                  <div className="row gap-2" style={{ flexWrap: "wrap" }}>
-                    {Object.entries(COACH_STYLES).map(([key, s]) => (
-                      <button
-                        key={key}
-                        className={`week-pill ${style === key ? "on" : ""}`}
-                        onClick={() => {
-                          actions.setSetting("coachStyle", key);
-                          setCoachStyle(key);
-                          setVoiceName(state.settings?.voiceName || null);
-                          speak(VOICE_SAMPLES[Math.floor(Math.random() * VOICE_SAMPLES.length)]);
-                          haptic();
-                        }}
-                      >
-                        {s.label}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-
-              </>
-            );
-          })()}
-          <div className="setting-row">
-            <div className="lab">Daily ring goals<small>Move (calories) &amp; Exercise (minutes)</small></div>
-            <div className="row gap-2">
-              <input
-                type="number" inputMode="numeric" aria-label="Move goal (calories)"
-                defaultValue={state.profile?.moveGoal ?? 600}
-                onBlur={(e) => actions.setProfile({ moveGoal: Math.max(50, parseInt(e.target.value, 10) || 600) })}
-              />
-              <input
-                type="number" inputMode="numeric" aria-label="Exercise goal (minutes)"
-                defaultValue={state.profile?.exerciseGoal ?? 30}
-                onBlur={(e) => actions.setProfile({ exerciseGoal: Math.max(5, parseInt(e.target.value, 10) || 30) })}
-              />
-            </div>
-          </div>
-          <div className="setting-row" style={{ flexWrap: "wrap", gap: 10 }}>
-            <div className="lab">Appearance<small>Light, dark, or follow your device</small></div>
-            <div className="row gap-2">
-              {["system", "light", "dark"].map((t) => (
-                <button
-                  key={t}
-                  className={`week-pill ${(state.settings?.theme || "system") === t ? "on" : ""}`}
-                  onClick={() => { actions.setSetting("theme", t); haptic(); }}
-                >
-                  {t === "system" ? "Auto" : t === "light" ? "Light" : "Dark"}
-                </button>
-              ))}
-            </div>
-          </div>
-        </div>
+        <button className="settings-open-btn" onClick={() => { haptic(); setSettingsOpen(true); }}>
+          <span className="sob-ico">⚙︎</span>
+          <span className="sob-txt">
+            <span className="sob-k">Settings</span>
+            <span className="sob-s">Coach voice, ring goals &amp; appearance</span>
+          </span>
+          <span className="sob-arrow">›</span>
+        </button>
 
         {/* music */}
         {spotifyEnabled && (
@@ -555,6 +442,8 @@ export default function MoreScreen() {
       )}
       {guiding && <GuidedBuilder onClose={() => setGuiding(false)} />}
       {building && <CustomPlanBuilder onClose={() => setBuilding(false)} />}
+      <SettingsSheet open={settingsOpen} onClose={() => setSettingsOpen(false)} />
+      <AvatarPicker open={avatarOpen} onClose={() => setAvatarOpen(false)} />
     </div>
   );
 }
@@ -562,46 +451,4 @@ export default function MoreScreen() {
 // keep earned badges first
 function bist(list) {
   return [...list].sort((a, b) => Number(b.earned) - Number(a.earned));
-}
-
-function ActivityCalendar({ state }) {
-  // score per date over last 16 weeks
-  const score = {};
-  for (const d in state.activityLog || {}) score[d] = (score[d] || 0) + (state.activityLog[d].workouts || 0) * 2;
-  for (const w of state.weights || []) score[w.date] = (score[w.date] || 0) + 1;
-  for (const d in state.meals || {}) {
-    const p = (state.meals[d].items || []).reduce((a, it) => a + (it.p || 0), 0);
-    if (p >= 100) score[d] = (score[d] || 0) + 1;
-  }
-
-  const WEEKS = 16;
-  const today = new Date(); today.setHours(12, 0, 0, 0);
-  const end = new Date(today);
-  end.setDate(end.getDate() + (6 - end.getDay())); // to Saturday
-  const cells = [];
-  for (let i = WEEKS * 7 - 1; i >= 0; i--) {
-    const d = new Date(end);
-    d.setDate(end.getDate() - i);
-    const key = todayKey(d);
-    const sc = score[key] || 0;
-    const level = d > today ? -1 : sc >= 3 ? 3 : sc === 2 ? 2 : sc === 1 ? 1 : 0;
-    cells.push({ key, level });
-  }
-
-  return (
-    <div className="card" style={{ padding: 14 }}>
-      <div className="cal-wrap">
-        <div className="cal-grid">
-          {cells.map((c) => (
-            <div key={c.key} className={`cal-cell ${c.level > 0 ? "l" + c.level : ""}`} style={c.level === -1 ? { visibility: "hidden" } : undefined} />
-          ))}
-        </div>
-      </div>
-      <div className="cal-legend">
-        Less
-        <span className="cal-cell" /><span className="cal-cell l1" /><span className="cal-cell l2" /><span className="cal-cell l3" />
-        More
-      </div>
-    </div>
-  );
 }

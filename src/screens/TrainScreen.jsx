@@ -60,6 +60,8 @@ export default function TrainScreen() {
   const isMissed = !!state.missed?.[missedKey];
 
   const sessionSec = state.durations?.[doneKey] || 0;
+  // One session control: the Start card until the workout clock is live.
+  const sessionLive = startSignal > 0 || sessionSec > 0;
   const estCals = caloriesForSession(sessionSec, day.type, bodyweight(state));
 
   const voiceOn = state.settings?.voice !== false;
@@ -149,23 +151,36 @@ export default function TrainScreen() {
 
         {day.type !== "rest" && (
           <>
-            <div className="train-toolbar">
-              <WorkoutTimer week={week} dayId={dayId} voice={voiceOn} startSignal={startSignal} />
-            </div>
+            {sessionLive ? (
+              <div className="train-toolbar">
+                <WorkoutTimer week={week} dayId={dayId} voice={voiceOn} startSignal={startSignal} />
+              </div>
+            ) : (
+              <div className="session-start">
+                <div className="ss-top">
+                  <span className="ss-kicker">Session</span>
+                  <span className="ss-len">{day.warmup ? `${clock(warmupSeconds(day.warmup))} warm-up first` : "No warm-up listed"}</span>
+                </div>
+                {day.warmup && <div className="ss-warm">{day.warmup}</div>}
+                <button
+                  className="ss-btn"
+                  onClick={() => {
+                    beep(600, 0.05); haptic("success");
+                    if (day.warmup) setWarmupSec(warmupSeconds(day.warmup));
+                    else beginTiming();
+                  }}
+                >
+                  ▶ Start session
+                </button>
+                <div className="ss-note">
+                  {day.warmup
+                    ? "Warm-up counts down, buzzes, then asks if you're ready to lift."
+                    : "Starts the workout clock."}
+                </div>
+              </div>
+            )}
             <NowPlaying />
           </>
-        )}
-
-        {day.warmup && (
-          <div className="warmup-card">
-            <div className="warmup-txt"><b>Warm-up</b> · {day.warmup}</div>
-            <button
-              className="btn warmup-btn"
-              onClick={() => { beep(600, 0.05); haptic(); setWarmupSec(warmupSeconds(day.warmup)); }}
-            >
-              ▶ Start warm-up · {clock(warmupSeconds(day.warmup))}
-            </button>
-          </div>
         )}
 
         {day.type === "lift" && (
@@ -292,7 +307,9 @@ export default function TrainScreen() {
           seconds={warmupSec}
           accent="warmup"
           voice={voiceOn}
-          doneLabel="Start workout ▶"
+          donePhase="Warm-up complete"
+          doneNote="Ready to start the workout?"
+          doneLabel="I'm ready — start workout ▶"
           onComplete={beginTiming}
           onClose={() => setWarmupSec(null)}
         />

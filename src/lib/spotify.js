@@ -11,7 +11,7 @@
 const CLIENT_ID = import.meta.env.VITE_SPOTIFY_CLIENT_ID || "";
 export const spotifyEnabled = !!CLIENT_ID;
 
-const SCOPES = "user-read-currently-playing user-read-playback-state user-modify-playback-state";
+const SCOPES = "user-read-currently-playing user-read-playback-state user-modify-playback-state playlist-read-private playlist-read-collaborative";
 const LS = {
   access: "svt_sp_access",
   refresh: "svt_sp_refresh",
@@ -157,6 +157,56 @@ export async function nowPlaying() {
     };
   } catch (e) {
     return null;
+  }
+}
+
+// The user's playlists (name, art, track count, uri, web url).
+// Needs the playlist-read scopes — reconnect once after upgrading.
+export async function myPlaylists(limit = 30) {
+  if (!isSpotifyConnected()) return null;
+  if (!(await refreshIfNeeded())) return null;
+  const token = localStorage.getItem(LS.access);
+  try {
+    const res = await fetch(`https://api.spotify.com/v1/me/playlists?limit=${limit}`, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    if (res.status === 401) { disconnectSpotify(); return null; }
+    if (res.status === 403) return { needsScope: true, items: [] };
+    if (!res.ok) return null;
+    const data = await res.json();
+    return {
+      items: (data.items || []).filter(Boolean).map((p) => ({
+        id: p.id,
+        name: p.name,
+        uri: p.uri,
+        url: p.external_urls?.spotify || `https://open.spotify.com/playlist/${p.id}`,
+        art: p.images?.[p.images.length - 1]?.url || p.images?.[0]?.url || null,
+        tracks: p.tracks?.total ?? 0,
+        owner: p.owner?.display_name || "",
+      })),
+    };
+  } catch (e) {
+    return null;
+  }
+}
+
+// Start a playlist. Premium-only (Spotify restricts playback control);
+// callers fall back to opening the Spotify app when this reports premium.
+export async function playContext(contextUri) {
+  if (!isSpotifyConnected()) return { ok: false };
+  if (!(await refreshIfNeeded())) return { ok: false };
+  const token = localStorage.getItem(LS.access);
+  try {
+    const res = await fetch("https://api.spotify.com/v1/me/player/play", {
+      method: "PUT",
+      headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
+      body: JSON.stringify({ context_uri: contextUri }),
+    });
+    if (res.status === 403) return { ok: false, premium: true };
+    if (res.status === 404) return { ok: false, noDevice: true };
+    return { ok: res.ok };
+  } catch (e) {
+    return { ok: false };
   }
 }
 
