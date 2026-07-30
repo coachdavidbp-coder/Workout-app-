@@ -83,7 +83,9 @@ export default function HomeScreen({ go }) {
         <div className="brandrow">
           <BrandLogo height={24} />
           <span className="mode-badge">{icon.emoji} Lv {lvl.level}</span>
-          <button className="gear-btn" onClick={() => { haptic(); setSettingsOpen(true); }} aria-label="Settings">⚙︎</button>
+          <button className="gear-btn" onClick={() => { haptic(); setSettingsOpen(true); }} aria-label="Settings">
+            <img src="/icons/nav-settings.png" alt="" />
+          </button>
         </div>
         <div className="h-title">
           <div className="kicker">{greet}, {state.profile?.name || "Coach"}</div>

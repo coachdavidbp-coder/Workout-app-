@@ -207,7 +207,7 @@ export default function MoreScreen() {
 
         {/* settings */}
         <button className="settings-open-btn" onClick={() => { haptic(); setSettingsOpen(true); }}>
-          <span className="sob-ico">⚙︎</span>
+          <span className="sob-ico"><img src="/icons/nav-settings.png" alt="" /></span>
           <span className="sob-txt">
             <span className="sob-k">Settings</span>
             <span className="sob-s">Coach voice, ring goals &amp; appearance</span>

@@ -1117,8 +1117,12 @@
 .run-hero-ico img { width: 40px; height: 40px; object-fit: contain; }
 
 /* gear + settings entry */
-.gear-btn { margin-left: 8px; width: 34px; height: 34px; border-radius: 50%; border: 1px solid var(--line); background: var(--panel); color: var(--tx-2); font-size: 16px; line-height: 1; }
+.gear-btn { margin-left: 8px; width: 36px; height: 36px; border-radius: 50%; border: 1px solid var(--line); background: var(--panel); padding: 0; display: flex; align-items: center; justify-content: center; }
+.gear-btn img { width: 26px; height: 26px; object-fit: contain; }
 .gear-btn:active { background: var(--panel-2); }
+.sob-ico img { width: 26px; height: 26px; object-fit: contain; display: block; }
+.settings-head { display: flex; align-items: center; gap: 12px; }
+.settings-head-ico { width: 40px; height: 40px; object-fit: contain; flex: none; }
 .settings-open-btn { width: 100%; display: flex; align-items: center; gap: 12px; text-align: left; background: var(--panel); border: 1px solid var(--line); border-radius: var(--r); padding: 14px; margin-top: 12px; }
 .sob-ico { font-size: 20px; color: var(--ac-hi); }
 .sob-txt { flex: 1; display: flex; flex-direction: column; }

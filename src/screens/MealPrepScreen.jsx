@@ -1,6 +1,6 @@
 import { useMemo, useState } from "react";
 import { useStore, todayKey } from "../store.jsx";
-import { RECIPES, findRecipes, dishGradient } from "../data/recipes.js";
+import { RECIPES, findRecipes, dishGradient, recipeVideoEmbed, recipeVideoSearch } from "../data/recipes.js";
 import { DIETS } from "../data/plan.js";
 import { MEAL_SLOTS } from "../data/foods.js";
 import BrandLogo from "../components/BrandLogo.jsx";
@@ -117,7 +117,7 @@ function RecipeDetail({ recipe, onBack, fav, actions }) {
     toast({ emoji: "🍽️", title: "Logged to today", sub: `${recipe.name} · ${recipe.cal} kcal`, tone: "good" });
     onBack();
   };
-  const watch = () => window.open(`https://www.youtube.com/results?search_query=${encodeURIComponent(recipe.yt)}`, "_blank", "noopener");
+  const watch = () => window.open(recipeVideoSearch(recipe), "_blank", "noopener");
 
   return (
     <div className="scroll recipe-detail">
@@ -152,7 +152,16 @@ function RecipeDetail({ recipe, onBack, fav, actions }) {
           {recipe.steps.map((s, k) => <li key={k}>{s}</li>)}
         </ol>
 
-        <button className="btn btn-block rd-watch" onClick={watch}>▶ Watch how-to video</button>
+        <div className="section-label" style={{ marginTop: 18 }}>How-to video</div>
+        <div className="video-wrap">
+          <iframe
+            src={recipeVideoEmbed(recipe)}
+            title={`${recipe.name} how-to`}
+            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+            allowFullScreen
+          />
+        </div>
+        <button className="btn btn-block rd-watch" onClick={watch}>▶ More videos on YouTube</button>
 
         <div className="section-label" style={{ marginTop: 18 }}>Add to</div>
         <div className="row gap-2" style={{ flexWrap: "wrap" }}>

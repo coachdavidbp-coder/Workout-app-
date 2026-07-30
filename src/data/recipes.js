@@ -7,7 +7,9 @@
 //   yt  = a YouTube "how-to" search query (opened on tap).
 // =========================================================
 
-export const RECIPES = [
+import { GENERATED_RECIPES } from "./recipesGenerated.js";
+
+const CURATED = [
   {
     id: "lentil-beet-salad",
     name: "Lentil Salad with Beets & Avocado",
@@ -447,7 +449,21 @@ export const RECIPES = [
   },
 ];
 
+// Hand-written recipes first, then the generated library.
+export const RECIPES = [...CURATED, ...GENERATED_RECIPES];
+
 export const RECIPE_TAGS = ["High-Protein", "Low-Carb", "Vegetarian", "Meal-Prep", "Quick", "No-Cook", "Breakfast", "Snack"];
+
+// In-app how-to video. YouTube's search-embed loads the top real result for
+// the query, so links never rot the way hardcoded video ids do.
+export function recipeVideoEmbed(recipe) {
+  const q = encodeURIComponent(recipe?.yt || recipe?.name || "healthy recipe");
+  return `https://www.youtube-nocookie.com/embed?listType=search&list=${q}&rel=0&modestbranding=1`;
+}
+export function recipeVideoSearch(recipe) {
+  const q = encodeURIComponent(recipe?.yt || recipe?.name || "healthy recipe");
+  return `https://www.youtube.com/results?search_query=${q}`;
+}
 
 // Deterministic dish tile: a food emoji on a unique gradient derived from the
 // recipe id. No network photos — so every card always matches its dish (real

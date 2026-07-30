@@ -24,8 +24,13 @@ export default function SettingsSheet({ open, onClose }) {
 
   return (
     <Sheet open={open} onClose={onClose}>
-      <h3 className="sheet-title">Settings</h3>
-      <div className="sheet-sub">Coach voice, goals &amp; appearance</div>
+      <div className="settings-head">
+        <img className="settings-head-ico" src="/icons/nav-settings.png" alt="" />
+        <div>
+          <h3 className="sheet-title">Settings</h3>
+          <div className="sheet-sub">Coach voice, goals &amp; appearance</div>
+        </div>
+      </div>
 
       <div className="card" style={{ marginTop: 14 }}>
         <div className="setting-row">
