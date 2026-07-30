@@ -13,6 +13,7 @@ import CountdownTimer from "../components/CountdownTimer.jsx";
 import SequenceTimer from "../components/SequenceTimer.jsx";
 import CooldownSheet from "../components/CooldownSheet.jsx";
 import { parseSequence, totalSeconds, PRE_STRETCH, POST_STRETCH } from "../lib/sequence.js";
+import { cooldownFor, focusLabel } from "../lib/yoga.js";
 import WorkoutSummarySheet from "../components/WorkoutSummarySheet.jsx";
 import { trainingCoach, fatigueCheck } from "../lib/coach.js";
 import { fmtPace, fmtDuration } from "../lib/progress.js";
@@ -61,6 +62,12 @@ export default function TrainScreen() {
   ).length;
   const coachMsg = trainingCoach(state, { week, dayId, day, todayId: today });
   const proto = protoFor(day, week);
+
+  // Cool-down is chosen from what today actually trained, so a squat day
+  // gets hips and quads while a press day gets chest and upper back.
+  const daySwaps = state.swaps?.[doneKey] || {};
+  const cooldown = day.type === "rest" ? [] : cooldownFor(day, daySwaps);
+  const cooldownFocus = day.type === "rest" ? "" : focusLabel(day, daySwaps);
 
   const wkDates = weekDates(new Date());
   const dateKeyFor = (id) => wkDates[DAY_IDS.indexOf(id)]?.key || todayKey();
@@ -264,11 +271,13 @@ export default function TrainScreen() {
               onRun={() => setStretchRun("post")}
             />
 
-            {day.cooldown?.length > 0 && (
+            {cooldown.length > 0 && (
               <div className="warmup-card cooldown-card">
-                <div className="warmup-txt"><b>Cool-down · yoga</b> · for your lower back</div>
+                <div className="warmup-txt">
+                  <b>Cool-down · yoga</b> · picked for {day.name} — {cooldownFocus}
+                </div>
                 <div className="pose-mini">
-                  {day.cooldown.map((c) => (
+                  {cooldown.map((c) => (
                     <span className="pose-chip" key={c.label}>
                       {c.label}<em className="tnum">{clock(c.seconds)}</em>
                     </span>
@@ -279,7 +288,7 @@ export default function TrainScreen() {
                     Poses &amp; videos
                   </button>
                   <button className="btn cooldown-btn" style={{ flex: 1.4, marginTop: 0 }} onClick={() => { beep(600, 0.05); haptic(); setCooldownOpen(true); }}>
-                    ▶ Start · {clock(totalSeconds(day.cooldown))}
+                    ▶ Start · {clock(totalSeconds(cooldown))}
                   </button>
                 </div>
               </div>
@@ -395,7 +404,8 @@ export default function TrainScreen() {
       <CooldownSheet
         open={cooldownList}
         onClose={() => setCooldownList(false)}
-        steps={day.cooldown || []}
+        steps={cooldown}
+        subtitle={`chosen for ${day.name} — ${cooldownFocus}`}
         onStart={() => setCooldownOpen(true)}
       />
 
@@ -429,16 +439,16 @@ export default function TrainScreen() {
         />
       )}
 
-      {cooldownOpen && day.cooldown?.length > 0 && (
+      {cooldownOpen && cooldown.length > 0 && (
         <SequenceTimer
           title="Cool-down"
-          steps={day.cooldown}
+          steps={cooldown}
           accent="rest"
           voice={voiceOn}
           countdownFrom={10}
           previewSteps
           donePhase="Cool-down complete"
-          doneNote="Low back should feel looser. Water and protein next."
+          doneNote={`That should have opened up ${cooldownFocus}. Water and protein next.`}
           doneLabel="Done"
           onClose={() => setCooldownOpen(false)}
         />
