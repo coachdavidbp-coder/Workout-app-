@@ -153,9 +153,9 @@ export default function SequenceTimer({
             <div className="seq-now">{step.label}</div>
             <div className="seq-len tnum">{fmt(step.seconds)}</div>
             {step.cue && <p className="seq-cue">{step.cue}</p>}
-            {step.q && (
+            {(step.video || step.q) && (
               <div className="seq-video">
-                <HowToVideo query={step.q} title={`${step.label} how-to`} />
+                <HowToVideo videoId={step.video} query={step.q} title={`${step.label} how-to`} />
               </div>
             )}
           </>

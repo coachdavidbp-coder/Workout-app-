@@ -35,7 +35,9 @@ export default function CooldownSheet({ open, onClose, steps = [], onStart }) {
             {openId === p.label && (
               <div className="pose-body">
                 {p.cue && <p className="pose-cue">{p.cue}</p>}
-                {p.q && <HowToVideo query={p.q} title={`${p.label} how-to`} />}
+                {(p.video || p.q) && (
+                  <HowToVideo videoId={p.video} query={p.q} title={`${p.label} how-to`} />
+                )}
               </div>
             )}
           </div>

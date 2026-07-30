@@ -26,14 +26,17 @@ export default function HowToVideo({ query, videoId = null, title = "How-to", co
 
   if (state === "ready" && id) {
     return (
-      <div className="video-wrap">
-        <iframe
-          src={embedUrl(id)}
-          title={title}
-          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-          allowFullScreen
-        />
-      </div>
+      <>
+        <div className="video-wrap">
+          <iframe
+            src={embedUrl(id)}
+            title={title}
+            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+            allowFullScreen
+          />
+        </div>
+        <button className="video-alt" onClick={open}>Not playing? Find another ›</button>
+      </>
     );
   }
 
