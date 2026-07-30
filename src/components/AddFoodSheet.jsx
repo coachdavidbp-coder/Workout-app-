@@ -4,9 +4,11 @@ import { IconSearch } from "./icons.jsx";
 import { BUILTIN_FOODS, MEAL_SLOTS } from "../data/foods.js";
 import { searchFoods, lookupBarcode } from "../lib/foodApi.js";
 import { useStore, todayKey } from "../store.jsx";
+import { useOnline } from "../lib/net.js";
 
 export default function AddFoodSheet({ open, onClose, dateKey }) {
   const { actions } = useStore();
+  const online = useOnline();
   const [q, setQ] = useState("");
   const [slot, setSlot] = useState("Breakfast");
   const [selected, setSelected] = useState(null); // food being portioned
@@ -131,6 +133,9 @@ export default function AddFoodSheet({ open, onClose, dateKey }) {
               </button>
             </div>
 
+            {!online && (
+              <p className="offline-note">📴 Offline — the built-in foods below still work. Database search and barcode lookup need a signal.</p>
+            )}
             {err && <p className="login-err" style={{ marginTop: 10 }}>{err}</p>}
           </div>
 

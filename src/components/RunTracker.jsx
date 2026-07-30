@@ -3,6 +3,7 @@ import { createPortal } from "react-dom";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
 import { useStore, todayKey } from "../store.jsx";
+import { useOnline } from "../lib/net.js";
 import { fmtDuration, fmtPace } from "../lib/progress.js";
 import { bodyweight } from "../lib/gamify.js";
 import { beep, haptic } from "../lib/fx.js";
@@ -46,6 +47,7 @@ function haversine(a, b) {
 // wake lock to keep the screen awake). Saves the run into history on finish.
 export default function RunTracker({ onClose }) {
   const { state, actions } = useStore();
+  const online = useOnline();
 
   const mapEl = useRef(null);
   const mapRef = useRef(null);
@@ -280,7 +282,10 @@ export default function RunTracker({ onClose }) {
 
       <div className="rt-map" ref={mapEl} />
 
-      {(err || !gpsReady) && (
+      {!online && (
+        <div className="rt-banner">📴 Offline — GPS still records your route, distance and pace. Only the map tiles need a signal.</div>
+      )}
+      {online && (err || !gpsReady) && (
         <div className="rt-banner">{err || "Locating you… make sure location is allowed."}</div>
       )}
 

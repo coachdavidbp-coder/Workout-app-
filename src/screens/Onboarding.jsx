@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useStore, todayKey } from "../store.jsx";
-import { PLAN_LIST, DAY_NAMES, DURATION_OPTIONS, planMeta } from "../data/plans.js";
+import { PLAN_LIST, DAY_NAMES, DURATION_OPTIONS, planMeta, getPlan } from "../data/plans.js";
+import { recommendGoals, ACTIVITY_LEVELS } from "../lib/goals.js";
 import { defaultTargets, DIETS } from "../data/plan.js";
 import BrandLogo from "../components/BrandLogo.jsx";
 import { haptic } from "../lib/fx.js";
@@ -20,6 +21,7 @@ export default function Onboarding() {
   const [f, setF] = useState({
     name: "", sex: "", heightFt: "", heightIn: "", currentWeight: "",
     goalWeight: "", goal: "lose", diet: "balanced", planId: "gridiron", programWeeks: 4,
+    age: "", activityLevel: "moderate",
   });
   const set = (k, v) => setF((p) => ({ ...p, [k]: v }));
 
@@ -32,6 +34,14 @@ export default function Onboarding() {
     const weight = parseFloat(f.currentWeight) || 0;
     const heightIn = (parseInt(f.heightFt) || 0) * 12 + (parseInt(f.heightIn) || 0);
     const t = defaultTargets({ weight: weight || 180, goal: f.goal, sex: f.sex, diet: f.diet });
+    // Ring goals from the same recommender the Goals wizard uses, so a new
+    // account starts on real targets instead of the generic defaults.
+    const pm = planMeta(getPlan(f.planId));
+    const rec = recommendGoals({
+      sex: f.sex, age: f.age, heightIn, weightLb: weight || 180,
+      activityLevel: f.activityLevel, goal: f.goal,
+      trainingDays: pm.trainingDays, avgMin: pm.avgMin,
+    });
     actions.setProfile({
       name: f.name.trim(),
       sex: f.sex,
@@ -42,6 +52,11 @@ export default function Onboarding() {
       diet: f.diet,
       planId: f.planId,
       programWeeks: f.programWeeks,
+      age: parseInt(f.age, 10) || null,
+      activityLevel: f.activityLevel,
+      moveGoal: rec.moveGoal,
+      exerciseGoal: rec.exerciseGoal,
+      workoutsGoal: rec.workoutsGoal,
       proteinGoal: t.protein,
       calorieGoal: t.calories,
       waterGoal: t.waterOz,
@@ -102,6 +117,18 @@ export default function Onboarding() {
               <div style={{ flex: 1 }}>
                 <label className="onb-label">Goal weight (lb)</label>
                 <input className="login-input" inputMode="decimal" placeholder="160" value={f.goalWeight} onChange={(e) => set("goalWeight", e.target.value)} />
+              </div>
+            </div>
+            <div className="row gap-2" style={{ marginTop: 12 }}>
+              <div style={{ flex: 1 }}>
+                <label className="onb-label">Age</label>
+                <input className="login-input" inputMode="numeric" placeholder="25" value={f.age} onChange={(e) => set("age", e.target.value)} />
+              </div>
+              <div style={{ flex: 2 }}>
+                <label className="onb-label">Everyday activity (outside workouts)</label>
+                <select className="login-input" value={f.activityLevel} onChange={(e) => set("activityLevel", e.target.value)}>
+                  {ACTIVITY_LEVELS.map((l) => <option key={l.id} value={l.id}>{l.label} — {l.blurb}</option>)}
+                </select>
               </div>
             </div>
             <label className="onb-label">Primary goal</label>
