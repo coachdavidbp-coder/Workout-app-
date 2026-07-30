@@ -454,12 +454,9 @@ export const RECIPES = [...CURATED, ...GENERATED_RECIPES];
 
 export const RECIPE_TAGS = ["High-Protein", "Low-Carb", "Vegetarian", "Meal-Prep", "Quick", "No-Cook", "Breakfast", "Snack"];
 
-// In-app how-to video. YouTube's search-embed loads the top real result for
-// the query, so links never rot the way hardcoded video ids do.
-export function recipeVideoEmbed(recipe) {
-  const q = encodeURIComponent(recipe?.yt || recipe?.name || "healthy recipe");
-  return `https://www.youtube-nocookie.com/embed?listType=search&list=${q}&rel=0&modestbranding=1`;
-}
+// How-to video link. Deliberately a search rather than a hardcoded video id:
+// ids can't be verified at build time and rot into dead/unrelated videos, and
+// YouTube blocks the search-embed player ("This video is unavailable").
 export function recipeVideoSearch(recipe) {
   const q = encodeURIComponent(recipe?.yt || recipe?.name || "healthy recipe");
   return `https://www.youtube.com/results?search_query=${q}`;

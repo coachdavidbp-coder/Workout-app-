@@ -8,7 +8,6 @@ import { fireConfetti, haptic } from "../lib/fx.js";
 import { speak, listVoices, setVoiceName, setCoachStyle, COACH_STYLES, hasHumanVoice, currentVoiceInfo, randomEncouragement } from "../lib/voice.js";
 import { toast } from "../lib/toast.js";
 import ActivityRings from "../components/ActivityRings.jsx";
-import SettingsSheet from "../components/SettingsSheet.jsx";
 import AvatarPicker from "../components/AvatarPicker.jsx";
 import { PLAN_LIST, getPlan, planFor, trainingCount, weeksOf, programWeeks, DURATION_OPTIONS, planMeta } from "../data/plans.js";
 import { DIETS, defaultTargets } from "../data/plan.js";
@@ -42,7 +41,6 @@ export default function MoreScreen() {
   const [building, setBuilding] = useState(false);
   const [guiding, setGuiding] = useState(false);
   const [choosing, setChoosing] = useState(false);
-  const [settingsOpen, setSettingsOpen] = useState(false);
   const [avatarOpen, setAvatarOpen] = useState(false);
   const [spTick, setSpTick] = useState(0);
   const spConnected = isSpotifyConnected();
@@ -204,16 +202,6 @@ export default function MoreScreen() {
         {/* activity rings */}
         <div className="section-title">Activity</div>
         <ActivityRings />
-
-        {/* settings */}
-        <button className="settings-open-btn" onClick={() => { haptic(); setSettingsOpen(true); }}>
-          <span className="sob-ico"><img src="/icons/nav-settings.png" alt="" /></span>
-          <span className="sob-txt">
-            <span className="sob-k">Settings</span>
-            <span className="sob-s">Coach voice, ring goals &amp; appearance</span>
-          </span>
-          <span className="sob-arrow">›</span>
-        </button>
 
         {/* music */}
         {spotifyEnabled && (
@@ -442,7 +430,6 @@ export default function MoreScreen() {
       )}
       {guiding && <GuidedBuilder onClose={() => setGuiding(false)} />}
       {building && <CustomPlanBuilder onClose={() => setBuilding(false)} />}
-      <SettingsSheet open={settingsOpen} onClose={() => setSettingsOpen(false)} />
       <AvatarPicker open={avatarOpen} onClose={() => setAvatarOpen(false)} />
     </div>
   );

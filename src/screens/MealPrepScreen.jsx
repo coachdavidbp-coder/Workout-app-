@@ -1,6 +1,6 @@
 import { useMemo, useState } from "react";
 import { useStore, todayKey } from "../store.jsx";
-import { RECIPES, findRecipes, dishGradient, recipeVideoEmbed, recipeVideoSearch } from "../data/recipes.js";
+import { RECIPES, findRecipes, dishGradient, recipeVideoSearch } from "../data/recipes.js";
 import { DIETS } from "../data/plan.js";
 import { MEAL_SLOTS } from "../data/foods.js";
 import BrandLogo from "../components/BrandLogo.jsx";
@@ -153,15 +153,13 @@ function RecipeDetail({ recipe, onBack, fav, actions }) {
         </ol>
 
         <div className="section-label" style={{ marginTop: 18 }}>How-to video</div>
-        <div className="video-wrap">
-          <iframe
-            src={recipeVideoEmbed(recipe)}
-            title={`${recipe.name} how-to`}
-            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-            allowFullScreen
-          />
-        </div>
-        <button className="btn btn-block rd-watch" onClick={watch}>▶ More videos on YouTube</button>
+        <button className="video-card" style={dishGradient(recipe)} onClick={watch}>
+          <span className="vc-play">▶</span>
+          <span className="vc-txt">
+            <span className="vc-k">Watch how-to on YouTube</span>
+            <span className="vc-s">{recipe.yt}</span>
+          </span>
+        </button>
 
         <div className="section-label" style={{ marginTop: 18 }}>Add to</div>
         <div className="row gap-2" style={{ flexWrap: "wrap" }}>
