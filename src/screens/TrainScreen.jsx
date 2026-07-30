@@ -382,7 +382,8 @@ export default function TrainScreen() {
           steps={day.cooldown}
           accent="rest"
           voice={voiceOn}
-          countdownFrom={5}
+          countdownFrom={10}
+          previewSteps
           donePhase="Cool-down complete"
           doneNote="Low back should feel looser. Water and protein next."
           doneLabel="Done"
