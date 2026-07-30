@@ -45,7 +45,7 @@ export default function App() {
     if (theme === "system") root.removeAttribute("data-theme");
     else root.setAttribute("data-theme", theme);
     const meta = document.querySelector('meta[name="theme-color"]');
-    if (meta) meta.setAttribute("content", getComputedStyle(root).getPropertyValue("--g").trim() || "#0A1020");
+    if (meta) meta.setAttribute("content", getComputedStyle(root).getPropertyValue("--g").trim() || "#000000");
   }, [theme]);
 
   if (mode === "loading") {

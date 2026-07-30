@@ -22,8 +22,8 @@ export default defineConfig(async () => {
           short_name: "Us vs Them",
           description:
             "Your college football training plan: lifts, runs, meals and weight — synced across your devices.",
-          theme_color: "#0A1020",
-          background_color: "#0A1020",
+          theme_color: "#000000",
+          background_color: "#000000",
           display: "standalone",
           orientation: "portrait",
           start_url: "/",
