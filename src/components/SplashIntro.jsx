@@ -1,9 +1,6 @@
 import { useEffect, useRef } from "react";
 import logoUrl from "../assets/logo.png";
-
-// The VS mark ships in public/ (it's also the home-screen icon), so it's
-// referenced by URL and precached by the service worker.
-const vsUrl = "/icons/apple-touch-icon.png";
+import vsUrl from "../assets/vs-mark.webp";
 
 // =========================================================
 // US VS THEM — cold-start splash. 2.4s, then Home.
@@ -36,10 +33,11 @@ const C = {
   black: "#05070F",
 };
 
-// The bolt on the VS mark runs bottom-left → top-right; the halves separate
-// perpendicular to it.
-const BOLT_ANGLE = -0.96; // radians, ≈ -55°
-const SPLIT_GAP = 35;
+// Measured off the artwork itself: the lightning streak sits at 118.2° from
+// horizontal, so that's the line the mark comes apart along, with the halves
+// parting perpendicular to it.
+const BOLT_ANGLE = -1.08; // radians, ≈ -61.8°
+const SPLIT_GAP = 38;
 
 const clamp01 = (n) => (n < 0 ? 0 : n > 1 ? 1 : n);
 const seg = (t, a, b) => clamp01((t - a) / (b - a));
@@ -288,25 +286,10 @@ export default function SplashIntro({ onDone }) {
     // border. Dropped straight onto black that reads as a floating app icon,
     // not an emblem, so it's cropped past the border and feathered at the
     // edges once, up front, into the canvas we actually draw.
-    const buildMark = (img) => {
-      const S = 512;
-      const c = document.createElement("canvas");
-      c.width = c.height = S;
-      const g = c.getContext("2d");
-      const inset = 0.05;
-      const sx = img.width * inset, sy = img.height * inset;
-      g.drawImage(img, sx, sy, img.width - sx * 2, img.height - sy * 2, 0, 0, S, S);
-      g.globalCompositeOperation = "destination-in";
-      const r = S / 2;
-      const m = g.createRadialGradient(r, r, 0, r, r, r);
-      m.addColorStop(0, "rgba(0,0,0,1)");
-      m.addColorStop(0.78, "rgba(0,0,0,1)");
-      m.addColorStop(0.92, "rgba(0,0,0,0.5)");
-      m.addColorStop(1, "rgba(0,0,0,0)");
-      g.fillStyle = m;
-      g.fillRect(0, 0, S, S);
-      return c;
-    };
+    // The artwork arrives already cropped to the emblem and feathered into
+    // black, so it's drawn as-is — only its aspect needs carrying, since it's
+    // a wide mark rather than a square tile.
+    let markAspect = 1;
 
     // ---- drawing ----
     const drawDust = (t, alpha) => {
@@ -354,9 +337,10 @@ export default function SplashIntro({ onDone }) {
     // VS mark, whole or split in two along the bolt.
     const drawMark = (x, y, size, scale, sepPx) => {
       if (!vsImg) return;
-      const s = size * scale;
+      const w = size * scale;
+      const h = w / markAspect;
       if (sepPx <= 0.2) {
-        ctx.drawImage(vsImg, x - s / 2, y - s / 2, s, s);
+        ctx.drawImage(vsImg, x - w / 2, y - h / 2, w, h);
         return;
       }
       const BIG = Math.max(W, H) * 2;
@@ -370,20 +354,25 @@ export default function SplashIntro({ onDone }) {
         ctx.clip();
         ctx.translate(0, (sign * sepPx) / 2);
         ctx.rotate(-BOLT_ANGLE);
-        ctx.drawImage(vsImg, -s / 2, -s / 2, s, s);
+        ctx.drawImage(vsImg, -w / 2, -h / 2, w, h);
         ctx.restore();
       }
-      // light pouring out of the crack
+      // Light leaking out of the seam. It has to hug the crack — the artwork
+      // already carries a bright bolt, so a wide bar here reads as a lightsaber
+      // laid over the mark instead of the two halves coming apart.
       ctx.save();
       ctx.translate(x, y);
       ctx.rotate(BOLT_ANGLE);
-      const grad = ctx.createLinearGradient(0, -sepPx, 0, sepPx);
+      const band = sepPx * 0.55;
+      const grad = ctx.createLinearGradient(0, -band, 0, band);
       grad.addColorStop(0, "rgba(61,139,255,0)");
-      grad.addColorStop(0.5, "rgba(200,225,255,0.95)");
+      grad.addColorStop(0.34, "rgba(61,139,255,0.30)");
+      grad.addColorStop(0.5, "rgba(214,233,255,0.62)");
+      grad.addColorStop(0.66, "rgba(61,139,255,0.30)");
       grad.addColorStop(1, "rgba(61,139,255,0)");
       ctx.globalCompositeOperation = "lighter";
       ctx.fillStyle = grad;
-      ctx.fillRect(-s * 0.62, -sepPx, s * 1.24, sepPx * 2);
+      ctx.fillRect(-w * 0.52, -band, w * 1.04, band * 2);
       ctx.restore();
       ctx.globalCompositeOperation = "source-over";
     };
@@ -475,7 +464,7 @@ export default function SplashIntro({ onDone }) {
       ctx.translate(shx, shy);
 
       const X = cx(), Y = cy();
-      const size = Math.min(W, H) * 0.40;
+      const size = Math.min(W * 0.86, H * 0.40);
 
       // Scene 1 — pre-impact charge
       if (t < T.impact) {
@@ -669,7 +658,8 @@ export default function SplashIntro({ onDone }) {
     (async () => {
       const [a, b] = await Promise.all([load(vsUrl), load(logoUrl)]);
       if (cancelled) return;
-      vsImg = a ? buildMark(a) : null;
+      vsImg = a;
+      if (a) markAspect = a.width / a.height;
       logoImg = b;
 
       if (reduced) {
