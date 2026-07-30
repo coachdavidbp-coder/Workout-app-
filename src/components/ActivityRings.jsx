@@ -1,18 +1,29 @@
 import { useState } from "react";
 import { useStore } from "../store.jsx";
 import { activityRings, SCOPES } from "../lib/activity.js";
+import GoalWizardSheet from "./GoalWizardSheet.jsx";
 import { haptic } from "../lib/fx.js";
 
-// Apple-Fitness-style triple ring: Move / Exercise / Workouts,
-// with Day · Week · Month · All scopes.
+// Triple activity ring: Move / Exercise / Workouts, with
+// Day · Week · Month · All scopes and a goal recommender.
 export default function ActivityRings() {
   const { state } = useStore();
   const [scope, setScope] = useState("day");
+  const [goalsOpen, setGoalsOpen] = useState(false);
   const data = activityRings(state, scope);
   const paced = scope !== "all";
 
   return (
     <div className="rings-card">
+      <div className="rings-head">
+        <span className="rings-goals-lab">
+          Goals · {data.dailyGoals.move} cal · {data.dailyGoals.exercise} min
+        </span>
+        <button className="rings-goals-btn" onClick={() => { haptic(); setGoalsOpen(true); }}>
+          Set goals
+        </button>
+      </div>
+
       <div className="rings-seg">
         {SCOPES.map((s) => (
           <button
@@ -62,15 +73,17 @@ export default function ActivityRings() {
         {scope === "month" && `${data.activeDays} active day${data.activeDays === 1 ? "" : "s"} this month · best burn ${data.bestMove} cal.`}
         {scope === "all" && `Since ${fmt(data.trackedFrom)} · ${data.activeDays} active days out of ${data.days}.`}
       </div>
+
+      <GoalWizardSheet open={goalsOpen} onClose={() => setGoalsOpen(false)} />
     </div>
   );
 }
 
-function TripleRing({ rings, allClosed }) {
+export function TripleRing({ rings, allClosed, className = "" }) {
   const R = [82, 60, 38];
   const SW = 17;
   return (
-    <svg className={`triple-ring ${allClosed ? "glow" : ""}`} viewBox="0 0 200 200">
+    <svg className={`triple-ring ${className} ${allClosed ? "glow" : ""}`} viewBox="0 0 200 200">
       {rings.map((r, i) => {
         const rad = R[i];
         const c = 2 * Math.PI * rad;

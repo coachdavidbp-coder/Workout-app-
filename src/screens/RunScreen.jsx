@@ -3,7 +3,6 @@ import { useStore } from "../store.jsx";
 import BrandLogo from "../components/BrandLogo.jsx";
 import RunTracker from "../components/RunTracker.jsx";
 import RouteMiniMap from "../components/RouteMiniMap.jsx";
-import { IconRun } from "../components/icons.jsx";
 import { fmtDuration, fmtPace, runningSummary } from "../lib/progress.js";
 import { haptic } from "../lib/fx.js";
 
@@ -31,7 +30,7 @@ export default function RunScreen() {
 
       <main className="content">
         <div className="run-hero">
-          <div className="run-hero-ico"><IconRun width="34" height="34" /></div>
+          <div className="run-hero-ico"><img src="/icons/nav-run.png" alt="" /></div>
           <div className="run-hero-txt">
             <div className="rh-k">Run or walk with live GPS</div>
             <div className="rh-s">Your route on a map, real-time pace, mile splits and voice callouts.</div>

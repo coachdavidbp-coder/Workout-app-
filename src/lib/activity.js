@@ -10,10 +10,12 @@
 import { todayKey } from "../store.jsx";
 import { trainingCount } from "../data/plans.js";
 
+// Our palette, deliberately not Apple's red/green/cyan:
+// amber burn, royal-blue minutes, violet sessions.
 export const RING_COLORS = {
-  move: "#FF375F",
-  exercise: "#6FE04A",
-  train: "#4CD6FF",
+  move: "#FFB43D",
+  exercise: "#4C8DFF",
+  train: "#A78BFA",
 };
 
 export const SCOPES = [
@@ -74,7 +76,7 @@ export function activityRings(state, scope = "day") {
   const prof = state.profile || {};
   const gMove = Math.max(50, parseInt(prof.moveGoal, 10) || 600);
   const gEx = Math.max(5, parseInt(prof.exerciseGoal, 10) || 30);
-  const perWeek = Math.max(1, trainingCount(state));
+  const perWeek = Math.max(1, parseInt(prof.workoutsGoal, 10) || trainingCount(state));
   const log = state.activityLog || {};
 
   const { from, to } = rangeFor(state, scope);

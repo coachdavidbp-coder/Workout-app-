@@ -1,14 +1,12 @@
 import { useState, useEffect } from "react";
 import { useStore, todayKey, weekDates, currentDayId } from "../store.jsx";
-import { DAY_NAMES, daysOf, trainingCount } from "../data/plans.js";
-import { targetsFor } from "../data/plan.js";
-import Ring from "../components/Ring.jsx";
-import TrendChart from "../components/TrendChart.jsx";
+import { DAY_NAMES, daysOf, dayById, trainingCount } from "../data/plans.js";
 import BrandLogo from "../components/BrandLogo.jsx";
 import DayRecapSheet from "../components/DayRecapSheet.jsx";
-import { weeklyActivity } from "../lib/progress.js";
+import { TripleRing } from "../components/ActivityRings.jsx";
+import { activityRings } from "../lib/activity.js";
 import {
-  totalXP, levelInfo, streak, dailyChallenge, quoteOfDay, coachQuoteOfDay,
+  totalXP, levelInfo, streak, dailyChallenge, coachQuoteOfDay,
   recentActivity, continueDay, currentIcon, activeDates,
 } from "../lib/gamify.js";
 import { haptic } from "../lib/fx.js";
@@ -27,6 +25,7 @@ export default function HomeScreen({ go }) {
   }, []);
 
   const openRecap = () => { actions.markRecapSeen(todayKey()); setRecapOpen(true); };
+
   const xp = totalXP(state);
   const lvl = levelInfo(xp);
   const s = streak(state);
@@ -35,20 +34,21 @@ export default function HomeScreen({ go }) {
   const days = weekDates(new Date());
   const active = activeDates(state);
   const todayId = currentDayId();
+  const day = dayById(state, todayId) || { type: "rest", name: "Rest Day" };
 
-  const T = targetsFor(state.profile);
+  const doneKey = `w${week}-${todayId}`;
+  const doneToday = !!state.done[doneKey];
+  const missedToday = !!state.missed?.[todayKey()];
+  const isRest = day.type === "rest";
+
+  const ring = activityRings(state, "day");
   const weekDone = daysOf(state).filter((d) => d.type !== "rest" && state.done[`w${week}-${d.id}`]).length;
-  let proteinDaysWk = 0;
-  let calWk = 0;
-  for (const d of days) {
-    const m = state.meals[d.key];
-    if (m && (m.items || []).reduce((a, it) => a + (it.p || 0), 0) >= T.protein) proteinDaysWk++;
-    calWk += state.activityLog?.[d.key]?.calories || 0;
-  }
+  const weekTotal = trainingCount(state);
 
   const chal = dailyChallenge(state);
   const cont = continueDay(state);
-  const recent = recentActivity(state);
+  const recent = recentActivity(state).slice(0, 4);
+  const cq = coachQuoteOfDay();
 
   const claim = () => {
     actions.claimReward(`${chal.todayKey}-${chal.id}`);
@@ -57,6 +57,23 @@ export default function HomeScreen({ go }) {
 
   const hour = new Date().getHours();
   const greet = hour < 12 ? "Good morning" : hour < 18 ? "Good afternoon" : "Good evening";
+  const dateLine = new Date().toLocaleDateString(undefined, { weekday: "short", month: "short", day: "numeric" });
+
+  const status = isRest
+    ? { label: "Rest day", tone: "rest" }
+    : doneToday
+    ? { label: "Complete", tone: "done" }
+    : missedToday
+    ? { label: "Missed", tone: "miss" }
+    : { label: "Not logged", tone: "open" };
+
+  const cta = isRest
+    ? { text: "Recovery day — see the plan", go: "train" }
+    : doneToday
+    ? { text: "✓ Logged — review workout", go: "train" }
+    : cont
+    ? { text: "▶ Continue workout", go: "train" }
+    : { text: "▶ Start workout", go: "train" };
 
   return (
     <div className="scroll">
@@ -67,42 +84,65 @@ export default function HomeScreen({ go }) {
         </div>
         <div className="h-title">
           <div className="kicker">{greet}, {state.profile?.name || "Coach"}</div>
-          {(() => {
-            const cq = coachQuoteOfDay();
-            return (
-              <blockquote className="coach-quote">
-                <p>{cq.text}</p>
-                <cite>— {cq.coach} · {cq.team}</cite>
-              </blockquote>
-            );
-          })()}
         </div>
       </header>
 
       <main className="content">
-        {/* level / xp hero */}
-        <div className="home-hero glass">
-          <div className="lvl-row">
-            <div className="lvl-badge">{icon.emoji}</div>
-            <div className="lvl-meta">
-              <div className="lvl-sub">Level {lvl.level}</div>
-              <div className="lvl-title">{lvl.title}</div>
-            </div>
-            <div className="lvl-xp">{xp}<span style={{ fontSize: 12, color: "var(--mu)" }}> XP</span></div>
+        {/* ---------- today ---------- */}
+        <section className="today-card">
+          <div className="tc-top">
+            <span className="tc-kicker">Today · {dateLine}</span>
+            <span className={`tc-status ${status.tone}`}>{status.label}</span>
           </div>
-          <div className="xp-track"><div className="xp-fill" style={{ width: `${lvl.pct * 100}%` }} /></div>
-          <div className="xp-cap"><span>{lvl.into} / {lvl.span} XP</span><span>{lvl.toNext} to Level {lvl.level + 1}</span></div>
-        </div>
+          <h2 className="tc-session">{day.name}</h2>
 
-        {/* end-of-day recap */}
-        <button className={`recap-launch ${hour >= 18 ? "evening" : ""}`} onClick={() => { haptic(); openRecap(); }}>
-          <span className="rl-ico">🌙</span>
-          <span className="rl-txt">
-            <span className="rl-k">{hour >= 18 ? "How did today go?" : "End-of-day recap"}</span>
-            <span className="rl-s">Training, food, movement & streak for today</span>
-          </span>
-          <span className="rl-arrow">›</span>
-        </button>
+          <div className="tc-body">
+            <TripleRing rings={ring.rings} allClosed={ring.allClosed} className="sm" />
+            <div className="tc-metrics">
+              {ring.rings.map((r) => (
+                <div className="tcm" key={r.id}>
+                  <span className="tcm-dot" style={{ background: r.color }} />
+                  <span className="tcm-lab">{r.label}</span>
+                  <span className="tcm-val" style={{ color: r.color }}>
+                    {r.value.toLocaleString()}<em>/{r.goal}{r.unit ? ` ${r.unit.toLowerCase()}` : ""}</em>
+                  </span>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          <div className="tc-week">
+            {days.map((d) => (
+              <span
+                key={d.key}
+                className={`tcw ${active.has(d.key) ? "on" : ""} ${d.key === todayKey() ? "today" : ""} ${state.missed?.[d.key] && !active.has(d.key) ? "miss" : ""}`}
+              >
+                {d.label}
+              </span>
+            ))}
+          </div>
+
+          <button className="tc-cta" onClick={() => { haptic(); go?.(cta.go); }}>{cta.text}</button>
+        </section>
+
+        {/* ---------- quick stats ---------- */}
+        <div className="stat-tiles">
+          <div className="stat-tile">
+            <div className="st-k">{s.current}</div>
+            <div className="st-l">Day streak</div>
+            <div className="st-s">best {s.best}</div>
+          </div>
+          <div className="stat-tile">
+            <div className="st-k">{weekDone}<span className="st-of">/{weekTotal}</span></div>
+            <div className="st-l">This week</div>
+            <div className="st-s">Week {week} · workouts</div>
+          </div>
+          <div className="stat-tile">
+            <div className="st-k">{lvl.level}</div>
+            <div className="st-l">{lvl.title}</div>
+            <div className="st-bar"><span style={{ width: `${lvl.pct * 100}%` }} /></div>
+          </div>
+        </div>
 
         {/* streak at risk */}
         {s.current >= 2 && !active.has(todayKey()) && (
@@ -110,59 +150,13 @@ export default function HomeScreen({ go }) {
             <span className="sr-flame">🔥</span>
             <span>
               <span className="sr-k">Don't break your {s.current}-day streak</span>
-              <span className="sr-s">You haven't logged anything today. Get a workout in.</span>
+              <span className="sr-s">Nothing logged today yet. Get a session in.</span>
             </span>
             <span className="sr-arrow">›</span>
           </button>
         )}
 
-        {/* continue */}
-        {cont && (
-          <button className="continue-card" onClick={() => { haptic(); go?.("train"); }}>
-            <span className="cc-ico">▶</span>
-            <span>
-              <span className="cc-k">Continue where you left off</span>
-              <span className="cc-t">{DAY_NAMES[cont.id]} · {cont.name}</span>
-            </span>
-            <span className="cc-arrow">›</span>
-          </button>
-        )}
-
-        {/* rings */}
-        <div className="section-title">This week</div>
-        <div className="rings">
-          <div className="ring-card">
-            <div className="rlab">Workouts</div>
-            <Ring value={weekDone} max={trainingCount(state)} center={`${weekDone}/${trainingCount(state)}`} />
-          </div>
-          <div className="ring-card">
-            <div className="rlab">Protein</div>
-            <Ring value={proteinDaysWk} max={7} color="var(--good)" center={`${proteinDaysWk}/7`} unit="days" />
-          </div>
-          <div className="ring-card">
-            <div className="rlab">Calories</div>
-            <Ring value={calWk} max={2500} color="var(--amber)" center={calWk} unit="kcal" />
-          </div>
-        </div>
-
-        {/* streak */}
-        <div className="streak-card glass">
-          <span className="streak-flame">🔥</span>
-          <div>
-            <div className="streak-num">{s.current}</div>
-            <div className="streak-lbl">day streak · best {s.best}</div>
-          </div>
-          <div className="streak-week">
-            {days.map((d) => (
-              <span key={d.key} className={`sd ${active.has(d.key) ? "on" : ""} ${d.key === todayKey() ? "today" : ""}`}>
-                {d.label}
-              </span>
-            ))}
-          </div>
-        </div>
-
-        {/* daily challenge */}
-        <div className="section-title">Daily challenge</div>
+        {/* ---------- daily challenge ---------- */}
         <div className="challenge-card glass">
           <div className="ch-top">
             <span className="ch-k">Today's mission</span>
@@ -181,28 +175,26 @@ export default function HomeScreen({ go }) {
           </div>
         </div>
 
-        {/* monthly trend */}
-        {(() => {
-          const wk = weeklyActivity(state, 8);
-          const any = wk.some((w) => w.value > 0);
-          return any ? (
-            <>
-              <div className="section-title">Last 8 weeks</div>
-              <div className="chart-card">
-                <div className="section-label" style={{ margin: "0 0 8px" }}>Workouts per week</div>
-                <TrendChart points={wk} color="var(--ac)" valueFmt={(v) => v} />
-              </div>
-            </>
-          ) : null;
-        })()}
+        {/* ---------- coach ---------- */}
+        <blockquote className="home-quote">
+          <p>{cq.text}</p>
+          <cite>— {cq.coach} · {cq.team}</cite>
+        </blockquote>
 
-        {/* quote */}
-        <div className="quote-card glass">“{quoteOfDay()}”</div>
+        {/* ---------- recap ---------- */}
+        <button className={`recap-launch ${hour >= 18 ? "evening" : ""}`} onClick={() => { haptic(); openRecap(); }}>
+          <span className="rl-ico">🌙</span>
+          <span className="rl-txt">
+            <span className="rl-k">{hour >= 18 ? "How did today go?" : "End-of-day recap"}</span>
+            <span className="rl-s">Training, food, movement & streak</span>
+          </span>
+          <span className="rl-arrow">›</span>
+        </button>
 
-        {/* recent activity */}
+        {/* ---------- recent ---------- */}
         {recent.length > 0 && (
           <>
-            <div className="section-title">Recent activity</div>
+            <div className="section-title">Recent</div>
             <div className="recent-list card">
               {recent.map((e, i) => (
                 <div className="recent-row" key={i}>

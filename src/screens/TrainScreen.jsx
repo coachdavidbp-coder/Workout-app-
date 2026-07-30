@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useStore, currentDayId, todayKey } from "../store.jsx";
+import { useStore, currentDayId, todayKey, weekDates } from "../store.jsx";
 import { DAY_NAMES, weeksOf, daysOf, dayById, trainingCount, setsFor, protoFor } from "../data/plans.js";
 import { IconPlay } from "../components/icons.jsx";
 import NumField from "../components/NumField.jsx";
@@ -26,6 +26,10 @@ function warmupSeconds(text) {
 }
 function clock(s) { return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, "0")}`; }
 
+// Sunday-first day ids, so a program day maps to a real calendar date
+// in the current week (missed days are stored by date).
+const DAY_IDS = ["sun", "mon", "tue", "wed", "thu", "fri", "sat"];
+
 export default function TrainScreen() {
   const { state, mode, actions } = useStore();
   const today = currentDayId();
@@ -49,6 +53,11 @@ export default function TrainScreen() {
   ).length;
   const coachMsg = trainingCoach(state, { week, dayId, day, todayId: today });
   const proto = protoFor(day, week);
+
+  const wkDates = weekDates(new Date());
+  const dateKeyFor = (id) => wkDates[DAY_IDS.indexOf(id)]?.key || todayKey();
+  const missedKey = dateKeyFor(dayId);
+  const isMissed = !!state.missed?.[missedKey];
 
   const sessionSec = state.durations?.[doneKey] || 0;
   const estCals = caloriesForSession(sessionSec, day.type, bodyweight(state));
@@ -119,6 +128,7 @@ export default function TrainScreen() {
           {days.map((d) => {
             const active = d.id === dayId;
             const isDone = d.type !== "rest" && state.done[`w${week}-${d.id}`];
+            const skipped = d.type !== "rest" && !isDone && !!state.missed?.[dateKeyFor(d.id)];
             return (
               <button
                 key={d.id}
@@ -127,7 +137,7 @@ export default function TrainScreen() {
               >
                 {d.id === today && <span className="today-dot" />}
                 {d.label}
-                <span className="ck">{isDone ? "✓" : " "}</span>
+                <span className={`ck ${skipped ? "miss" : ""}`}>{isDone ? "✓" : skipped ? "✕" : " "}</span>
               </button>
             );
           })}
@@ -235,20 +245,20 @@ export default function TrainScreen() {
               </button>
             )}
 
-            {dayId === today && !state.done[doneKey] && (
+            {!state.done[doneKey] && (
               <button
-                className={`btn btn-block missed-btn ${state.missed?.[todayKey()] ? "on" : ""}`}
+                className={`btn btn-block missed-btn ${isMissed ? "on" : ""}`}
                 style={{ marginTop: 10 }}
                 onClick={() => {
-                  const now = !state.missed?.[todayKey()];
-                  actions.reportMissed(todayKey(), now);
+                  const now = !isMissed;
+                  actions.reportMissed(missedKey, now);
                   haptic(now ? "warning" : "light");
                   toast(now
-                    ? { emoji: "🛌", title: "Logged as a rest day", sub: "No workout today — that's on the record.", tone: "neutral" }
-                    : { emoji: "↩️", title: "Undone", sub: "Removed the no-workout note.", tone: "neutral" });
+                    ? { emoji: "✗", title: "Marked as missed", sub: `${day.name} — logged as a workout you skipped.`, tone: "neutral" }
+                    : { emoji: "↩️", title: "Undone", sub: "Removed the missed-workout mark.", tone: "neutral" });
                 }}
               >
-                {state.missed?.[todayKey()] ? "✓ Marked: didn't work out today (tap to undo)" : "I didn't work out today"}
+                {isMissed ? "✓ Marked missed (tap to undo)" : `✗ I missed this workout${dayId === today ? "" : ` (${DAY_NAMES[dayId]})`}`}
               </button>
             )}
           </>

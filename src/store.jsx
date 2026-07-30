@@ -51,8 +51,11 @@ export const DEFAULT_STATE = {
     diet: "balanced", // balanced | high_protein | lower_carb | vegetarian | glp1
     customPlan: null, // built via the custom plan builder (used when planId === "custom")
     programWeeks: 4, // program length: 4 | 8 | 12 | 16 (blocks repeat past week 4)
+    age: null, // used to recommend ring goals
+    activityLevel: "moderate", // sedentary | light | moderate | very | athlete
     moveGoal: 600, // daily calorie-burn ring goal
     exerciseGoal: 30, // daily training-minutes ring goal
+    workoutsGoal: null, // workouts/week ring goal (null → use the plan's training days)
     proteinGoal: 0,
     calorieGoal: 0,
     waterGoal: 0,
