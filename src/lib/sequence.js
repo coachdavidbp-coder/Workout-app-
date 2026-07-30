@@ -45,21 +45,25 @@ export const YOGA_LOWER_BACK = [
   {
     label: "Cat-Cow",
     seconds: 60,
+    q: "cat cow stretch lower back tutorial",
     cue: "On hands and knees. Inhale — drop the belly, lift the chest. Exhale — round the spine, tuck the chin. Slow and smooth.",
   },
   {
     label: "Child's Pose",
     seconds: 60,
+    q: "childs pose yoga lower back tutorial",
     cue: "Knees wide, big toes together, hips back to the heels. Walk the hands forward and let the low back open. Breathe into your back ribs.",
   },
   {
     label: "Figure-4 Glute Stretch",
     seconds: 90,
+    q: "supine figure 4 glute stretch tutorial",
     cue: "On your back, ankle across the opposite knee, pull the thigh in. 45 seconds each side — tight glutes are what drag on your low back.",
   },
   {
     label: "Supine Spinal Twist",
     seconds: 90,
+    q: "supine spinal twist yoga lower back tutorial",
     cue: "On your back, knees together, drop them to one side, shoulders flat. 45 seconds each side. Exhale and let gravity do it.",
   },
 ];

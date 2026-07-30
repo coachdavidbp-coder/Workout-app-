@@ -11,6 +11,7 @@ import NowPlaying from "../components/NowPlaying.jsx";
 import IntervalTimer from "../components/IntervalTimer.jsx";
 import CountdownTimer from "../components/CountdownTimer.jsx";
 import SequenceTimer from "../components/SequenceTimer.jsx";
+import CooldownSheet from "../components/CooldownSheet.jsx";
 import { parseSequence, totalSeconds } from "../lib/sequence.js";
 import WorkoutSummarySheet from "../components/WorkoutSummarySheet.jsx";
 import { trainingCoach, fatigueCheck } from "../lib/coach.js";
@@ -40,6 +41,7 @@ export default function TrainScreen() {
   const [timerOpen, setTimerOpen] = useState(false);
   const [warmupOpen, setWarmupOpen] = useState(false);
   const [cooldownOpen, setCooldownOpen] = useState(false);
+  const [cooldownList, setCooldownList] = useState(false);
   const [summaryOpen, setSummaryOpen] = useState(false);
   const [startSignal, setStartSignal] = useState(0);
   const beginTiming = () => setStartSignal((n) => n + 1);
@@ -241,13 +243,22 @@ export default function TrainScreen() {
           <>
             {day.cooldown?.length > 0 && (
               <div className="warmup-card cooldown-card">
-                <div className="warmup-txt">
-                  <b>Cool-down · yoga</b> · {day.cooldown.map((c) => c.label).join(" · ")}
+                <div className="warmup-txt"><b>Cool-down · yoga</b> · for your lower back</div>
+                <div className="pose-mini">
+                  {day.cooldown.map((c) => (
+                    <span className="pose-chip" key={c.label}>
+                      {c.label}<em className="tnum">{clock(c.seconds)}</em>
+                    </span>
+                  ))}
                 </div>
-                <button className="btn cooldown-btn" onClick={() => { beep(600, 0.05); haptic(); setCooldownOpen(true); }}>
-                  ▶ Start cool-down · {clock(totalSeconds(day.cooldown))}
-                </button>
-                <div className="ss-note">Four poses for your lower back — guided, one at a time.</div>
+                <div className="row gap-2" style={{ marginTop: 10 }}>
+                  <button className="btn" style={{ flex: 1 }} onClick={() => { haptic(); setCooldownList(true); }}>
+                    Poses &amp; videos
+                  </button>
+                  <button className="btn cooldown-btn" style={{ flex: 1.4, marginTop: 0 }} onClick={() => { beep(600, 0.05); haptic(); setCooldownOpen(true); }}>
+                    ▶ Start · {clock(totalSeconds(day.cooldown))}
+                  </button>
+                </div>
               </div>
             )}
 
@@ -357,6 +368,13 @@ export default function TrainScreen() {
           onClose={() => setWarmupOpen(false)}
         />
       )}
+
+      <CooldownSheet
+        open={cooldownList}
+        onClose={() => setCooldownList(false)}
+        steps={day.cooldown || []}
+        onStart={() => setCooldownOpen(true)}
+      />
 
       {cooldownOpen && day.cooldown?.length > 0 && (
         <SequenceTimer

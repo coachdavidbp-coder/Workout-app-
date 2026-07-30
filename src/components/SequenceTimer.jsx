@@ -129,6 +129,14 @@ export default function SequenceTimer({
             <div className="seq-now">{step.label}</div>
             <div className="it-count tnum">{fmt(remaining)}</div>
             {step.cue && <p className="seq-cue">{step.cue}</p>}
+            {step.q && (
+              <button
+                className="seq-vid"
+                onClick={() => window.open(`https://www.youtube.com/results?search_query=${encodeURIComponent(step.q)}`, "_blank", "noopener")}
+              >
+                ▶ How to do this
+              </button>
+            )}
             <div className="seq-next">
               {next ? <>Next · <b>{next.label}</b> · {fmt(next.seconds)}</> : "Last one — finish strong."}
             </div>
