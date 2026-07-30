@@ -7,6 +7,7 @@ import NumField from "../components/NumField.jsx";
 import BrandLogo from "../components/BrandLogo.jsx";
 import RouteMiniMap from "../components/RouteMiniMap.jsx";
 import EmptyState from "../components/EmptyState.jsx";
+import ProgressPhotos from "../components/ProgressPhotos.jsx";
 import { strengthSummary, runningSummary, personalBests, fmtPace } from "../lib/progress.js";
 
 const SEGMENTS = [
@@ -155,6 +156,7 @@ function WeightBody() {
           ))}
         </div>
       </div>
+      <ProgressPhotos />
       <WeighInSheet open={logging} onClose={() => setLogging(false)} />
     </>
   );

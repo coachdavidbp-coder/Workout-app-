@@ -76,3 +76,34 @@ export const EXERCISES = [
   { name: "Broad Jump", eq: ["bw"], grp: "power", rep: "8", q: "broad jump form" },
   { name: "Farmer's Carry", eq: ["db", "kb"], grp: "power", rep: "40s", q: "farmers carry form" },
 ];
+
+// ---------------- swaps ----------------
+// Finds alternatives that train the same pattern. Plan exercises don't all
+// exist in this library verbatim, so fall back to inferring the group from
+// the name — better a sensible swap list than an empty one.
+// Order matters: the specific patterns run before the loose ones, so
+// "Nordic Hamstring Curl" lands on hinge rather than arms, and
+// "Lateral Raise" doesn't get caught by the "lat" in pull-downs.
+const GROUP_HINTS = [
+  [/nordic|hamstring/i, "hinge"],
+  [/deadlift|\brdl\b|hinge|kb swing|glute|hip thrust|good morning/i, "hinge"],
+  [/squat|lunge|step-?up|wall sit|leg press|calf/i, "legs"],
+  [/plank|crunch|sit-?up|hollow|russian|leg raise|\bcore\b|bird dog|dead bug/i, "core"],
+  [/curl|tricep|lateral raise|front raise|rear delt|shrug|extension/i, "arms"],
+  [/press|push|dip|\bfly\b|thruster/i, "push"],
+  [/row|pull-?up|pulldown|chin-?up|\blat\b|face pull/i, "pull"],
+];
+
+export function groupOf(name) {
+  const exact = EXERCISES.find((e) => e.name.toLowerCase() === String(name || "").toLowerCase());
+  if (exact) return exact.grp;
+  for (const [re, grp] of GROUP_HINTS) if (re.test(name || "")) return grp;
+  return null;
+}
+
+export function swapsFor(name, limit = 10) {
+  const grp = groupOf(name);
+  if (!grp) return [];
+  const lower = String(name || "").toLowerCase();
+  return EXERCISES.filter((e) => e.grp === grp && e.name.toLowerCase() !== lower).slice(0, limit);
+}

@@ -75,6 +75,8 @@ export const DEFAULT_STATE = {
   game: { claimedDays: {}, profileIcon: null }, // daily rewards claimed + chosen icon
   favRecipes: [], // saved Meal Prep recipe ids
   missed: {}, // { "2026-07-28": true } — days the user reported not working out
+  swaps: {}, // { "w1-mon": { "DB Goblet Squat": "Barbell Back Squat" } }
+  photos: [], // [{ date, img, weight }] — progress pictures
   completedPrograms: [], // [{ planId, name, accent, date, trainingDays }]
   settings: { voice: true, theme: "system", voiceName: null }, // coach voice, light/dark, chosen TTS voice
 };
@@ -338,6 +340,26 @@ export function StoreProvider({ children }) {
       }),
 
     setProfile: (patch) => update((s) => Object.assign(s.profile, patch)),
+
+    // ---- swap an exercise for an equivalent ----
+    setSwap: (week, dayId, originalName, replacement) =>
+      update((s) => {
+        s.swaps = s.swaps || {};
+        const key = `w${week}-${dayId}`;
+        s.swaps[key] = s.swaps[key] || {};
+        if (replacement) s.swaps[key][originalName] = replacement;
+        else delete s.swaps[key][originalName];
+      }),
+
+    // ---- progress photos ----
+    addPhoto: (rec) =>
+      update((s) => {
+        s.photos = s.photos || [];
+        s.photos.push({ ...rec });
+        s.photos.sort((a, b) => a.date.localeCompare(b.date));
+      }),
+    removePhoto: (date) =>
+      update((s) => { s.photos = (s.photos || []).filter((p) => p.date !== date); }),
 
     // ---- report a day with no workout ----
     reportMissed: (dateKey, val = true) =>

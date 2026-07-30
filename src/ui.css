@@ -1436,3 +1436,58 @@
   font-family: var(--font-display); font-weight: 800; font-size: 12.5px;
 }
 .es-btn:active { transform: scale(.98); }
+
+/* ---------- fatigue / deload card ---------- */
+.fatigue-card { background: var(--panel); border: 1px solid var(--amber); border-left-width: 3px; border-radius: var(--r); padding: 13px 14px;
+  -webkit-backdrop-filter: blur(14px) saturate(1.3); backdrop-filter: blur(14px) saturate(1.3); }
+.fatigue-card.good { border-color: var(--good); }
+.fc-top { display: flex; align-items: center; gap: 9px; }
+.fc-ico { font-size: 17px; }
+.fc-title { font-family: var(--font-display); font-weight: 800; font-size: 14px; letter-spacing: -.01em; }
+.fc-body { margin: 7px 0 0; font-size: 12.5px; line-height: 1.5; color: var(--tx-2); }
+
+/* ---------- weekly report ---------- */
+.wr-headline { margin: 14px 0 0; font-family: var(--font-display); font-weight: 800; font-size: 16px; line-height: 1.3; letter-spacing: -.015em; }
+.wr-rows { margin-top: 14px; }
+.wr-row { display: grid; grid-template-columns: 1fr auto 62px; gap: 10px; align-items: baseline; padding: 11px 0; border-top: 1px solid var(--line-soft); }
+.wr-row:first-child { border-top: none; }
+.wr-lab { font-size: 13px; color: var(--tx-2); }
+.wr-val { font-family: var(--font-display); font-weight: 800; font-size: 16px; font-variant-numeric: tabular-nums; }
+.wr-val em { font-style: normal; font-size: 10.5px; color: var(--mu); font-weight: 700; }
+.wr-chg { text-align: right; font-family: var(--font-display); font-weight: 800; font-size: 11.5px; }
+.wr-chg.up { color: var(--good); } .wr-chg.down { color: var(--amber); } .wr-chg.flat { color: var(--mu); }
+.wr-note { margin: 12px 0 0; font-size: 11.5px; color: var(--mu); line-height: 1.5; }
+.wr-nav { display: flex; gap: 10px; margin-top: 16px; }
+.wr-nav .btn { flex: 1; }
+
+/* ---------- exercise swaps ---------- */
+.swap-box { margin-top: 14px; }
+.swap-toggle { width: 100%; background: var(--panel-2); border: 1px solid var(--line); border-radius: 10px; padding: 10px;
+  color: var(--ac-hi); font-family: var(--font-display); font-weight: 800; font-size: 12.5px; }
+.swap-note { margin-top: 8px; font-size: 12px; color: var(--mu); display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.swap-note b { color: var(--tx); }
+.swap-undo { background: none; border: none; color: var(--ac-hi); font-weight: 700; font-size: 12px; text-decoration: underline; padding: 0; }
+.swap-list { margin-top: 8px; display: flex; flex-direction: column; gap: 6px; }
+.swap-hint { font-size: 11px; color: var(--mu); margin-bottom: 2px; }
+.swap-opt { display: flex; align-items: center; justify-content: space-between; gap: 10px; text-align: left;
+  background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 10px 12px; font-size: 13px; color: var(--tx); }
+.swap-opt.on { border-color: var(--ac); background: var(--ac-dim); }
+.swap-eq { font-size: 9.5px; color: var(--mu); text-transform: uppercase; font-family: var(--font-display); font-weight: 700; letter-spacing: .04em; }
+.swap-tag { margin-left: 7px; font-size: 8.5px; font-family: var(--font-display); font-weight: 800; text-transform: uppercase;
+  letter-spacing: .05em; color: var(--ac-hi); background: var(--ac-dim); border-radius: 100px; padding: 2px 7px; vertical-align: middle; }
+
+/* ---------- progress photos ---------- */
+.pp-actions { display: flex; gap: 10px; }
+.pp-actions .btn { flex: 1; }
+.pp-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-top: 12px; }
+.pp-cell { position: relative; margin: 0; border-radius: 12px; overflow: hidden; border: 1px solid var(--line); background: var(--panel); }
+.pp-cell img, .pp-side img { display: block; width: 100%; aspect-ratio: 3/4; object-fit: cover; }
+.pp-cell figcaption, .pp-side figcaption { display: flex; flex-direction: column; gap: 1px; padding: 6px 7px; }
+.pp-date { font-size: 9.5px; color: var(--mu); font-family: var(--font-display); font-weight: 700; }
+.pp-wt { font-size: 11px; font-family: var(--font-display); font-weight: 800; font-variant-numeric: tabular-nums; }
+.pp-when { font-size: 9px; text-transform: uppercase; letter-spacing: .06em; color: var(--ac-hi); font-family: var(--font-display); font-weight: 800; }
+.pp-del { position: absolute; top: 5px; right: 5px; width: 20px; height: 20px; border-radius: 50%; border: none;
+  background: rgba(0,0,0,.6); color: #fff; font-size: 13px; line-height: 1; }
+.pp-compare { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 12px; }
+.pp-side { margin: 0; border-radius: 12px; overflow: hidden; border: 1px solid var(--line); background: var(--panel); }
+.pp-delta { grid-column: 1 / -1; text-align: center; font-family: var(--font-display); font-weight: 800; font-size: 13px; color: var(--good); padding-top: 2px; }

@@ -5,6 +5,7 @@ import BrandLogo from "../components/BrandLogo.jsx";
 import DayRecapSheet from "../components/DayRecapSheet.jsx";
 import SettingsSheet from "../components/SettingsSheet.jsx";
 import EmptyState from "../components/EmptyState.jsx";
+import WeeklyReportSheet from "../components/WeeklyReportSheet.jsx";
 import { TripleRing } from "../components/ActivityRings.jsx";
 import { activityRings } from "../lib/activity.js";
 import { useCountUp } from "../lib/anim.js";
@@ -18,6 +19,7 @@ export default function HomeScreen({ go }) {
   const { state, actions } = useStore();
   const [recapOpen, setRecapOpen] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
+  const [weekOpen, setWeekOpen] = useState(false);
 
   // Auto-pop the recap once per day, the first time you open the app after 8pm.
   useEffect(() => {
@@ -176,6 +178,16 @@ export default function HomeScreen({ go }) {
           <cite>— {cq.coach} · {cq.team}</cite>
         </blockquote>
 
+        {/* ---------- week in review ---------- */}
+        <button className="recap-launch" onClick={() => { haptic(); setWeekOpen(true); }}>
+          <span className="rl-ico">📊</span>
+          <span className="rl-txt">
+            <span className="rl-k">Week in review</span>
+            <span className="rl-s">Every number against last week</span>
+          </span>
+          <span className="rl-arrow">›</span>
+        </button>
+
         {/* ---------- recap ---------- */}
         <button className={`recap-launch ${hour >= 18 ? "evening" : ""}`} onClick={() => { haptic(); openRecap(); }}>
           <span className="rl-ico">🌙</span>
@@ -211,6 +223,7 @@ export default function HomeScreen({ go }) {
 
       <DayRecapSheet open={recapOpen} onClose={() => setRecapOpen(false)} />
       <SettingsSheet open={settingsOpen} onClose={() => setSettingsOpen(false)} />
+      <WeeklyReportSheet open={weekOpen} onClose={() => setWeekOpen(false)} />
     </div>
   );
 }

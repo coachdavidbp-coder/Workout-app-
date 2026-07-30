@@ -188,3 +188,60 @@ export function nutritionCoach(state, { dateKey, isToday }) {
     body: `${Math.round(totals.p)}g protein, ${water}oz water. This is exactly how you keep muscle while the weight comes off. Repeat it tomorrow.`,
   };
 }
+
+// ---------------- fatigue / deload check ----------------
+// Looks for the honest signals that you're digging a hole: sessions you
+// marked missed, repeated low "how did that feel" scores, and finishing a
+// full block. Returns null when there's nothing to say — the coach should
+// stay quiet unless it has a reason.
+export function fatigueCheck(state) {
+  const today = new Date();
+  const keys = Array.from({ length: 14 }, (_, i) => {
+    const d = new Date(today);
+    d.setHours(12, 0, 0, 0);
+    d.setDate(d.getDate() - i);
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+  });
+
+  const missed7 = keys.slice(0, 7).filter((k) => state.missed?.[k]).length;
+  const missed14 = keys.filter((k) => state.missed?.[k]).length;
+
+  // most recent feel scores across all logged days
+  const feels = Object.values(state.liftLogs || {})
+    .map((l) => l?.feel)
+    .filter((f) => typeof f === "number");
+  const recentFeels = feels.slice(-4);
+  const rough = recentFeels.filter((f) => f <= 2).length;
+
+  const active7 = keys.slice(0, 7).filter((k) => (state.activityLog?.[k]?.workouts || 0) > 0).length;
+
+  if (rough >= 3 && recentFeels.length >= 3) {
+    return {
+      tone: "push", kind: "deload",
+      title: "Time to back off — on purpose.",
+      body: "Three of your last four sessions felt rough. That's a body asking for a lighter week, not a weaker one. Cut the weight ~20% for a week, keep every session, then come back and hit numbers you couldn't touch before.",
+    };
+  }
+  if (missed7 >= 3) {
+    return {
+      tone: "push", kind: "missed",
+      title: `${missed7} sessions missed this week.`,
+      body: "Life happens — but three is a pattern, not an accident. Pick the two you'll actually make next week and protect them. Two real sessions beat six planned ones.",
+    };
+  }
+  if (missed14 >= 4 && missed7 <= 1) {
+    return {
+      tone: "good", kind: "recovering",
+      title: "You're pulling it back.",
+      body: "Rough couple of weeks, but this one's cleaner. That's the part most people never do — keep it going.",
+    };
+  }
+  if (active7 >= 6) {
+    return {
+      tone: "push", kind: "highload",
+      title: "Six days on. Watch the tank.",
+      body: "Big week. Make the next rest day a real one — sleep, food, water — so this turns into muscle instead of a hole you have to climb out of.",
+    };
+  }
+  return null;
+}

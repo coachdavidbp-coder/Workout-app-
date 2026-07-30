@@ -11,7 +11,7 @@ import NowPlaying from "../components/NowPlaying.jsx";
 import IntervalTimer from "../components/IntervalTimer.jsx";
 import CountdownTimer from "../components/CountdownTimer.jsx";
 import WorkoutSummarySheet from "../components/WorkoutSummarySheet.jsx";
-import { trainingCoach } from "../lib/coach.js";
+import { trainingCoach, fatigueCheck } from "../lib/coach.js";
 import { fmtPace, fmtDuration } from "../lib/progress.js";
 import { caloriesForSession, bodyweight, strengthPRHit, runPRHit, streakMilestoneHit, streak } from "../lib/gamify.js";
 import { fireConfetti, beep, haptic } from "../lib/fx.js";
@@ -149,6 +149,20 @@ export default function TrainScreen() {
       <main className="content">
         <CoachCard msg={coachMsg} />
 
+        {(() => {
+          const f = fatigueCheck(state);
+          if (!f) return null;
+          return (
+            <div className={`fatigue-card ${f.tone}`}>
+              <div className="fc-top">
+                <span className="fc-ico">{f.kind === "recovering" ? "📈" : f.kind === "highload" ? "🔋" : "🛑"}</span>
+                <span className="fc-title">{f.title}</span>
+              </div>
+              <p className="fc-body">{f.body}</p>
+            </div>
+          );
+        })()}
+
         {day.type !== "rest" && (
           <>
             {sessionLive ? (
@@ -184,7 +198,7 @@ export default function TrainScreen() {
         )}
 
         {day.type === "lift" && (
-          <LiftDay day={day} week={week} log={log} onOpen={openEx} actions={actions} dayId={dayId} />
+          <LiftDay day={day} week={week} log={log} onOpen={openEx} actions={actions} dayId={dayId} swaps={state.swaps?.[doneKey] || {}} />
         )}
 
         {day.type === "cardio" && (
@@ -329,7 +343,7 @@ export default function TrainScreen() {
   );
 }
 
-function LiftDay({ day, week, log, onOpen, actions, dayId }) {
+function LiftDay({ day, week, log, onOpen, actions, dayId, swaps = {} }) {
   return (
     <>
       <div className="bw-log">
@@ -362,7 +376,9 @@ function LiftDay({ day, week, log, onOpen, actions, dayId }) {
 
       <div className="ex-card">
         {day.exercises.map((ex) => {
-          const exLog = log.exercises?.[ex.name] || {};
+          const swapped = swaps[ex.name] || null;
+          const shownName = swapped || ex.name;
+          const exLog = log.exercises?.[shownName] || {};
           const reps = (exLog.reps || []).filter((r) => r !== "" && r != null);
           return (
             <div className="ex-item" key={ex.name}>
@@ -372,7 +388,8 @@ function LiftDay({ day, week, log, onOpen, actions, dayId }) {
                     <span className="vic">
                       <IconPlay width="15" height="15" />
                     </span>
-                    {ex.name}
+                    {shownName}
+                    {swapped && <span className="swap-tag">swapped</span>}
                   </div>
                   <div className="ex-sub">
                     {exLog.weight ? `${exLog.weight} lb` : "Tap for video & log"}
