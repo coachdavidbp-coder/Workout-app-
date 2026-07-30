@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useStore } from "./store.jsx";
 import HomeScreen from "./screens/HomeScreen.jsx";
 import TrainScreen from "./screens/TrainScreen.jsx";
@@ -13,6 +13,7 @@ import ErrorBoundary from "./components/ErrorBoundary.jsx";
 import Toaster from "./components/Toaster.jsx";
 import AchievementWatcher from "./components/AchievementWatcher.jsx";
 import BrandLogo from "./components/BrandLogo.jsx";
+import SplashIntro from "./components/SplashIntro.jsx";
 import { setVoiceName, setCoachStyle } from "./lib/voice.js";
 import { handleSpotifyRedirect } from "./lib/spotify.js";
 
@@ -26,7 +27,7 @@ const TABS = [
   { id: "more", label: "You", img: "/icons/nav-you.png", Screen: MoreScreen },
 ];
 
-export default function App() {
+function AppBody() {
   const { mode, state } = useStore();
   const [tab, setTab] = useState("home");
   const theme = state?.settings?.theme || "system";
@@ -100,5 +101,24 @@ export default function App() {
         ))}
       </nav>
     </div>
+  );
+}
+
+// The intro sits above every state the app can be in — loading, signed out,
+// onboarding or the tab shell — so a slow cold start never shows through it.
+export default function App() {
+  const [splashDone, setSplashDone] = useState(() => {
+    try { return sessionStorage.getItem("splash:seen") === "1"; } catch (e) { return false; }
+  });
+  const endSplash = useCallback(() => {
+    try { sessionStorage.setItem("splash:seen", "1"); } catch (e) { /* ignore */ }
+    setSplashDone(true);
+  }, []);
+
+  return (
+    <>
+      <AppBody />
+      {!splashDone && <SplashIntro onDone={endSplash} />}
+    </>
   );
 }
