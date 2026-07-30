@@ -67,3 +67,37 @@ export async function resolveVideoId(query, signal) {
 export function embedUrl(videoId) {
   return `https://www.youtube-nocookie.com/embed/${videoId}?rel=0&modestbranding=1&playsinline=1`;
 }
+
+// ---------------------------------------------------------
+// Per-move video overrides.
+//
+// The ids shipped for stretches and poses were picked without being able to
+// play them from the build machine. Rather than leave you stuck with a bad
+// one, any player can be repointed from inside the app — paste a YouTube
+// link and it sticks on this device from then on.
+// ---------------------------------------------------------
+const OVERRIDE_PREFIX = "ytfix:v1:";
+
+// Accepts a full watch/share/embed URL or a bare id.
+export function parseVideoId(input) {
+  const s = String(input || "").trim();
+  if (!s) return null;
+  if (/^[\w-]{11}$/.test(s)) return s;
+  const m =
+    s.match(/[?&]v=([\w-]{11})/) ||
+    s.match(/youtu\.be\/([\w-]{11})/) ||
+    s.match(/\/(?:embed|shorts|live)\/([\w-]{11})/);
+  return m ? m[1] : null;
+}
+
+export function videoOverride(slug) {
+  if (!slug) return null;
+  try { return localStorage.getItem(OVERRIDE_PREFIX + slug) || null; } catch (e) { return null; }
+}
+
+export function setVideoOverride(slug, input) {
+  const id = parseVideoId(input);
+  if (!slug || !id) return null;
+  try { localStorage.setItem(OVERRIDE_PREFIX + slug, id); } catch (e) { /* ignore */ }
+  return id;
+}

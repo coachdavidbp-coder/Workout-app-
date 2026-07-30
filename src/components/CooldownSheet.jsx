@@ -8,14 +8,20 @@ const fmt = (s) => `${Math.floor(s / 60)}:${String(s % 60).padStart(2, "0")}`;
 
 // The cool-down laid out pose by pose — how long each one lasts, what to do,
 // and a how-to video — with the option to run the whole thing guided.
-export default function CooldownSheet({ open, onClose, steps = [], onStart }) {
+export default function CooldownSheet({
+  open, onClose, steps = [], onStart,
+  title = "Cool-down · yoga",
+  subtitle = "for your lower back",
+  noun = "poses",
+  startLabel = "Start guided cool-down",
+}) {
   const [openId, setOpenId] = useState(null);
 
   return (
     <Sheet open={open} onClose={onClose}>
-      <h3 className="sheet-title">Cool-down · yoga</h3>
+      <h3 className="sheet-title">{title}</h3>
       <div className="sheet-sub">
-        {steps.length} poses · {fmt(totalSeconds(steps))} · for your lower back
+        {steps.length} {noun} · {fmt(totalSeconds(steps))} · {subtitle}
       </div>
 
       <div className="pose-list">
@@ -36,7 +42,7 @@ export default function CooldownSheet({ open, onClose, steps = [], onStart }) {
               <div className="pose-body">
                 {p.cue && <p className="pose-cue">{p.cue}</p>}
                 {(p.video || p.q) && (
-                  <HowToVideo videoId={p.video} query={p.q} title={`${p.label} how-to`} />
+                  <HowToVideo videoId={p.video} slug={p.label} query={p.q} title={`${p.label} how-to`} />
                 )}
               </div>
             )}
@@ -49,9 +55,9 @@ export default function CooldownSheet({ open, onClose, steps = [], onStart }) {
         style={{ marginTop: 16 }}
         onClick={() => { haptic("success"); onClose(); onStart?.(); }}
       >
-        ▶ Start guided cool-down · {fmt(totalSeconds(steps))}
+        ▶ {startLabel} · {fmt(totalSeconds(steps))}
       </button>
-      <div className="ss-note">Runs one pose at a time with a timer and a countdown into the next.</div>
+      <div className="ss-note">Runs one {noun.replace(/e?s$/, "")} at a time with a timer and a countdown into the next.</div>
     </Sheet>
   );
 }

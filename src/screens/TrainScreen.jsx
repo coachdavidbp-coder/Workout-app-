@@ -12,7 +12,7 @@ import IntervalTimer from "../components/IntervalTimer.jsx";
 import CountdownTimer from "../components/CountdownTimer.jsx";
 import SequenceTimer from "../components/SequenceTimer.jsx";
 import CooldownSheet from "../components/CooldownSheet.jsx";
-import { parseSequence, totalSeconds } from "../lib/sequence.js";
+import { parseSequence, totalSeconds, PRE_STRETCH, POST_STRETCH } from "../lib/sequence.js";
 import WorkoutSummarySheet from "../components/WorkoutSummarySheet.jsx";
 import { trainingCoach, fatigueCheck } from "../lib/coach.js";
 import { fmtPace, fmtDuration } from "../lib/progress.js";
@@ -42,6 +42,9 @@ export default function TrainScreen() {
   const [warmupOpen, setWarmupOpen] = useState(false);
   const [cooldownOpen, setCooldownOpen] = useState(false);
   const [cooldownList, setCooldownList] = useState(false);
+  // "pre" | "post" | null — which stretch block is open, list vs guided run
+  const [stretchList, setStretchList] = useState(null);
+  const [stretchRun, setStretchRun] = useState(null);
   const [summaryOpen, setSummaryOpen] = useState(false);
   const [startSignal, setStartSignal] = useState(0);
   const beginTiming = () => setStartSignal((n) => n + 1);
@@ -211,6 +214,17 @@ export default function TrainScreen() {
               </div>
             )}
 
+            {/* Dynamic stretching goes after the warm-up, not before it —
+                you want to be warm before you chase range. */}
+            <StretchCard
+              kind="pre"
+              steps={PRE_STRETCH}
+              heading="Pre-workout stretch"
+              blurb="dynamic — move through it, don't hold"
+              onList={() => setStretchList("pre")}
+              onRun={() => setStretchRun("pre")}
+            />
+
             <NowPlaying />
           </>
         )}
@@ -241,6 +255,15 @@ export default function TrainScreen() {
 
         {day.type !== "rest" && (
           <>
+            <StretchCard
+              kind="post"
+              steps={POST_STRETCH}
+              heading="Post-workout stretch"
+              blurb="static — hold each one, this is where length sticks"
+              onList={() => setStretchList("post")}
+              onRun={() => setStretchRun("post")}
+            />
+
             {day.cooldown?.length > 0 && (
               <div className="warmup-card cooldown-card">
                 <div className="warmup-txt"><b>Cool-down · yoga</b> · for your lower back</div>
@@ -376,6 +399,36 @@ export default function TrainScreen() {
         onStart={() => setCooldownOpen(true)}
       />
 
+      <CooldownSheet
+        open={stretchList !== null}
+        onClose={() => setStretchList(null)}
+        steps={stretchList === "post" ? POST_STRETCH : PRE_STRETCH}
+        noun="stretches"
+        title={stretchList === "post" ? "Post-workout stretch" : "Pre-workout stretch"}
+        subtitle={stretchList === "post" ? "static holds, while you're warm" : "dynamic, before you load up"}
+        startLabel={stretchList === "post" ? "Start guided stretch" : "Start guided stretch"}
+        onStart={() => setStretchRun(stretchList)}
+      />
+
+      {stretchRun && (
+        <SequenceTimer
+          title={stretchRun === "post" ? "Post-workout stretch" : "Pre-workout stretch"}
+          steps={stretchRun === "post" ? POST_STRETCH : PRE_STRETCH}
+          accent={stretchRun === "post" ? "rest" : "warmup"}
+          voice={voiceOn}
+          countdownFrom={10}
+          previewSteps
+          donePhase={stretchRun === "post" ? "Stretch complete" : "Mobility done"}
+          doneNote={
+            stretchRun === "post"
+              ? "That's the part most people skip. Water and protein next."
+              : "Hips and shoulders are open. Go lift."
+          }
+          doneLabel="Done"
+          onClose={() => setStretchRun(null)}
+        />
+      )}
+
       {cooldownOpen && day.cooldown?.length > 0 && (
         <SequenceTimer
           title="Cool-down"
@@ -401,6 +454,35 @@ export default function TrainScreen() {
         sessionSec={sessionSec}
         estCals={estCals}
       />
+    </div>
+  );
+}
+
+// Pre / post stretch block. Same shape as the yoga cool-down card so the
+// three of them read as one family down the page.
+function StretchCard({ kind, steps, heading, blurb, onList, onRun }) {
+  return (
+    <div className={`warmup-card stretch-card ${kind}`}>
+      <div className="warmup-txt"><b>{heading}</b> · {blurb}</div>
+      <div className="pose-mini">
+        {steps.map((s) => (
+          <span className="pose-chip" key={s.label}>
+            {s.label}<em className="tnum">{clock(s.seconds)}</em>
+          </span>
+        ))}
+      </div>
+      <div className="row gap-2" style={{ marginTop: 10 }}>
+        <button className="btn" style={{ flex: 1 }} onClick={() => { haptic(); onList(); }}>
+          Stretches &amp; videos
+        </button>
+        <button
+          className="btn cooldown-btn"
+          style={{ flex: 1.4, marginTop: 0 }}
+          onClick={() => { beep(600, 0.05); haptic(); onRun(); }}
+        >
+          ▶ Start · {clock(totalSeconds(steps))}
+        </button>
+      </div>
     </div>
   );
 }

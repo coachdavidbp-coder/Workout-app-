@@ -1,10 +1,12 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import Sheet from "./Sheet.jsx";
+import BarcodeScanner from "./BarcodeScanner.jsx";
 import { IconSearch } from "./icons.jsx";
 import { BUILTIN_FOODS, MEAL_SLOTS } from "../data/foods.js";
 import { searchFoods, lookupBarcode } from "../lib/foodApi.js";
 import { useStore, todayKey } from "../store.jsx";
 import { useOnline } from "../lib/net.js";
+import { haptic } from "../lib/fx.js";
 
 export default function AddFoodSheet({ open, onClose, dateKey }) {
   const { actions } = useStore();
@@ -17,6 +19,7 @@ export default function AddFoodSheet({ open, onClose, dateKey }) {
   const [loading, setLoading] = useState(false);
   const [err, setErr] = useState("");
   const [barcode, setBarcode] = useState("");
+  const [scanning, setScanning] = useState(false);
   const abortRef = useRef(null);
 
   // reset on open
@@ -28,6 +31,7 @@ export default function AddFoodSheet({ open, onClose, dateKey }) {
       setResults([]);
       setErr("");
       setBarcode("");
+      setScanning(false);
     }
   }, [open]);
 
@@ -65,20 +69,27 @@ export default function AddFoodSheet({ open, onClose, dateKey }) {
     };
   }, [q]);
 
-  const doBarcode = async () => {
-    const code = barcode.trim();
+  const doBarcode = async (raw) => {
+    const code = String(raw ?? barcode).trim();
     if (!code) return;
     setLoading(true);
     setErr("");
     try {
       const food = await lookupBarcode(code);
-      if (food) setSelected(food);
-      else setErr("No product found for that barcode.");
+      if (food) { setSelected(food); setQty("1"); }
+      else setErr(`No product found for ${code}. Try the search box — the database misses some store brands.`);
     } catch (e) {
-      setErr("Barcode lookup failed.");
+      setErr("Barcode lookup failed — check your connection.");
     } finally {
       setLoading(false);
     }
+  };
+
+  // Scanner hands back the digits; close the camera and look it up.
+  const onScanned = (code) => {
+    setScanning(false);
+    setBarcode(code);
+    doBarcode(code);
   };
 
   const confirmAdd = () => {
@@ -95,6 +106,8 @@ export default function AddFoodSheet({ open, onClose, dateKey }) {
   };
 
   return (
+    <>
+    <BarcodeScanner open={scanning} onClose={() => setScanning(false)} onDetect={onScanned} />
     <Sheet open={open} onClose={onClose}>
       {!selected ? (
         <>
@@ -119,22 +132,30 @@ export default function AddFoodSheet({ open, onClose, dateKey }) {
               )}
             </div>
 
-            {/* barcode */}
-            <div className="row gap-2" style={{ marginTop: 10 }}>
+            {/* barcode — camera first, typing as the backup */}
+            <button className="scan-cta" onClick={() => { haptic(); setErr(""); setScanning(true); }}>
+              <span className="sc-ico">▣</span>
+              <span className="sc-txt">
+                <b>Scan a barcode</b>
+                <em>Point the camera at the package</em>
+              </span>
+              <span className="sc-caret">›</span>
+            </button>
+            <div className="row gap-2" style={{ marginTop: 8 }}>
               <input
                 className="login-input"
                 inputMode="numeric"
-                placeholder="Barcode number"
+                placeholder="…or type the barcode number"
                 value={barcode}
                 onChange={(e) => setBarcode(e.target.value)}
               />
-              <button className="btn" onClick={doBarcode}>
+              <button className="btn" onClick={() => doBarcode()}>
                 Look up
               </button>
             </div>
 
             {!online && (
-              <p className="offline-note">📴 Offline — the built-in foods below still work. Database search and barcode lookup need a signal.</p>
+              <p className="offline-note">📴 Offline — the built-in foods below still work. Search and barcode lookup need a signal (the camera will read the code, but there's nothing to match it against).</p>
             )}
             {err && <p className="login-err" style={{ marginTop: 10 }}>{err}</p>}
           </div>
@@ -221,6 +242,7 @@ export default function AddFoodSheet({ open, onClose, dateKey }) {
         </>
       )}
     </Sheet>
+    </>
   );
 }
 
