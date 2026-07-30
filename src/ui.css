@@ -127,7 +127,7 @@
   font-weight: 700; text-transform: uppercase; letter-spacing: 0.14em;
 }
 .day-title h2 { font-size: 22px; }
-.warmup { color: var(--mu); font-size: 14px; margin-top: -6px; }
+.warmup { color: var(--mu); font-size: 14px; margin-top: 0; }
 .warmup b { color: var(--tx-2); font-weight: 600; }
 .warmup-card { background: var(--panel); border: 1px solid var(--line); border-radius: var(--r); padding: 12px 14px; }
 .warmup-txt { color: var(--mu); font-size: 13px; line-height: 1.4; }
@@ -911,8 +911,8 @@
 .toggle.on { background: var(--ac); border-color: var(--ac); }
 .toggle.on .knob { transform: translateX(20px); background: #fff; }
 
-.summary-note { font-size: 11px; color: var(--mu); text-align: center; margin-top: -4px; line-height: 1.4; }
-.summary-ex { display: flex; justify-content: space-between; align-items: center; gap: 12px; padding: 11px 4px; border-top: 1px solid var(--line-soft); }
+.summary-note { font-size: 11px; color: var(--mu); text-align: center; margin: 12px 0 0; line-height: 1.4; position: relative; z-index: 1; }
+.summary-ex { display: flex; justify-content: space-between; align-items: center; gap: 12px; padding: 11px 13px; border-top: 1px solid var(--line-soft); }
 .summary-ex:first-child { border-top: none; }
 .se-name { font-size: 13px; font-weight: 600; }
 .se-val { font-size: 12px; color: var(--mu); font-family: var(--font-display); font-weight: 700; font-variant-numeric: tabular-nums; text-align: right; }
