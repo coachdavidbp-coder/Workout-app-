@@ -7,6 +7,8 @@
 
 // Default block length. Programs can run longer (see programWeeks): the
 // per-week set schemes / interval protocols cycle in repeating blocks.
+import { YOGA_LOWER_BACK } from "../lib/sequence.js";
+
 export const WEEKS = [1, 2, 3, 4];
 export const DURATION_OPTIONS = [4, 8, 12, 16];
 
@@ -72,6 +74,7 @@ const GRIDIRON_DAYS = [
       { name: "DB Front Raise (light)", sets: ["3×12", "3×12", "3×15", "3×15"], video: "-t7fuZ0KhDA", q: "dumbbell front raise form" },
       { name: "DB Shrug", sets: ["3×15", "3×15", "4×15", "4×15"], video: "zrs4FLeF_-4", q: "dumbbell shrug form" },
     ],
+    cooldown: YOGA_LOWER_BACK,
     note: "Rest 60–90 sec. When 55 lb feels easy, lower for 3–4 seconds per rep.",
   },
   {
@@ -85,6 +88,7 @@ const GRIDIRON_DAYS = [
       { name: "Single-Leg DB RDL", sets: ["3×8/leg", "3×8/leg", "3×10/leg", "3×10/leg"], video: "iS7atZhcRnw", q: "single leg romanian deadlift form" },
       { name: "DB Calf Raise (3s down)", sets: ["3×15", "3×18", "4×15", "4×20"], video: "wxwY7GXxL4k", q: "dumbbell calf raise form" },
     ],
+    cooldown: YOGA_LOWER_BACK,
     note: "Rest 60–90 sec between sets.",
   },
   {
@@ -96,6 +100,7 @@ const GRIDIRON_DAYS = [
       { week: 3, label: "8 × 20-sec sprint (faster), 90-sec walk", rounds: 8, seconds: 20, rest: 90 },
       { week: 4, label: "10 × 20-sec sprint, 90-sec walk", rounds: 10, seconds: 20, rest: 90 },
     ],
+    cooldown: YOGA_LOWER_BACK,
     note: "Then 4 × 30-sec power run at 10–12% incline. Safety: straddle the belt, bring it to speed, then step on — or use steep incline at moderate speed instead.",
   },
   {
@@ -109,6 +114,7 @@ const GRIDIRON_DAYS = [
       { name: "DB Hammer Curl", sets: ["3×10", "3×12", "3×12", "3×15"], video: "8XLxfXROrTo", q: "dumbbell hammer curl form" },
       { name: "Overhead Triceps Ext.", sets: ["3×12", "3×12", "3×15", "4×12"], video: "IJ6J7EKprsc", q: "dumbbell overhead triceps extension form" },
     ],
+    cooldown: YOGA_LOWER_BACK,
     note: "Rest 60–90 sec between sets.",
   },
   {
@@ -120,6 +126,7 @@ const GRIDIRON_DAYS = [
       { week: 3, label: "6 × 2-min at the same pace, 60-sec walk", rounds: 6, seconds: 120, rest: 60 },
       { week: 4, label: "8 × 90-sec slightly faster, 60-sec walk", rounds: 8, seconds: 90, rest: 60 },
     ],
+    cooldown: YOGA_LOWER_BACK,
     note: "Game-day finisher (all weeks): 3 rounds — 10 light DB thrusters + 10 push-ups + 30-sec incline run. Minimal rest. Cooldown 5 min.",
   },
   {
@@ -133,6 +140,7 @@ const GRIDIRON_DAYS = [
       { name: "Farmer's Carry (both 55s)", sets: ["4×40s", "4×40s", "4×40s", "4×40s"], video: "7mzKcADa46c", q: "farmers carry dumbbell form" },
       { name: "Plank", sets: ["3×45s", "3×50s", "3×55s", "3×60s"], video: "mwlp75MS6Rg", q: "plank form" },
     ],
+    cooldown: YOGA_LOWER_BACK,
     note: "Rest fully (90–120 sec) between power sets — quality over fatigue.",
   },
   { id: "sat", label: "Sat", name: "Rest Day", type: "rest", warmup: "", note: "Full recovery. Optional 20–30 min easy walk and stretching. This is where the week's work turns into gains." },

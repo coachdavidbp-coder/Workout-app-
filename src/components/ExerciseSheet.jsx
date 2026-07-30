@@ -182,6 +182,7 @@ export default function ExerciseSheet({ open, onClose, week, dayId, exercise }) 
           label="Rest"
           seconds={restSec}
           accent="rest"
+          voice={state.settings?.voice !== false}
           doneLabel="Back to it"
           onClose={() => setRestSec(null)}
         />

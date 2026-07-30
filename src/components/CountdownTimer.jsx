@@ -8,6 +8,8 @@ import { speak } from "../lib/voice.js";
 // know to move without watching the screen. X closes it; a done button runs
 // an optional follow-up action (e.g. start the workout after a warm-up).
 // Rendered through a portal so it overlays the tab bar and any open sheet.
+const COUNTDOWN_FROM = 10; // spoken/beeped countdown for the last 10 seconds
+
 export default function CountdownTimer({
   label = "Rest",
   seconds = 60,
@@ -48,7 +50,7 @@ export default function CountdownTimer({
       remRef.current -= 1;
       if (remRef.current > 0) {
         setRemaining(remRef.current);
-        if (remRef.current <= 3) { beep(700, 0.09, 0.28); haptic("light"); }
+        if (remRef.current <= COUNTDOWN_FROM) { beep(700, 0.09, 0.28); haptic("light"); if (voice) speak(String(remRef.current), { rate: 1.15 }); }
         return;
       }
       clearInterval(tick.current);

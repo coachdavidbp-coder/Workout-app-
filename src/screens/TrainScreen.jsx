@@ -10,6 +10,8 @@ import WorkoutTimer from "../components/WorkoutTimer.jsx";
 import NowPlaying from "../components/NowPlaying.jsx";
 import IntervalTimer from "../components/IntervalTimer.jsx";
 import CountdownTimer from "../components/CountdownTimer.jsx";
+import SequenceTimer from "../components/SequenceTimer.jsx";
+import { parseSequence, totalSeconds } from "../lib/sequence.js";
 import WorkoutSummarySheet from "../components/WorkoutSummarySheet.jsx";
 import { trainingCoach, fatigueCheck } from "../lib/coach.js";
 import { fmtPace, fmtDuration } from "../lib/progress.js";
@@ -36,7 +38,8 @@ export default function TrainScreen() {
   const [dayId, setDayId] = useState(today);
   const [sheetEx, setSheetEx] = useState(null);
   const [timerOpen, setTimerOpen] = useState(false);
-  const [warmupSec, setWarmupSec] = useState(null);
+  const [warmupOpen, setWarmupOpen] = useState(false);
+  const [cooldownOpen, setCooldownOpen] = useState(false);
   const [summaryOpen, setSummaryOpen] = useState(false);
   const [startSignal, setStartSignal] = useState(0);
   const beginTiming = () => setStartSignal((n) => n + 1);
@@ -173,13 +176,13 @@ export default function TrainScreen() {
               <div className="session-start">
                 <div className="ss-top">
                   <span className="ss-kicker">Session</span>
-                  <span className="ss-len">{day.warmup ? `${clock(warmupSeconds(day.warmup))} warm-up first` : "No warm-up listed"}</span>
+                  <span className="ss-len">{day.warmup ? `${clock(totalSeconds(parseSequence(day.warmup)))} guided warm-up first` : "No warm-up listed"}</span>
                 </div>
                 <button
                   className="ss-btn"
                   onClick={() => {
                     beep(600, 0.05); haptic("success");
-                    if (day.warmup) setWarmupSec(warmupSeconds(day.warmup));
+                    if (day.warmup) setWarmupOpen(true);
                     else beginTiming();
                   }}
                 >
@@ -199,9 +202,9 @@ export default function TrainScreen() {
                 <div className="warmup-txt"><b>Warm-up</b> · {day.warmup}</div>
                 <button
                   className="btn warmup-btn"
-                  onClick={() => { beep(600, 0.05); haptic(); setWarmupSec(warmupSeconds(day.warmup)); }}
+                  onClick={() => { beep(600, 0.05); haptic(); setWarmupOpen(true); }}
                 >
-                  ▶ {sessionLive ? "Run warm-up again" : "Start warm-up"} · {clock(warmupSeconds(day.warmup))}
+                  ▶ {sessionLive ? "Run warm-up again" : "Start warm-up"} · {clock(totalSeconds(parseSequence(day.warmup)))}
                 </button>
               </div>
             )}
@@ -236,6 +239,18 @@ export default function TrainScreen() {
 
         {day.type !== "rest" && (
           <>
+            {day.cooldown?.length > 0 && (
+              <div className="warmup-card cooldown-card">
+                <div className="warmup-txt">
+                  <b>Cool-down · yoga</b> · {day.cooldown.map((c) => c.label).join(" · ")}
+                </div>
+                <button className="btn cooldown-btn" onClick={() => { beep(600, 0.05); haptic(); setCooldownOpen(true); }}>
+                  ▶ Start cool-down · {clock(totalSeconds(day.cooldown))}
+                </button>
+                <div className="ss-note">Four poses for your lower back — guided, one at a time.</div>
+              </div>
+            )}
+
             <div className="note-box">{day.note}</div>
 
             <div className="feel-wrap">
@@ -328,17 +343,32 @@ export default function TrainScreen() {
         </div>
       )}
 
-      {warmupSec != null && (
-        <CountdownTimer
-          label="Warm-up"
-          seconds={warmupSec}
+      {warmupOpen && day.warmup && (
+        <SequenceTimer
+          title="Warm-up"
+          steps={parseSequence(day.warmup)}
           accent="warmup"
           voice={voiceOn}
+          countdownFrom={5}
           donePhase="Warm-up complete"
           doneNote="Ready to start the workout?"
           doneLabel="I'm ready — start workout ▶"
           onComplete={beginTiming}
-          onClose={() => setWarmupSec(null)}
+          onClose={() => setWarmupOpen(false)}
+        />
+      )}
+
+      {cooldownOpen && day.cooldown?.length > 0 && (
+        <SequenceTimer
+          title="Cool-down"
+          steps={day.cooldown}
+          accent="rest"
+          voice={voiceOn}
+          countdownFrom={5}
+          donePhase="Cool-down complete"
+          doneNote="Low back should feel looser. Water and protein next."
+          doneLabel="Done"
+          onClose={() => setCooldownOpen(false)}
         />
       )}
 
