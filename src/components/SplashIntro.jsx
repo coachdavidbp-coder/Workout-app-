@@ -6,26 +6,26 @@ import logoUrl from "../assets/logo.png";
 const vsUrl = "/icons/apple-touch-icon.png";
 
 // =========================================================
-// US VS THEM — cold-start splash. 1.8s, then Home.
+// US VS THEM — cold-start splash. 2.4s, then Home.
 //
 // Everything is drawn into one canvas on a single requestAnimationFrame
 // timeline, so the whole intro is one composite per frame instead of a
 // pile of animated DOM nodes. No video, no GIF.
 //
-//   0.00–0.20  black, blue arcs flicker, dust, glow ramps up
-//   0.20–0.55  VS drops in — easeInQuart, motion blur, energy trail
-//   0.55       IMPACT — shake, shockwave, flash, 25 debris, 40 sparks, smoke
-//   0.75–1.10  VS splits along the lightning bolt, halves part 35px
-//   1.10–1.55  US VS THEM fades in behind, spotlight, bloom
-//   1.55–1.80  chrome shine sweeps left→right, glow fades, cut to Home
+//   0.00–0.26  black, blue arcs flicker, dust, glow ramps up
+//   0.26–0.76  VS drops in — easeInQuart, motion blur, energy trail
+//   0.76       IMPACT — shake, shockwave, flash, 25 debris, 40 sparks, smoke
+//   1.00–1.45  VS splits along the lightning bolt, halves part 35px
+//   1.45–2.05  US VS THEM fades in behind, spotlight, bloom
+//   2.05–2.40  chrome shine sweeps left→right, glow fades, cut to Home
 // =========================================================
 
-const DUR = 1800;
+const DUR = 2400;
 const T = {
-  dropStart: 200, impact: 550, settle: 750,
-  splitStart: 750, splitEnd: 1100,
-  logoStart: 1100, logoEnd: 1550,
-  shineStart: 1550, fadeStart: 1650,
+  dropStart: 260, impact: 760, settle: 1000,
+  splitStart: 1000, splitEnd: 1450,
+  logoStart: 1450, logoEnd: 2050,
+  shineStart: 2050, fadeStart: 2230,
 };
 
 const C = {
@@ -168,67 +168,108 @@ export default function SplashIntro({ onDone }) {
       return { pts, life: 1, w: rand(1, 2.4) };
     };
 
-    // ---- audio (best-effort) ----
-    // Browsers only let audio start after a tap. On a cold launch there
-    // hasn't been one, so this stays silent rather than throwing.
+    // ---- audio ----
+    // Browsers won't start audio until the user has tapped something, and a
+    // cold launch has no prior tap — so the old code gave up the instant the
+    // context came back "suspended", which was every single time.
+    //
+    // Now: ask it to resume, and if that succeeds late (a replay from
+    // Settings, or the tab already had audio going), schedule whichever cues
+    // are still ahead of us instead of dropping the lot.
+    let audioCtx = null;
+    const audioAt = Date.now();
+
+    // close() rejects if the context is already closed, and both the cleanup
+    // and the end-of-intro timer want to close it — so route both here.
+    const closeAudio = () => {
+      const ac = audioCtx;
+      audioCtx = null;
+      if (!ac) return;
+      try { ac.close()?.catch?.(() => {}); } catch (e) { /* already gone */ }
+    };
+
     const playAudio = () => {
       try {
         const AC = window.AudioContext || window.webkitAudioContext;
         if (!AC) return;
         const ac = new AC();
-        if (ac.state !== "running") { ac.close?.(); return; }
+        audioCtx = ac;
+        const arm = () => { if (ac.state === "running") schedule(ac); };
+        const p = ac.resume?.();
+        if (p && p.then) p.then(arm).catch(() => {}); else arm();
+        // Safari resolves resume() before the state flips often enough to
+        // warrant one more look on the next tick.
+        setTimeout(arm, 60);
+      } catch (e) { /* silent is fine */ }
+    };
+
+    let scheduled = false;
+    const schedule = (ac) => {
+      if (scheduled) return;
+      scheduled = true;
+      try {
         const now = ac.currentTime;
-        const hit = T.impact / 1000;
+        // How far into the intro we already are, so a late unlock plays only
+        // the cues still ahead instead of firing everything at once.
+        const elapsed = (Date.now() - audioAt) / 1000;
+        // Absolute context time for a cue that sits `sec` into the intro,
+        // or null if that moment has already gone by.
+        const cue = (sec) => (sec < elapsed - 0.05 ? null : now + (sec - elapsed));
 
-        // low stadium bass hit
-        const bass = ac.createOscillator(), bg = ac.createGain();
-        bass.type = "sine";
-        bass.frequency.setValueAtTime(90, now + hit);
-        bass.frequency.exponentialRampToValueAtTime(38, now + hit + 0.5);
-        bg.gain.setValueAtTime(0.0001, now + hit);
-        bg.gain.exponentialRampToValueAtTime(0.5, now + hit + 0.02);
-        bg.gain.exponentialRampToValueAtTime(0.0001, now + hit + 0.7);
-        bass.connect(bg).connect(ac.destination);
-        bass.start(now + hit); bass.stop(now + hit + 0.75);
+        const hit = cue(T.impact / 1000);
+        if (hit != null) {
+          // low stadium bass hit
+          const bass = ac.createOscillator(), bg = ac.createGain();
+          bass.type = "sine";
+          bass.frequency.setValueAtTime(90, hit);
+          bass.frequency.exponentialRampToValueAtTime(38, hit + 0.5);
+          bg.gain.setValueAtTime(0.0001, hit);
+          bg.gain.exponentialRampToValueAtTime(0.5, hit + 0.02);
+          bg.gain.exponentialRampToValueAtTime(0.0001, hit + 0.7);
+          bass.connect(bg).connect(ac.destination);
+          bass.start(hit); bass.stop(hit + 0.75);
 
-        // metal slam + debris: filtered noise burst
-        const len = Math.floor(ac.sampleRate * 0.6);
-        const buf = ac.createBuffer(1, len, ac.sampleRate);
-        const d = buf.getChannelData(0);
-        for (let i = 0; i < len; i++) d[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / len, 2.5);
-        const noise = ac.createBufferSource(); noise.buffer = buf;
-        const bp = ac.createBiquadFilter(); bp.type = "bandpass";
-        bp.frequency.value = 2400; bp.Q.value = 0.8;
-        const ng = ac.createGain();
-        ng.gain.setValueAtTime(0.35, now + hit);
-        ng.gain.exponentialRampToValueAtTime(0.0001, now + hit + 0.45);
-        noise.connect(bp).connect(ng).connect(ac.destination);
-        noise.start(now + hit);
+          // metal slam + debris: filtered noise burst
+          const len = Math.floor(ac.sampleRate * 0.6);
+          const buf = ac.createBuffer(1, len, ac.sampleRate);
+          const d = buf.getChannelData(0);
+          for (let i = 0; i < len; i++) d[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / len, 2.5);
+          const noise = ac.createBufferSource(); noise.buffer = buf;
+          const bp = ac.createBiquadFilter(); bp.type = "bandpass";
+          bp.frequency.value = 2400; bp.Q.value = 0.8;
+          const ng = ac.createGain();
+          ng.gain.setValueAtTime(0.35, hit);
+          ng.gain.exponentialRampToValueAtTime(0.0001, hit + 0.45);
+          noise.connect(bp).connect(ng).connect(ac.destination);
+          noise.start(hit);
 
-        // electric crackle just after the hit
-        const cr = ac.createOscillator(), cg = ac.createGain();
-        cr.type = "sawtooth";
-        cr.frequency.setValueAtTime(1800, now + hit + 0.04);
-        cr.frequency.linearRampToValueAtTime(600, now + hit + 0.3);
-        cg.gain.setValueAtTime(0.0001, now + hit + 0.04);
-        cg.gain.exponentialRampToValueAtTime(0.06, now + hit + 0.07);
-        cg.gain.exponentialRampToValueAtTime(0.0001, now + hit + 0.32);
-        cr.connect(cg).connect(ac.destination);
-        cr.start(now + hit + 0.04); cr.stop(now + hit + 0.34);
+          // electric crackle just after the hit
+          const cr = ac.createOscillator(), cg = ac.createGain();
+          cr.type = "sawtooth";
+          cr.frequency.setValueAtTime(1800, hit + 0.04);
+          cr.frequency.linearRampToValueAtTime(600, hit + 0.3);
+          cg.gain.setValueAtTime(0.0001, hit + 0.04);
+          cg.gain.exponentialRampToValueAtTime(0.06, hit + 0.07);
+          cg.gain.exponentialRampToValueAtTime(0.0001, hit + 0.32);
+          cr.connect(cg).connect(ac.destination);
+          cr.start(hit + 0.04); cr.stop(hit + 0.34);
+        }
 
         // chrome shimmer on the shine sweep
-        const sh = ac.createOscillator(), sg = ac.createGain();
-        const st = T.shineStart / 1000;
-        sh.type = "triangle";
-        sh.frequency.setValueAtTime(2600, now + st);
-        sh.frequency.linearRampToValueAtTime(4200, now + st + 0.25);
-        sg.gain.setValueAtTime(0.0001, now + st);
-        sg.gain.exponentialRampToValueAtTime(0.05, now + st + 0.08);
-        sg.gain.exponentialRampToValueAtTime(0.0001, now + st + 0.3);
-        sh.connect(sg).connect(ac.destination);
-        sh.start(now + st); sh.stop(now + st + 0.32);
+        const st = cue(T.shineStart / 1000);
+        if (st != null) {
+          const sh = ac.createOscillator(), sg = ac.createGain();
+          sh.type = "triangle";
+          sh.frequency.setValueAtTime(2600, st);
+          sh.frequency.linearRampToValueAtTime(4200, st + 0.25);
+          sg.gain.setValueAtTime(0.0001, st);
+          sg.gain.exponentialRampToValueAtTime(0.05, st + 0.08);
+          sg.gain.exponentialRampToValueAtTime(0.0001, st + 0.3);
+          sh.connect(sg).connect(ac.destination);
+          sh.start(st); sh.stop(st + 0.32);
+        }
 
-        setTimeout(() => { try { ac.close(); } catch (e) { /* ignore */ } }, DUR + 400);
+        setTimeout(closeAudio, DUR + 400);
       } catch (e) { /* silent is fine */ }
     };
 
@@ -659,6 +700,7 @@ export default function SplashIntro({ onDone }) {
       cancelAnimationFrame(raf);
       clearTimeout(guard);
       window.removeEventListener("resize", resize);
+      closeAudio();
     };
   }, [onDone]);
 

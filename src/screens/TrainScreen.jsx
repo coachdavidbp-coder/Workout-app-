@@ -38,7 +38,7 @@ export default function TrainScreen() {
   const { state, mode, actions } = useStore();
   const today = currentDayId();
   const [dayId, setDayId] = useState(today);
-  const [sheetEx, setSheetEx] = useState(null);
+  const [sheetIdx, setSheetIdx] = useState(null);
   const [timerOpen, setTimerOpen] = useState(false);
   const [warmupOpen, setWarmupOpen] = useState(false);
   const [cooldownOpen, setCooldownOpen] = useState(false);
@@ -49,7 +49,7 @@ export default function TrainScreen() {
   const [summaryOpen, setSummaryOpen] = useState(false);
   const [startSignal, setStartSignal] = useState(0);
   const beginTiming = () => setStartSignal((n) => n + 1);
-  const openEx = (ex) => { setSheetEx(ex); beginTiming(); };
+  const openEx = (ex, i) => { setSheetIdx(i); beginTiming(); };
 
   const week = state.week;
   const day = dayById(state, dayId);
@@ -182,7 +182,8 @@ export default function TrainScreen() {
           <>
             {sessionLive ? (
               <div className="train-toolbar">
-                <WorkoutTimer week={week} dayId={dayId} voice={voiceOn} startSignal={startSignal} />
+                <WorkoutTimer week={week} dayId={dayId} voice={voiceOn} startSignal={startSignal}
+                  phase={warmupOpen ? "Warm-up" : null} />
               </div>
             ) : (
               <div className="session-start">
@@ -194,15 +195,17 @@ export default function TrainScreen() {
                   className="ss-btn"
                   onClick={() => {
                     beep(600, 0.05); haptic("success");
+                    // The clock starts here either way — warm-up is part of
+                    // the session, not a separate thing you time on its own.
+                    beginTiming();
                     if (day.warmup) setWarmupOpen(true);
-                    else beginTiming();
                   }}
                 >
                   ▶ Start session
                 </button>
                 <div className="ss-note">
                   {day.warmup
-                    ? "Warm-up counts down, buzzes, then asks if you're ready to lift."
+                    ? "One clock: it starts on the warm-up and keeps running into the lifts."
                     : "Starts the workout clock."}
                 </div>
               </div>
@@ -214,7 +217,7 @@ export default function TrainScreen() {
                 <div className="warmup-txt"><b>Warm-up</b> · {day.warmup}</div>
                 <button
                   className="btn warmup-btn"
-                  onClick={() => { beep(600, 0.05); haptic(); setWarmupOpen(true); }}
+                  onClick={() => { beep(600, 0.05); haptic(); beginTiming(); setWarmupOpen(true); }}
                 >
                   ▶ {sessionLive ? "Run warm-up again" : "Start warm-up"} · {clock(totalSeconds(parseSequence(day.warmup)))}
                 </button>
@@ -366,11 +369,14 @@ export default function TrainScreen() {
       </main>
 
       <ExerciseSheet
-        open={!!sheetEx}
-        onClose={() => setSheetEx(null)}
+        open={sheetIdx != null}
+        onClose={() => setSheetIdx(null)}
         week={week}
         dayId={dayId}
-        exercise={sheetEx}
+        exercise={(day.exercises || [])[sheetIdx] || null}
+        index={sheetIdx ?? 0}
+        total={(day.exercises || []).length}
+        onIndex={setSheetIdx}
       />
 
       {timerOpen && proto && (
@@ -394,9 +400,8 @@ export default function TrainScreen() {
           voice={voiceOn}
           countdownFrom={5}
           donePhase="Warm-up complete"
-          doneNote="Ready to start the workout?"
-          doneLabel="I'm ready — start workout ▶"
-          onComplete={beginTiming}
+          doneNote="Clock's already running — go lift."
+          doneLabel="Start lifting ▶"
           onClose={() => setWarmupOpen(false)}
         />
       )}
@@ -529,14 +534,14 @@ function LiftDay({ day, week, log, onOpen, actions, dayId, swaps = {} }) {
       </div>
 
       <div className="ex-card">
-        {day.exercises.map((ex) => {
+        {day.exercises.map((ex, i) => {
           const swapped = swaps[ex.name] || null;
           const shownName = swapped || ex.name;
           const exLog = log.exercises?.[shownName] || {};
           const reps = (exLog.reps || []).filter((r) => r !== "" && r != null);
           return (
             <div className="ex-item" key={ex.name}>
-              <button className="ex-top" onClick={() => onOpen(ex)}>
+              <button className="ex-top" onClick={() => onOpen(ex, i)}>
                 <div>
                   <div className="ex-name">
                     <span className="vic">

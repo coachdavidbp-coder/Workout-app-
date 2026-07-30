@@ -149,6 +149,16 @@ export default function SettingsSheet({ open, onClose }) {
           </div>
         </div>
 
+        <div className="setting-row">
+          <div className="lab">Opening intro<small>Replay it — with sound, since tapping is what lets audio play</small></div>
+          <button
+            className="btn"
+            onClick={() => { haptic(); onClose(); window.dispatchEvent(new CustomEvent("uvt:replay-intro")); }}
+          >
+            ▶ Play
+          </button>
+        </div>
+
         <div className="setting-row" style={{ flexWrap: "wrap", gap: 10 }}>
           <div className="lab">Appearance<small>Light, dark, or follow your device</small></div>
           <div className="row gap-2">

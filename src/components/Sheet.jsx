@@ -7,7 +7,12 @@ import { createPortal } from "react-dom";
 // gesture. Tracks the on-screen keyboard via visualViewport so the sheet sits
 // above it. Rendered via a portal on <body> so it escapes each screen's
 // `.scroll` stacking context and overlays the fixed bottom nav.
-export default function Sheet({ open, onClose, children }) {
+// `full` gives a full-screen panel instead of a bottom sheet. That matters
+// wherever you type: a bottom sheet is sized to the space above the keyboard,
+// so every time the keyboard opens the sheet shrinks and the whole thing
+// jumps under your thumb. A full-screen panel keeps its height and just
+// scrolls, so the layout stays put while you enter weight and reps.
+export default function Sheet({ open, onClose, children, full = false, header = null }) {
   const sheetRef = useRef(null);
   const drag = useRef({ startY: 0, dy: 0, active: false });
 
@@ -21,6 +26,10 @@ export default function Sheet({ open, onClose, children }) {
     const setVVH = () => {
       const h = vv ? vv.height : window.innerHeight;
       document.documentElement.style.setProperty("--vvh", `${h}px`);
+      // How much of the screen the keyboard is covering. Full-screen panels
+      // pad the bottom by this so a focused field can always scroll clear.
+      const kb = Math.max(0, window.innerHeight - h);
+      document.documentElement.style.setProperty("--kb", `${kb}px`);
     };
     setVVH();
     vv?.addEventListener("resize", setVVH);
@@ -32,6 +41,7 @@ export default function Sheet({ open, onClose, children }) {
       vv?.removeEventListener("resize", setVVH);
       vv?.removeEventListener("scroll", setVVH);
       document.documentElement.style.removeProperty("--vvh");
+      document.documentElement.style.removeProperty("--kb");
     };
   }, [open, onClose]);
 
@@ -66,6 +76,19 @@ export default function Sheet({ open, onClose, children }) {
   };
 
   if (!open) return null;
+
+  if (full) {
+    return createPortal(
+      <div className="scrim full" role="dialog" aria-modal="true">
+        <div className="sheet full" ref={sheetRef}>
+          {header}
+          <div className="sheet-body">{children}</div>
+        </div>
+      </div>,
+      document.body
+    );
+  }
+
   return createPortal(
     <div className="scrim" onClick={onClose} role="dialog" aria-modal="true">
       <div className="sheet" ref={sheetRef} onClick={(e) => e.stopPropagation()}>

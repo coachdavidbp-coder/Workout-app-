@@ -7,9 +7,11 @@ import { beep, haptic } from "../lib/fx.js";
 // Stopwatch that records how long a workout took (saved to state.durations).
 // Start runs a spoken 5-second countdown, then the clock; you can Pause/
 // Resume, Restart (fresh countdown), or End (stop & save the final time).
-// `startSignal` — when it increments (e.g. you open a lift), the timer
-// auto-starts so total time + calories capture without tapping Start.
-export default function WorkoutTimer({ week, dayId, voice = true, startSignal = 0 }) {
+// `startSignal` — when it increments (e.g. the warm-up starts, or you open a
+// lift), the timer auto-starts so total time + calories capture without tapping
+// Start. There is only ever one clock for a session: it begins on the warm-up
+// and keeps running through the lifts, with `phase` naming what you're on.
+export default function WorkoutTimer({ week, dayId, voice = true, startSignal = 0, phase = null }) {
   const { state, actions } = useStore();
   const key = `w${week}-${dayId}`;
   const saved = state.durations?.[key] || 0;
@@ -98,7 +100,7 @@ export default function WorkoutTimer({ week, dayId, voice = true, startSignal = 
   return (
     <div className={`wtimer ${running ? "run" : ""} ${counting ? "counting" : ""}`}>
       <div className="wt-left">
-        <div className="wt-label">{counting ? "Get ready…" : "Workout time"}</div>
+        <div className="wt-label">{counting ? "Get ready…" : phase ? `${phase} · session time` : "Session time"}</div>
         <div className="wt-clock tnum">{counting ? countdown : fmtDuration(elapsed)}</div>
       </div>
       <div className="wt-controls">

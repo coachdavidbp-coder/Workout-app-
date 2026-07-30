@@ -1585,3 +1585,61 @@
   animation: splashSkipIn 600ms ease 1100ms both; }
 @keyframes splashSkipIn { from { opacity: 0; } to { opacity: 1; } }
 @media (prefers-reduced-motion: reduce) { .splash-skip { display: none; } }
+
+/* ---------- full-screen panel (typing-heavy views) ----------
+   A bottom sheet is sized to the space above the keyboard, so opening the
+   keyboard shrinks it and the content jumps. This keeps full height and
+   scrolls instead, padding the bottom by the keyboard's own height. */
+.scrim.full { height: 100dvh; align-items: stretch; padding: 0; backdrop-filter: none; -webkit-backdrop-filter: none; }
+.sheet.full {
+  width: 100%; max-width: none; height: 100dvh; max-height: none;
+  border: none; border-radius: 0; padding: 0;
+  display: flex; flex-direction: column;
+  background: var(--g-2);
+  animation: sheetUp 0.26s cubic-bezier(0.2, 0.9, 0.3, 1);
+}
+.sheet.full .sheet-body {
+  flex: 1 1 auto; overflow-y: auto; -webkit-overflow-scrolling: touch;
+  padding: 4px 16px calc(30px + var(--safe-bot) + var(--kb, 0px));
+  overscroll-behavior: contain;
+}
+
+/* header: close + position on top, prev/next either side of the name */
+.ex-head {
+  flex: none; position: relative; z-index: 2;
+  padding: calc(8px + var(--safe-top, env(safe-area-inset-top))) 10px 10px;
+  background: var(--g-2); border-bottom: 1px solid var(--line);
+  display: flex; flex-direction: column; gap: 6px;
+}
+.ex-head-top { display: flex; align-items: center; gap: 8px; }
+.ex-count {
+  flex: 1; text-align: center; font-family: var(--font-display); font-weight: 800;
+  font-size: 11px; letter-spacing: 0.14em; text-transform: uppercase; color: var(--mu);
+}
+.ex-close {
+  width: 38px; height: 38px; flex: none; border-radius: 11px;
+  background: var(--panel); border: 1px solid var(--line); color: var(--tx);
+  font-size: 15px; line-height: 1;
+}
+.ex-head-nav { display: flex; align-items: center; gap: 8px; }
+.ex-nav {
+  width: 46px; height: 46px; flex: none; border-radius: 13px;
+  background: var(--panel); border: 1px solid var(--line); color: var(--tx);
+  font-size: 22px; line-height: 1; font-family: var(--font-display);
+}
+.ex-nav:disabled { opacity: 0.3; }
+.ex-nav:active:not(:disabled) { transform: scale(0.94); }
+.ex-head-mid { flex: 1; min-width: 0; text-align: center; }
+.ex-head-name {
+  font-family: var(--font-display); font-weight: 800; font-size: 17px;
+  line-height: 1.15; text-wrap: balance;
+}
+.ex-head-target { font-size: 11.5px; color: var(--ac); font-family: var(--font-display); font-weight: 700; margin-top: 2px; }
+
+/* the set-logging block gets room and a clear edge, since it's the bit you
+   actually come here to use */
+.log-block {
+  margin-top: 16px; padding: 13px; border-radius: 16px;
+  background: var(--panel); border: 1px solid var(--line);
+}
+.log-block .section-label { margin-top: 0; }

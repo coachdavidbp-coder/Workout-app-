@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Sheet from "./Sheet.jsx";
 import NumField from "./NumField.jsx";
 import CountdownTimer from "./CountdownTimer.jsx";
@@ -9,11 +9,42 @@ import { toast } from "../lib/toast.js";
 import { beep, haptic } from "../lib/fx.js";
 
 // How-to video + set logging for a single exercise.
-export default function ExerciseSheet({ open, onClose, week, dayId, exercise }) {
+//
+// Runs full-screen so the keyboard can't squeeze the layout while you're
+// entering weight and reps, and carries arrows in the header so you move
+// between lifts from the top instead of closing and scrolling the list.
+export default function ExerciseSheet({
+  open, onClose, week, dayId, exercise,
+  index = 0, total = 1, onIndex,
+}) {
   const { state, actions } = useStore();
   const [restSec, setRestSec] = useState(null);
   const [swapping, setSwapping] = useState(false);
+  const bodyRef = useRef(null);
+
+  // Moving to another lift should land you at the top of it, with any
+  // half-open swap list closed.
+  useEffect(() => {
+    setSwapping(false);
+    setRestSec(null);
+    const body = document.querySelector(".sheet.full .sheet-body");
+    if (body) body.scrollTop = 0;
+  }, [exercise?.name]);
+
   if (!exercise) return null;
+
+  const go = (d) => {
+    const next = index + d;
+    if (next < 0 || next >= total) return;
+    haptic();
+    onIndex?.(next);
+  };
+
+  // Keep a focused field clear of the keyboard.
+  const keepInView = (e) => {
+    const el = e.target;
+    setTimeout(() => el.scrollIntoView({ block: "center", behavior: "smooth" }), 260);
+  };
 
   const key = `w${week}-${dayId}`;
   // A swap replaces the movement for this day; logs key off the name you
@@ -38,15 +69,26 @@ export default function ExerciseSheet({ open, onClose, week, dayId, exercise }) 
     exercise.q || exercise.name
   )}`;
 
-  return (
-    <Sheet open={open} onClose={onClose}>
-      <div className="spread" style={{ alignItems: "flex-start" }}>
-        <div>
-          <h3 className="sheet-title">{shownName}</h3>
-          <div className="sheet-sub">Target · {target}</div>
-        </div>
-        <span className="set-pill">{target}</span>
+  const header = (
+    <div className="ex-head">
+      <div className="ex-head-top">
+        <button className="ex-close" onClick={onClose} aria-label="Close">✕</button>
+        <span className="ex-count">Lift {index + 1} of {total}</span>
+        <span style={{ width: 38 }} />
       </div>
+      <div className="ex-head-nav">
+        <button className="ex-nav" onClick={() => go(-1)} disabled={index <= 0} aria-label="Previous lift">‹</button>
+        <div className="ex-head-mid">
+          <div className="ex-head-name">{shownName}</div>
+          <div className="ex-head-target">Target · {target}</div>
+        </div>
+        <button className="ex-nav" onClick={() => go(1)} disabled={index >= total - 1} aria-label="Next lift">›</button>
+      </div>
+    </div>
+  );
+
+  return (
+    <Sheet open={open} onClose={onClose} full header={header}>
 
       {exercise.video ? (
         <>
@@ -123,7 +165,8 @@ export default function ExerciseSheet({ open, onClose, week, dayId, exercise }) 
         </div>
       )}
 
-      <div className="section-label" style={{ marginTop: 18 }}>
+      <div className="log-block" ref={bodyRef}>
+      <div className="section-label">
         Log your sets
       </div>
       <div className="ex-log" style={{ flexWrap: "wrap" }}>
@@ -131,6 +174,7 @@ export default function ExerciseSheet({ open, onClose, week, dayId, exercise }) 
           label="Weight"
           value={log.weight}
           accent
+          onFocus={keepInView}
           placeholder="55"
           onCommit={(v) => actions.setExerciseLog(week, dayId, shownName, { weight: v })}
         />
@@ -140,24 +184,28 @@ export default function ExerciseSheet({ open, onClose, week, dayId, exercise }) 
             label={`Set ${i + 1}`}
             value={reps[i]}
             placeholder="reps"
+            onFocus={keepInView}
             onCommit={(v) => setRep(i, v)}
           />
         ))}
       </div>
 
-      <div className="ex-log">
+      <div className="ex-log" style={{ marginTop: 10 }}>
         <NumField
           label="Start wt"
           value={log.startWt}
           placeholder="—"
+          onFocus={keepInView}
           onCommit={(v) => actions.setExerciseLog(week, dayId, shownName, { startWt: v })}
         />
         <NumField
           label="End wt"
           value={log.endWt}
           placeholder="—"
+          onFocus={keepInView}
           onCommit={(v) => actions.setExerciseLog(week, dayId, shownName, { endWt: v })}
         />
+      </div>
       </div>
 
       <div className="section-label" style={{ marginTop: 18 }}>Rest timer</div>
@@ -173,9 +221,14 @@ export default function ExerciseSheet({ open, onClose, week, dayId, exercise }) 
         ))}
       </div>
 
-      <button className="btn btn-primary btn-block" style={{ marginTop: 18 }} onClick={onClose}>
-        Done
-      </button>
+      <div className="row gap-2" style={{ marginTop: 18 }}>
+        <button className="btn" style={{ flex: 1 }} onClick={() => go(-1)} disabled={index <= 0}>‹ Previous</button>
+        {index < total - 1 ? (
+          <button className="btn btn-primary" style={{ flex: 1.4 }} onClick={() => go(1)}>Next lift ›</button>
+        ) : (
+          <button className="btn btn-primary" style={{ flex: 1.4 }} onClick={onClose}>Done</button>
+        )}
+      </div>
 
       {restSec != null && (
         <CountdownTimer

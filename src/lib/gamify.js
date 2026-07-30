@@ -32,11 +32,22 @@ function proteinDaysSet(state) {
   return set;
 }
 
+// Any day you did *something* — trained, weighed in, or hit protein.
+// This is what the calendars shade in.
 export function activeDates(state) {
   const set = new Set();
   for (const d in state.activityLog || {}) if (state.activityLog[d].workouts > 0) set.add(d);
   for (const w of state.weights || []) set.add(w.date);
   for (const d of proteinDaysSet(state)) set.add(d);
+  return set;
+}
+
+// Days you actually trained. The streak counts these and nothing else —
+// stepping on the scale is not a workout, and a streak that quietly counted
+// weigh-ins read as inflated against what you knew you'd done.
+export function workoutDates(state) {
+  const set = new Set();
+  for (const d in state.activityLog || {}) if (state.activityLog[d].workouts > 0) set.add(d);
   return set;
 }
 
@@ -48,7 +59,7 @@ function dayOffset(n) {
 }
 
 export function streak(state) {
-  const set = activeDates(state);
+  const set = workoutDates(state);
   // current streak: count back from today (or yesterday if today empty)
   let current = 0;
   let start = set.has(todayKey()) ? 0 : set.has(dayOffset(1)) ? 1 : -1;
@@ -300,7 +311,7 @@ export function runPRHit(state, { topMph, pace }) {
 
 // Would completing today push the streak onto a milestone?
 export function streakMilestoneHit(state) {
-  const set = activeDates(state);
+  const set = workoutDates(state);
   const tk = todayKey();
   if (set.has(tk)) return false; // already counted today
   set.add(tk);

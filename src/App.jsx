@@ -115,10 +115,19 @@ export default function App() {
     setSplashDone(true);
   }, []);
 
+  // Settings can replay the intro. That replay starts from a tap, which is the
+  // only reliable way the browser will let the sound play at all.
+  const [replayKey, setReplayKey] = useState(0);
+  useEffect(() => {
+    const onReplay = () => { setReplayKey((n) => n + 1); setSplashDone(false); };
+    window.addEventListener("uvt:replay-intro", onReplay);
+    return () => window.removeEventListener("uvt:replay-intro", onReplay);
+  }, []);
+
   return (
     <>
       <AppBody />
-      {!splashDone && <SplashIntro onDone={endSplash} />}
+      {!splashDone && <SplashIntro key={replayKey} onDone={endSplash} />}
     </>
   );
 }
