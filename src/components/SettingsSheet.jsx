@@ -1,6 +1,6 @@
 import Sheet from "./Sheet.jsx";
 import { useStore } from "../store.jsx";
-import { haptic } from "../lib/fx.js";
+import { haptic, unlockAudio } from "../lib/fx.js";
 import {
   speak, listVoices, setVoiceName, setCoachStyle, COACH_STYLES,
   hasHumanVoice, currentVoiceInfo,
@@ -153,9 +153,16 @@ export default function SettingsSheet({ open, onClose }) {
           <div className="lab">Opening intro<small>Replay it — with sound, since tapping is what lets audio play</small></div>
           <button
             className="btn"
-            onClick={() => { haptic(); onClose(); window.dispatchEvent(new CustomEvent("uvt:replay-intro")); }}
+            onClick={() => {
+              // Unlock audio right here, in the tap itself — iOS ignores it
+              // if it happens later, from an effect or a promise.
+              unlockAudio();
+              haptic();
+              onClose();
+              window.dispatchEvent(new CustomEvent("uvt:replay-intro"));
+            }}
           >
-            ▶ Play
+            ▶ Play with sound
           </button>
         </div>
 

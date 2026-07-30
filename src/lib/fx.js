@@ -1,14 +1,48 @@
 // Lightweight FX: confetti burst + haptics + beeps. No dependencies.
 
-// Short Web-Audio beep (ducks background music instead of stopping it).
-// The AudioContext is created lazily on the first call, which happens from
-// a user gesture (button tap), satisfying autoplay rules.
+// ---------------------------------------------------------
+// One AudioContext for the whole app.
+//
+// iOS won't start audio until a real tap has happened, and it grants that
+// per-context — so a component that spins up its own fresh context gets a
+// suspended one that never recovers, no matter how politely it asks. Every
+// sound in the app goes through this single context, which the first button
+// tap of the session unlocks for good.
+// ---------------------------------------------------------
 let _actx = null;
-export function beep(freq = 880, dur = 0.14, vol = 0.28) {
+
+export function audioCtx() {
   try {
     _actx = _actx || new (window.AudioContext || window.webkitAudioContext)();
-    if (_actx.state === "suspended") _actx.resume();
-    const ctx = _actx;
+    return _actx;
+  } catch (e) {
+    return null;
+  }
+}
+
+// Call this SYNCHRONOUSLY inside a click/tap handler — not from an effect or
+// a promise that runs afterwards, or iOS treats it as unprompted. Playing a
+// one-sample silent buffer is what actually flips the context to running on
+// older iOS; resume() alone isn't always enough.
+export function unlockAudio() {
+  const ctx = audioCtx();
+  if (!ctx) return null;
+  try {
+    if (ctx.state !== "running") ctx.resume()?.catch?.(() => {});
+    const src = ctx.createBufferSource();
+    src.buffer = ctx.createBuffer(1, 1, 22050);
+    src.connect(ctx.destination);
+    src.start(0);
+  } catch (e) { /* ignore */ }
+  return ctx;
+}
+
+// Short Web-Audio beep (ducks background music instead of stopping it).
+export function beep(freq = 880, dur = 0.14, vol = 0.28) {
+  try {
+    const ctx = audioCtx();
+    if (!ctx) return;
+    if (ctx.state === "suspended") ctx.resume();
     const o = ctx.createOscillator();
     const g = ctx.createGain();
     o.frequency.value = freq;

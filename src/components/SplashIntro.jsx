@@ -1,4 +1,5 @@
 import { useEffect, useRef } from "react";
+import { audioCtx } from "../lib/fx.js";
 import logoUrl from "../assets/logo.png";
 import vsUrl from "../assets/vs-mark.webp";
 
@@ -167,36 +168,34 @@ export default function SplashIntro({ onDone }) {
     };
 
     // ---- audio ----
-    // Browsers won't start audio until the user has tapped something, and a
-    // cold launch has no prior tap — so the old code gave up the instant the
-    // context came back "suspended", which was every single time.
-    //
-    // Now: ask it to resume, and if that succeeds late (a replay from
-    // Settings, or the tab already had audio going), schedule whichever cues
-    // are still ahead of us instead of dropping the lot.
-    let audioCtx = null;
+    // Uses the app's shared AudioContext (lib/fx.js) rather than making its
+    // own. iOS grants permission to play per-context, and only off the back
+    // of a real tap — a fresh context created at launch is born suspended and
+    // never recovers. The shared one is already unlocked the moment you've
+    // tapped anything, which is why replaying the intro from Settings has
+    // sound and a cold launch cannot.
     const audioAt = Date.now();
+    let bus = null; // master gain, so skipping the intro kills queued cues
 
-    // close() rejects if the context is already closed, and both the cleanup
-    // and the end-of-intro timer want to close it — so route both here.
-    const closeAudio = () => {
-      const ac = audioCtx;
-      audioCtx = null;
-      if (!ac) return;
-      try { ac.close()?.catch?.(() => {}); } catch (e) { /* already gone */ }
+    const stopAudio = () => {
+      if (!bus) return;
+      try {
+        bus.gain.cancelScheduledValues(0);
+        bus.gain.value = 0;
+        bus.disconnect();
+      } catch (e) { /* ignore */ }
+      bus = null;
     };
 
     const playAudio = () => {
       try {
-        const AC = window.AudioContext || window.webkitAudioContext;
-        if (!AC) return;
-        const ac = new AC();
-        audioCtx = ac;
+        const ac = audioCtx();
+        if (!ac) return;
         const arm = () => { if (ac.state === "running") schedule(ac); };
-        const p = ac.resume?.();
-        if (p && p.then) p.then(arm).catch(() => {}); else arm();
-        // Safari resolves resume() before the state flips often enough to
-        // warrant one more look on the next tick.
+        if (ac.state !== "running") ac.resume?.()?.then?.(arm)?.catch?.(() => {});
+        arm();
+        // Safari flips the state a tick after resume() resolves often enough
+        // to be worth one more look.
         setTimeout(arm, 60);
       } catch (e) { /* silent is fine */ }
     };
@@ -207,6 +206,9 @@ export default function SplashIntro({ onDone }) {
       scheduled = true;
       try {
         const now = ac.currentTime;
+        bus = ac.createGain();
+        bus.gain.value = 1;
+        bus.connect(ac.destination);
         // How far into the intro we already are, so a late unlock plays only
         // the cues still ahead instead of firing everything at once.
         const elapsed = (Date.now() - audioAt) / 1000;
@@ -224,7 +226,7 @@ export default function SplashIntro({ onDone }) {
           bg.gain.setValueAtTime(0.0001, hit);
           bg.gain.exponentialRampToValueAtTime(0.5, hit + 0.02);
           bg.gain.exponentialRampToValueAtTime(0.0001, hit + 0.7);
-          bass.connect(bg).connect(ac.destination);
+          bass.connect(bg).connect(bus);
           bass.start(hit); bass.stop(hit + 0.75);
 
           // metal slam + debris: filtered noise burst
@@ -238,7 +240,7 @@ export default function SplashIntro({ onDone }) {
           const ng = ac.createGain();
           ng.gain.setValueAtTime(0.35, hit);
           ng.gain.exponentialRampToValueAtTime(0.0001, hit + 0.45);
-          noise.connect(bp).connect(ng).connect(ac.destination);
+          noise.connect(bp).connect(ng).connect(bus);
           noise.start(hit);
 
           // electric crackle just after the hit
@@ -249,7 +251,7 @@ export default function SplashIntro({ onDone }) {
           cg.gain.setValueAtTime(0.0001, hit + 0.04);
           cg.gain.exponentialRampToValueAtTime(0.06, hit + 0.07);
           cg.gain.exponentialRampToValueAtTime(0.0001, hit + 0.32);
-          cr.connect(cg).connect(ac.destination);
+          cr.connect(cg).connect(bus);
           cr.start(hit + 0.04); cr.stop(hit + 0.34);
         }
 
@@ -263,11 +265,11 @@ export default function SplashIntro({ onDone }) {
           sg.gain.setValueAtTime(0.0001, st);
           sg.gain.exponentialRampToValueAtTime(0.05, st + 0.08);
           sg.gain.exponentialRampToValueAtTime(0.0001, st + 0.3);
-          sh.connect(sg).connect(ac.destination);
+          sh.connect(sg).connect(bus);
           sh.start(st); sh.stop(st + 0.32);
         }
 
-        setTimeout(closeAudio, DUR + 400);
+        setTimeout(stopAudio, DUR + 400);
       } catch (e) { /* silent is fine */ }
     };
 
@@ -690,7 +692,7 @@ export default function SplashIntro({ onDone }) {
       cancelAnimationFrame(raf);
       clearTimeout(guard);
       window.removeEventListener("resize", resize);
-      closeAudio();
+      stopAudio();
     };
   }, [onDone]);
 
