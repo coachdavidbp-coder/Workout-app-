@@ -14,11 +14,14 @@
   --g: #01060F;          /* app background (solid fallback / overlays) */
   --g-grad: linear-gradient(178deg, #000000 0%, #000000 26%, #061530 62%, #0B2E63 100%);
   --g-2: #04101F;        /* raised background / sheets scrim base */
-  --panel: #0B1424;      /* cards */
-  --panel-2: #060E1B;    /* inset rows */
-  --panel-3: #14233D;    /* hover / active surface */
-  --line: #1C2A45;       /* borders */
-  --line-soft: #131E33;
+  /* Cards are frosted glass: translucent so the blue ground reads through,
+     with blur + a lit top edge added by the .card-surface rule in ui.css. */
+  --panel: rgba(255, 255, 255, 0.065);   /* cards */
+  --panel-2: rgba(255, 255, 255, 0.035); /* inset rows */
+  --panel-3: rgba(255, 255, 255, 0.11);  /* hover / active surface */
+  --line: rgba(255, 255, 255, 0.14);     /* borders */
+  --line-soft: rgba(255, 255, 255, 0.08);
+  --edge-lit: rgba(255, 255, 255, 0.22); /* top edge of a glass card */
 
   /* ---- accent (electric blue) ---- */
   --ac: #4C8DFF;
@@ -66,8 +69,10 @@
 /* ---- LIGHT THEME tokens (explicit toggle OR system when no override) ---- */
 :root[data-theme="light"] {
   color-scheme: light;
-  --g: #F4F6F2; --g-grad: #F4F6F2; --g-2: #ECEFEA; --panel: #FFFFFF; --panel-2: #F1F4EE; --panel-3: #E7EBE4;
-  --line: #E0E3DB; --line-soft: #EBEEE8;
+  --g: #F4F6F2; --g-grad: #F4F6F2; --g-2: #ECEFEA;
+  --panel: rgba(255, 255, 255, 0.78); --panel-2: rgba(255, 255, 255, 0.5); --panel-3: #E7EBE4;
+  --line: rgba(20, 28, 45, 0.12); --line-soft: rgba(20, 28, 45, 0.07);
+  --edge-lit: rgba(255, 255, 255, 0.9);
   --ac: #2F6EDE; --ac-hi: #1E5FCF; --ac-dim: rgba(47, 110, 222, 0.10); --ac-glow: rgba(47, 110, 222, 0.35); --on-ac: #FFFFFF;
   --teal: #0E8F82; --good: #1F9D57; --live: #E0384A; --amber: #B9770A;
   --tx: #141A22; --tx-2: #414A56; --mu: #6B7480;
@@ -81,8 +86,10 @@
 @media (prefers-color-scheme: light) {
   :root:not([data-theme="dark"]):not([data-theme="light"]) {
     color-scheme: light;
-    --g: #F4F6F2; --g-grad: #F4F6F2; --g-2: #ECEFEA; --panel: #FFFFFF; --panel-2: #F1F4EE; --panel-3: #E7EBE4;
-    --line: #E0E3DB; --line-soft: #EBEEE8;
+    --g: #F4F6F2; --g-grad: #F4F6F2; --g-2: #ECEFEA;
+    --panel: rgba(255, 255, 255, 0.78); --panel-2: rgba(255, 255, 255, 0.5); --panel-3: #E7EBE4;
+    --line: rgba(20, 28, 45, 0.12); --line-soft: rgba(20, 28, 45, 0.07);
+    --edge-lit: rgba(255, 255, 255, 0.9);
     --ac: #2F6EDE; --ac-hi: #1E5FCF; --ac-dim: rgba(47, 110, 222, 0.10); --ac-glow: rgba(47, 110, 222, 0.35); --on-ac: #FFFFFF;
     --teal: #0E8F82; --good: #1F9D57; --live: #E0384A; --amber: #B9770A;
     --tx: #141A22; --tx-2: #414A56; --mu: #6B7480;

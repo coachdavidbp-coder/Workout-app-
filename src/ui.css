@@ -1323,3 +1323,70 @@
 .rd-steps { padding-left: 22px; }
 .rd-list li, .rd-steps li { margin-bottom: 4px; }
 .rd-watch { margin-top: 18px; }
+
+/* =========================================================
+   CARD SURFACES — frosted glass by default, machined steel
+   on the few hero surfaces. Grounds/accents unchanged.
+   ========================================================= */
+
+/* Glass: the --panel token already makes these translucent; this adds the
+   blur and the lit top edge that sells it as glass rather than a flat wash. */
+.card, .ex-card, .chart-card, .mini-stat, .pb-card, .stat-tile, .rings-card,
+.challenge-card, .recipe-card, .run-card, .session-start, .dur-card,
+.phase-complete, .recap-launch, .home-quote, .summary-stat, .np-card,
+.streak-risk, .continue-card, .warmup-card, .steady-run-hint, .voice-guide,
+.badge, .icon-opt, .video-card, .bw-log, .note-box, .feel-wrap, .recent-list {
+  -webkit-backdrop-filter: blur(14px) saturate(1.3);
+  backdrop-filter: blur(14px) saturate(1.3);
+  border-top-color: var(--edge-lit);
+}
+
+/* Nested surfaces shouldn't stack blur on blur — it muddies and costs GPU. */
+.card .mini-stat, .card .summary-stat, .ex-card .interval-row,
+.rings-card .rleg, .recent-list .recent-row {
+  -webkit-backdrop-filter: none;
+  backdrop-filter: none;
+}
+
+/* Hero surfaces: brushed steel, so the big moments speak the same language
+   as the metallic icon set. Deliberately kept to three places — at volume
+   this treatment gets heavy. */
+.today-card,
+.run-hero,
+.card.profile-card {
+  border: 1px solid rgba(190, 205, 230, 0.24);
+  background:
+    repeating-linear-gradient(96deg, rgba(255,255,255,0.045) 0 1px, transparent 1px 3px),
+    linear-gradient(158deg, #2A3346 0%, #151D2E 46%, #222B3D 100%);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.2), 0 8px 20px rgba(0,0,0,0.45);
+  -webkit-backdrop-filter: none;
+  backdrop-filter: none;
+}
+
+/* Light theme: brushed aluminium instead of gunmetal, or the steel goes
+   black-on-white and fights everything around it. */
+:root[data-theme="light"] .today-card,
+:root[data-theme="light"] .run-hero,
+:root[data-theme="light"] .card.profile-card {
+  border-color: rgba(20, 28, 45, 0.14);
+  background:
+    repeating-linear-gradient(96deg, rgba(255,255,255,0.5) 0 1px, transparent 1px 3px),
+    linear-gradient(158deg, #FFFFFF 0%, #E8ECF2 52%, #F6F8FB 100%);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.9), 0 8px 20px rgba(20,30,60,0.10);
+}
+@media (prefers-color-scheme: light) {
+  :root:not([data-theme="dark"]):not([data-theme="light"]) .today-card,
+  :root:not([data-theme="dark"]):not([data-theme="light"]) .run-hero,
+  :root:not([data-theme="dark"]):not([data-theme="light"]) .card.profile-card {
+    border-color: rgba(20, 28, 45, 0.14);
+    background:
+      repeating-linear-gradient(96deg, rgba(255,255,255,0.5) 0 1px, transparent 1px 3px),
+      linear-gradient(158deg, #FFFFFF 0%, #E8ECF2 52%, #F6F8FB 100%);
+    box-shadow: inset 0 1px 0 rgba(255,255,255,0.9), 0 8px 20px rgba(20,30,60,0.10);
+  }
+}
+
+/* Devices that can't blur get a slightly more opaque card so text stays legible. */
+@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+  :root { --panel: rgba(14, 26, 48, 0.86); --panel-2: rgba(10, 20, 38, 0.8); }
+}
