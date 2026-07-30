@@ -175,7 +175,6 @@ export default function TrainScreen() {
                   <span className="ss-kicker">Session</span>
                   <span className="ss-len">{day.warmup ? `${clock(warmupSeconds(day.warmup))} warm-up first` : "No warm-up listed"}</span>
                 </div>
-                {day.warmup && <div className="ss-warm">{day.warmup}</div>}
                 <button
                   className="ss-btn"
                   onClick={() => {
@@ -193,6 +192,20 @@ export default function TrainScreen() {
                 </div>
               </div>
             )}
+            {/* Always visible: the warm-up is part of the session, not just a
+                prompt before it. Re-runnable once the workout is underway. */}
+            {day.warmup && (
+              <div className="warmup-card">
+                <div className="warmup-txt"><b>Warm-up</b> · {day.warmup}</div>
+                <button
+                  className="btn warmup-btn"
+                  onClick={() => { beep(600, 0.05); haptic(); setWarmupSec(warmupSeconds(day.warmup)); }}
+                >
+                  ▶ {sessionLive ? "Run warm-up again" : "Start warm-up"} · {clock(warmupSeconds(day.warmup))}
+                </button>
+              </div>
+            )}
+
             <NowPlaying />
           </>
         )}
