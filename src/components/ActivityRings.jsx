@@ -4,6 +4,8 @@ import { activityRings, SCOPES } from "../lib/activity.js";
 import GoalWizardSheet from "./GoalWizardSheet.jsx";
 import { useMountedFlag } from "../lib/anim.js";
 import { haptic } from "../lib/fx.js";
+import Lottie from "./Lottie.jsx";
+import checkAnim from "../data/lottie/check.json";
 
 // Triple activity ring: Move / Exercise / Workouts, with
 // Day · Week · Month · All scopes and a goal recommender.
@@ -38,7 +40,12 @@ export default function ActivityRings() {
       </div>
 
       <div className="rings-body">
-        <TripleRing rings={data.rings} allClosed={data.allClosed} />
+        <div className="ring-wrap">
+          <TripleRing rings={data.rings} allClosed={data.allClosed} />
+          {/* Closing all three is the day's win — mark it in the middle of
+              the rings rather than only in the line underneath. */}
+          {data.allClosed && <Lottie data={checkAnim} size={72} className="ring-check" />}
+        </div>
 
         <div className="rings-legend">
           {data.rings.map((r) => (

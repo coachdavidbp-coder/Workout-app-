@@ -1643,3 +1643,11 @@
   background: var(--panel); border: 1px solid var(--line);
 }
 .log-block .section-label { margin-top: 0; }
+
+/* ---------- Lottie ---------- */
+.lottie { pointer-events: none; }
+.lottie svg { display: block; overflow: visible; }
+
+/* the "all three closed" tick lands in the middle of the rings */
+.ring-wrap { position: relative; display: inline-flex; }
+.ring-check { position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); }
