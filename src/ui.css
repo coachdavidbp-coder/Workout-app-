@@ -1651,3 +1651,12 @@
 /* the "all three closed" tick lands in the middle of the rings */
 .ring-wrap { position: relative; display: inline-flex; }
 .ring-check { position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); }
+
+/* the intro holds for a tap so the sound is allowed to play */
+.splash-intro.armed .splash-skip {
+  animation: splashPulse 1.9s ease-in-out infinite;
+  color: rgba(216, 221, 230, 0.62);
+  font-size: 11.5px;
+}
+@keyframes splashPulse { 0%, 100% { opacity: 0.45; } 50% { opacity: 1; } }
+@media (prefers-reduced-motion: reduce) { .splash-intro.armed .splash-skip { animation: none; opacity: 1; } }

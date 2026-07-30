@@ -1,5 +1,6 @@
-import { useEffect, useRef } from "react";
-import { audioCtx } from "../lib/fx.js";
+import { useEffect, useRef, useState } from "react";
+import { audioCtx, unlockAudio } from "../lib/fx.js";
+import { scheduleIntroSound } from "../lib/introSound.js";
 import logoUrl from "../assets/logo.png";
 import vsUrl from "../assets/vs-mark.webp";
 
@@ -65,9 +66,35 @@ function glowSprite(inner, outer, size = 64) {
 
 const rand = (a, b) => a + Math.random() * (b - a);
 
+// Whether to hold on the charge-up until you tap. Read straight from
+// localStorage rather than the store, because the intro is on screen before
+// the store has finished loading.
+const GATE_KEY = "uvt:introSound";
+export const introSoundOn = () => {
+  try { return localStorage.getItem(GATE_KEY) !== "0"; } catch (e) { return true; }
+};
+export const setIntroSoundOn = (on) => {
+  try { localStorage.setItem(GATE_KEY, on ? "1" : "0"); } catch (e) { /* ignore */ }
+};
+
 export default function SplashIntro({ onDone }) {
   const canvasRef = useRef(null);
   const doneRef = useRef(false);
+  const beginRef = useRef(null);
+  // Armed = holding for the tap that both starts the intro and unlocks audio.
+  // If the context is already running (a replay, or you've used the app this
+  // session) there's nothing to unlock, so don't make you tap for nothing.
+  const [armed, setArmed] = useState(() => {
+    if (!introSoundOn()) return false;
+    try { return audioCtx()?.state !== "running"; } catch (e) { return true; }
+  });
+
+  const begin = () => {
+    if (!armed) { onDone?.(); return; }   // not gated → a tap means skip
+    unlockAudio();                        // must happen inside the gesture
+    setArmed(false);
+    beginRef.current?.();
+  };
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -80,6 +107,7 @@ export default function SplashIntro({ onDone }) {
     };
 
     const reduced = window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
+    let holding = armed;
     const ctx = canvas.getContext("2d", { alpha: false });
     let raf = 0;
     let started = 0;
@@ -174,7 +202,11 @@ export default function SplashIntro({ onDone }) {
     // never recovers. The shared one is already unlocked the moment you've
     // tapped anything, which is why replaying the intro from Settings has
     // sound and a cold launch cannot.
-    const audioAt = Date.now();
+    // When the intro actually began. Not the same as when this mounted: with
+    // the tap-to-start hold, the clock doesn't run until you tap, and dating
+    // the cues from mount makes the scheduler think the impact has already
+    // been and gone.
+    let audioAt = Date.now();
     let bus = null; // master gain, so skipping the intro kills queued cues
 
     const stopAudio = () => {
@@ -191,6 +223,7 @@ export default function SplashIntro({ onDone }) {
       try {
         const ac = audioCtx();
         if (!ac) return;
+        if (!bus) { bus = ac.createGain(); bus.gain.value = 1; bus.connect(ac.destination); }
         const arm = () => { if (ac.state === "running") schedule(ac); };
         if (ac.state !== "running") ac.resume?.()?.then?.(arm)?.catch?.(() => {});
         arm();
@@ -202,74 +235,18 @@ export default function SplashIntro({ onDone }) {
 
     let scheduled = false;
     const schedule = (ac) => {
-      if (scheduled) return;
+      if (scheduled || !bus) return;
       scheduled = true;
       try {
         const now = ac.currentTime;
-        bus = ac.createGain();
-        bus.gain.value = 1;
-        bus.connect(ac.destination);
-        // How far into the intro we already are, so a late unlock plays only
-        // the cues still ahead instead of firing everything at once.
+        // Where we already are, so a late unlock plays only what's ahead.
         const elapsed = (Date.now() - audioAt) / 1000;
-        // Absolute context time for a cue that sits `sec` into the intro,
-        // or null if that moment has already gone by.
         const cue = (sec) => (sec < elapsed - 0.05 ? null : now + (sec - elapsed));
-
-        const hit = cue(T.impact / 1000);
-        if (hit != null) {
-          // low stadium bass hit
-          const bass = ac.createOscillator(), bg = ac.createGain();
-          bass.type = "sine";
-          bass.frequency.setValueAtTime(90, hit);
-          bass.frequency.exponentialRampToValueAtTime(38, hit + 0.5);
-          bg.gain.setValueAtTime(0.0001, hit);
-          bg.gain.exponentialRampToValueAtTime(0.5, hit + 0.02);
-          bg.gain.exponentialRampToValueAtTime(0.0001, hit + 0.7);
-          bass.connect(bg).connect(bus);
-          bass.start(hit); bass.stop(hit + 0.75);
-
-          // metal slam + debris: filtered noise burst
-          const len = Math.floor(ac.sampleRate * 0.6);
-          const buf = ac.createBuffer(1, len, ac.sampleRate);
-          const d = buf.getChannelData(0);
-          for (let i = 0; i < len; i++) d[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / len, 2.5);
-          const noise = ac.createBufferSource(); noise.buffer = buf;
-          const bp = ac.createBiquadFilter(); bp.type = "bandpass";
-          bp.frequency.value = 2400; bp.Q.value = 0.8;
-          const ng = ac.createGain();
-          ng.gain.setValueAtTime(0.35, hit);
-          ng.gain.exponentialRampToValueAtTime(0.0001, hit + 0.45);
-          noise.connect(bp).connect(ng).connect(bus);
-          noise.start(hit);
-
-          // electric crackle just after the hit
-          const cr = ac.createOscillator(), cg = ac.createGain();
-          cr.type = "sawtooth";
-          cr.frequency.setValueAtTime(1800, hit + 0.04);
-          cr.frequency.linearRampToValueAtTime(600, hit + 0.3);
-          cg.gain.setValueAtTime(0.0001, hit + 0.04);
-          cg.gain.exponentialRampToValueAtTime(0.06, hit + 0.07);
-          cg.gain.exponentialRampToValueAtTime(0.0001, hit + 0.32);
-          cr.connect(cg).connect(bus);
-          cr.start(hit + 0.04); cr.stop(hit + 0.34);
-        }
-
-        // chrome shimmer on the shine sweep
-        const st = cue(T.shineStart / 1000);
-        if (st != null) {
-          const sh = ac.createOscillator(), sg = ac.createGain();
-          sh.type = "triangle";
-          sh.frequency.setValueAtTime(2600, st);
-          sh.frequency.linearRampToValueAtTime(4200, st + 0.25);
-          sg.gain.setValueAtTime(0.0001, st);
-          sg.gain.exponentialRampToValueAtTime(0.05, st + 0.08);
-          sg.gain.exponentialRampToValueAtTime(0.0001, st + 0.3);
-          sh.connect(sg).connect(bus);
-          sh.start(st); sh.stop(st + 0.32);
-        }
-
-        setTimeout(stopAudio, DUR + 400);
+        scheduleIntroSound(ac, bus, {
+          impact: cue(T.impact / 1000),
+          shine: cue(T.shineStart / 1000),
+        });
+        setTimeout(stopAudio, DUR + 1400);
       } catch (e) { /* silent is fine */ }
     };
 
@@ -439,7 +416,9 @@ export default function SplashIntro({ onDone }) {
     const frame = (now) => {
       if (cancelled) return;
       if (!started) started = now;
-      const t = now - started;
+      // While we're waiting for the tap, park in the charge-up. The arcs and
+      // dust still move, so it reads as idling under load rather than frozen.
+      const t = holding ? Math.min(now - started, T.dropStart - 30) : now - started;
 
       // background
       ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
@@ -679,27 +658,40 @@ export default function SplashIntro({ onDone }) {
         return;
       }
 
-      playAudio();
+      // Hand the loop a way to be released by the tap.
+      beginRef.current = () => {
+        if (!holding) return;
+        holding = false;
+        started = 0;          // restart the timeline from zero, now with sound
+        audioAt = Date.now(); // ...and date the sound cues from here too
+        clearTimeout(holdGuard);
+        playAudio();
+      };
+      if (!holding) playAudio();
       raf = requestAnimationFrame(frame);
     })();
 
+    // Never trap anyone on the hold screen.
+    const holdGuard = setTimeout(() => beginRef.current?.(), 7000);
+
     // Never strand the user on the splash if a frame loop dies or a tab is
     // backgrounded mid-intro.
-    const guard = setTimeout(finish, DUR + 1200);
+    const guard = setTimeout(() => { if (!holding) finish(); }, DUR + 1200);
 
     return () => {
       cancelled = true;
       cancelAnimationFrame(raf);
       clearTimeout(guard);
+      clearTimeout(holdGuard);
       window.removeEventListener("resize", resize);
       stopAudio();
     };
   }, [onDone]);
 
   return (
-    <div className="splash-intro" onClick={() => onDone?.()} role="presentation">
+    <div className={`splash-intro ${armed ? "armed" : ""}`} onPointerDown={begin} role="presentation">
       <canvas ref={canvasRef} />
-      <span className="splash-skip">Tap to skip</span>
+      <span className="splash-skip">{armed ? "Tap anywhere to start" : "Tap to skip"}</span>
     </div>
   );
 }

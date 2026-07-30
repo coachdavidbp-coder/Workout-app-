@@ -1,6 +1,7 @@
 import Sheet from "./Sheet.jsx";
 import { useStore } from "../store.jsx";
 import { haptic, unlockAudio } from "../lib/fx.js";
+import { introSoundOn, setIntroSoundOn } from "./SplashIntro.jsx";
 import {
   speak, listVoices, setVoiceName, setCoachStyle, COACH_STYLES,
   hasHumanVoice, currentVoiceInfo,
@@ -149,8 +150,26 @@ export default function SettingsSheet({ open, onClose }) {
           </div>
         </div>
 
+        <div className="setting-row" style={{ flexWrap: "wrap", gap: 10 }}>
+          <div className="lab">
+            Intro sound
+            <small>Holds on the opening for a tap, because iPhones only allow sound after one. Off plays it silently.</small>
+          </div>
+          <div className="row gap-2">
+            {[true, false].map((on) => (
+              <button
+                key={String(on)}
+                className={`week-pill ${introSoundOn() === on ? "on" : ""}`}
+                onClick={() => { setIntroSoundOn(on); haptic(); actions.setSetting("introSound", on); }}
+              >
+                {on ? "On" : "Off"}
+              </button>
+            ))}
+          </div>
+        </div>
+
         <div className="setting-row">
-          <div className="lab">Opening intro<small>Replay it — with sound, since tapping is what lets audio play</small></div>
+          <div className="lab">Replay the intro<small>Plays it now, with sound</small></div>
           <button
             className="btn"
             onClick={() => {
