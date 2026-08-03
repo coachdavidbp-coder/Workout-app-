@@ -1,9 +1,10 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import Sheet from "./Sheet.jsx";
 import BarcodeScanner from "./BarcodeScanner.jsx";
+import NumField from "./NumField.jsx";
 import { IconSearch } from "./icons.jsx";
 import { BUILTIN_FOODS, MEAL_SLOTS } from "../data/foods.js";
-import { searchFoods, lookupBarcode } from "../lib/foodApi.js";
+import { searchFoods, lookupBarcode, resolveRestaurantItem, restaurantsEnabled } from "../lib/foodApi.js";
 import { useStore, todayKey } from "../store.jsx";
 import { useOnline } from "../lib/net.js";
 import { haptic } from "../lib/fx.js";
@@ -20,6 +21,7 @@ export default function AddFoodSheet({ open, onClose, dateKey }) {
   const [err, setErr] = useState("");
   const [barcode, setBarcode] = useState("");
   const [scanning, setScanning] = useState(false);
+  const [manual, setManual] = useState(null);   // { name, cal, p, unit } while typing one in
   const abortRef = useRef(null);
 
   // reset on open
@@ -32,6 +34,7 @@ export default function AddFoodSheet({ open, onClose, dateKey }) {
       setErr("");
       setBarcode("");
       setScanning(false);
+      setManual(null);
     }
   }, [open]);
 
@@ -85,6 +88,19 @@ export default function AddFoodSheet({ open, onClose, dateKey }) {
     }
   };
 
+  // Restaurant results arrive with calories but no protein — the menu
+  // database only returns full macros per item, so fetch them for the one
+  // actually chosen rather than for every row in the list.
+  const pick = async (food) => {
+    setQty("1");
+    setSelected(food);
+    if (food.nixId && food.p == null) {
+      setLoading(true);
+      try { setSelected(await resolveRestaurantItem(food)); }
+      finally { setLoading(false); }
+    }
+  };
+
   // Scanner hands back the digits; close the camera and look it up.
   const onScanned = (code) => {
     setScanning(false);
@@ -97,7 +113,7 @@ export default function AddFoodSheet({ open, onClose, dateKey }) {
     actions.addMeal(dateKey, {
       name: selected.name,
       cal: Math.round(selected.cal * n),
-      p: Math.round(selected.p * n * 10) / 10,
+      p: Math.round((selected.p || 0) * n * 10) / 10,
       qty: n,
       slot,
       unit: selected.unit,
@@ -109,7 +125,72 @@ export default function AddFoodSheet({ open, onClose, dateKey }) {
     <>
     <BarcodeScanner open={scanning} onClose={() => setScanning(false)} onDetect={onScanned} />
     <Sheet open={open} onClose={onClose}>
-      {!selected ? (
+      {manual ? (
+        <>
+          <h3 className="sheet-title">Enter it yourself</h3>
+          <div className="sheet-sub">Straight off the menu board or the receipt</div>
+
+          <div className="section-label" style={{ marginTop: 16 }}>What is it?</div>
+          <input
+            className="login-input"
+            placeholder="e.g. Chicken Avocado Salad · El Pollo Loco"
+            value={manual.name}
+            onChange={(e) => setManual({ ...manual, name: e.target.value })}
+            autoFocus
+          />
+
+          <div className="section-label" style={{ marginTop: 16 }}>Per serving</div>
+          <div className="ex-log">
+            <NumField
+              label="Calories"
+              accent
+              value={manual.cal}
+              placeholder="540"
+              onCommit={(v) => setManual({ ...manual, cal: v })}
+            />
+            <NumField
+              label="Protein (g)"
+              value={manual.p}
+              placeholder="42"
+              onCommit={(v) => setManual({ ...manual, p: v })}
+            />
+          </div>
+
+          <div className="section-label" style={{ marginTop: 16 }}>Serving name</div>
+          <input
+            className="login-input"
+            placeholder="1 serving"
+            value={manual.unit}
+            onChange={(e) => setManual({ ...manual, unit: e.target.value })}
+          />
+
+          <div className="row gap-2" style={{ marginTop: 20 }}>
+            <button className="btn btn-ghost" style={{ flex: 1 }} onClick={() => setManual(null)}>
+              Back
+            </button>
+            <button
+              className="btn btn-primary"
+              style={{ flex: 2 }}
+              disabled={!manual.name.trim() || !(parseFloat(manual.cal) > 0)}
+              onClick={() => {
+                setSelected({
+                  name: manual.name.trim().slice(0, 72),
+                  cal: Math.round(parseFloat(manual.cal) || 0),
+                  p: Math.round((parseFloat(manual.p) || 0) * 10) / 10,
+                  unit: manual.unit.trim() || "1 serving",
+                });
+                setQty("1");
+                setManual(null);
+              }}
+            >
+              Continue
+            </button>
+          </div>
+          <div className="ss-note">
+            Chains print calories on the board and full macros on their website.
+          </div>
+        </>
+      ) : !selected ? (
         <>
           <div className="food-search-head">
             <h3 className="sheet-title">Add Food</h3>
@@ -165,16 +246,38 @@ export default function AddFoodSheet({ open, onClose, dateKey }) {
           </div>
           <div className="meal-list">
             {builtinMatches.map((f) => (
-              <FoodResult key={f.id} food={f} onPick={() => { setSelected(f); setQty("1"); }} />
+              <FoodResult key={f.id} food={f} onPick={() => pick(f)} />
             ))}
             {loading && <div className="empty-hint">Searching…</div>}
             {results.map((f, i) => (
-              <FoodResult key={`off-${i}`} food={f} onPick={() => { setSelected(f); setQty("1"); }} />
+              <FoodResult key={`db-${i}`} food={f} onPick={() => pick(f)} />
             ))}
             {!loading && q.trim().length >= 3 && results.length === 0 && builtinMatches.length === 0 && (
-              <div className="empty-hint">No matches. Try a simpler term.</div>
+              <div className="empty-hint">
+                Nothing found for “{q.trim()}”.
+                {!restaurantsEnabled && (
+                  <span className="eh-note">
+                    Restaurant menus (El Pollo Loco, Subway, Chipotle) need the free
+                    Nutritionix key — the grocery databases don’t carry food served
+                    over a counter.
+                  </span>
+                )}
+              </div>
             )}
           </div>
+
+          {/* Always available, needs no database: type it off the receipt or
+              the wall menu and it logs like anything else. */}
+          <button
+            className="manual-cta"
+            onClick={() => { haptic(); setManual({ name: q.trim(), cal: "", p: "", unit: "1 serving" }); }}
+          >
+            <span className="mc-ico">✎</span>
+            <span className="mc-txt">
+              <b>Can’t find it? Enter it yourself</b>
+              <em>Type the calories and protein straight off the menu board</em>
+            </span>
+          </button>
         </>
       ) : (
         <>
@@ -188,7 +291,7 @@ export default function AddFoodSheet({ open, onClose, dateKey }) {
             </div>
             <div className="mini-stat">
               <div className="k" style={{ color: "var(--good)" }}>
-                {Math.round(selected.p * (parseFloat(qty) || 1) * 10) / 10}g
+                {Math.round((selected.p || 0) * (parseFloat(qty) || 1) * 10) / 10}g
               </div>
               <div className="l">Protein</div>
             </div>

@@ -1660,3 +1660,19 @@
 }
 @keyframes splashPulse { 0%, 100% { opacity: 0.45; } 50% { opacity: 1; } }
 @media (prefers-reduced-motion: reduce) { .splash-intro.armed .splash-skip { animation: none; opacity: 1; } }
+
+/* ---------- enter a food by hand ---------- */
+.manual-cta {
+  display: flex; align-items: center; gap: 12px; width: 100%; margin-top: 14px;
+  background: var(--panel); border: 1px dashed var(--line); border-radius: 14px;
+  padding: 12px 14px; text-align: left;
+}
+.manual-cta:active { transform: scale(0.99); }
+.manual-cta .mc-ico {
+  width: 36px; height: 36px; flex: none; display: grid; place-items: center; border-radius: 11px;
+  background: var(--panel-3); color: var(--tx); font-size: 16px;
+}
+.manual-cta .mc-txt { display: flex; flex-direction: column; gap: 2px; }
+.manual-cta .mc-txt b { font-family: var(--font-display); font-size: 13.5px; color: var(--tx); }
+.manual-cta .mc-txt em { font-style: normal; font-size: 11.5px; color: var(--mu); }
+.empty-hint .eh-note { display: block; margin-top: 7px; font-size: 12px; line-height: 1.5; color: var(--mu); }
