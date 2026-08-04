@@ -425,6 +425,9 @@
 .login-divider::before, .login-divider::after { content: ""; flex: 1; height: 1px; background: var(--line); }
 .login-input { width: 100%; background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 13px 14px; color: var(--tx); font-size: 15px; }
 .login-input:focus { outline: none; border-color: var(--ac); }
+/* Sits in a settings row next to buttons, so it sizes to its content
+   rather than stretching the row. */
+.date-field { width: auto; min-width: 152px; padding: 10px 12px; font-size: 14px; }
 .login-err { color: var(--live); font-size: 13px; text-align: center; }
 .login-toggle { background: none; border: none; color: var(--ac); font-size: 13px; font-weight: 600; }
 .pw-field { position: relative; }

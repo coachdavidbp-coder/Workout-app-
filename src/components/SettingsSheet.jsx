@@ -186,21 +186,47 @@ export default function SettingsSheet({ open, onClose }) {
           <div className="lab">
             Program start
             <small>
-              Week {programPosition(state).week} of {programPosition(state).totalWeeks} ·
-              began {programStart(state)}. Missed days are counted from here, so
-              reset it if you're picking the program up fresh.
+              Week {programPosition(state).week} of {programPosition(state).totalWeeks}.
+              Set the day you actually began — the week you're on and every
+              missed day are counted from here.
             </small>
           </div>
-          <button
-            className="btn"
-            onClick={() => {
-              actions.setProfile({ programStart: dateKey() });
-              actions.setWeek(1);
-              haptic("success");
-            }}
-          >
-            Start from today
-          </button>
+          <div className="row gap-2" style={{ flexWrap: "wrap", justifyContent: "flex-end" }}>
+            <input
+              className="login-input date-field"
+              type="date"
+              value={programStart(state)}
+              max={dateKey()}
+              onChange={(e) => {
+                if (!e.target.value) return;
+                actions.setProfile({ programStart: e.target.value });
+                haptic("success");
+              }}
+            />
+            <button
+              className="btn"
+              onClick={() => {
+                // Sunday of the week you're in — where a training block
+                // normally begins, and the answer most of the time.
+                const d = new Date();
+                d.setDate(d.getDate() - d.getDay());
+                actions.setProfile({ programStart: dateKey(d) });
+                haptic("success");
+              }}
+            >
+              Last Sunday
+            </button>
+            <button
+              className="btn"
+              onClick={() => {
+                actions.setProfile({ programStart: dateKey() });
+                actions.setWeek(1);
+                haptic("success");
+              }}
+            >
+              Today
+            </button>
+          </div>
         </div>
 
         <div className="setting-row" style={{ flexWrap: "wrap", gap: 10 }}>

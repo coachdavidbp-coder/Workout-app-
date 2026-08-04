@@ -46,38 +46,37 @@ export const totalSeconds = (steps) => steps.reduce((a, s) => a + s.seconds, 0);
 // the YouTube app. To swap one: open the video on YouTube, copy the id out of
 // the URL (youtube.com/watch?v=THIS_PART) and paste it here. Set an entry to
 // null and that pose falls back to a "search YouTube" card.
+//
+// Every id below was looked up by searching for the move and taking a video
+// that actually came back indexed under that name — the titles are in the
+// comments so a wrong one is easy to spot. An id that can't be reached from
+// the build machine is an id that might not exist, and a dead embed shows up
+// as a black box mid-session.
 // ---------------------------------------------------------
 export const POSE_VIDEOS = {
   // cool-down yoga (see lib/yoga.js for which day gets which)
-  "Cat-Cow": "kqnua4rHVVA",
-  "Child's Pose": "eqVMAPM00DM",
-  "Figure-4 Glute Stretch": "AlpJlaPQOSs",
-  "Supine Spinal Twist": "AJIQxcT1Iyg",
-  "Sphinx Pose": "8vScuPCcuGY",
-  "Low Lunge": "Nl2XwYVQmHo",
-  "Half Frog Quad Stretch": "4Sti0zdBcOM",
-  "Seated Forward Fold": "H6kbz8Zpwtc",
-  "Downward Dog": "j97SSGsnCAQ",
-  "Thread the Needle": "sMs_C_2Z0Fk",
-  "Puppy Pose": "7Nn5wTiFXqk",
-  "Supported Fish": "3nDgHzMJ_iw",
-  "Pigeon Pose": "0_zPqA65Nu4",
-  "Reclined Butterfly": "V0ROlWLBHTM",
-  "Happy Baby": "5DsUwkbnwfg",
+  "Cat-Cow": "kqnua4rHVVA",                    // How to Do a Cat Cow Pose for Energy | Yoga
+  "Child's Pose": "EniGBCHAEVQ",               // How to do Childs Pose PROPERLY | Yoga for Beginners
+  "Figure-4 Glute Stretch": "OcfcKXTaEkA",     // How to do a Figure-4 Stretch | Well+Good
+  "Supine Spinal Twist": "sADFnhF-Ln0",        // How To Do A Supine Spinal Twist (Supta Matsyendrasana)
+  "Sphinx Pose": "QVYLJJE2TlE",                // How to Do Sphinx Pose in Yoga
+  "Low Lunge": "Y8jM-f_mUTM",                  // How to do Low Lunge Pose | Anjaneyasana
+  "Half Frog Quad Stretch": "K2QimPsO8zw",     // Yoga: How To Do Half Frog
+  "Seated Forward Fold": "IreNmKl5o6U",        // How to Do Seated Forward Fold - Paschimottanasana
+  "Downward Dog": "Y0GDgQqt-bA",               // How to do Downward Facing Dog | Yoga for Beginners
+  "Thread the Needle": "UomKzkyp6kQ",          // How to Thread-the-Needle | Well+Good
+  "Puppy Pose": "U6ExAZXkJ80",                 // How To: Puppy Pose (Uttana Shishosana)
+  "Supported Fish": "s6cSG0ebhkI",             // How To - Supported Fish Pose
+  "Pigeon Pose": "zuYbjkuKLKY",                // How To SAFELY Do Pigeon Pose For Beginners
+  "Reclined Butterfly": "N4figcWjDGI",         // How to Do the Reclined Butterfly Pose
+  "Happy Baby": "Rg8L0_ZDick",                 // How to Do Happy Baby Pose
   // pre-workout (dynamic)
-  "Leg Swings": "bxdBhqzHQIQ",
-  "World's Greatest Stretch": "TfLm2yqLDpM",
-  "90/90 Hip Switch": "sTdIcT_ZWDo",
-  "Arm Circles & Shoulder Openers": "140RTNMciH8",
-  "Ankle Rocks": "IikISr-0i7g",
-  "Glute Bridge": "wPM8icPu6H8",
-  // post-workout (static)
-  "Standing Hamstring Stretch": "FKPmT_lRbXQ",
-  "Standing Quad Stretch": "aWEXhpDBhwo",
-  "Kneeling Hip Flexor Stretch": "UnRxOJcpJ_4",
-  "Doorway Chest Stretch": "SV7hLmwLisM",
-  "Calf Stretch": "6JsxJp2vjjI",
-  "Overhead Lat Stretch": "K2FBqbf7Ii8",
+  "Leg Swings": "difYoBtZi2s",                 // How To Do Leg Swings
+  "World's Greatest Stretch": "T6j7BpxeqqU",   // World's Greatest Stretch | Tutorial
+  "90/90 Hip Switch": "HUZimFZJZWU",           // How to Do the 90/90 Switch for Hip Mobility
+  "Arm Circles & Shoulder Openers": "mwDgFY86zck", // Workout WARM-UP | ARM CIRCLES
+  "Ankle Rocks": "Hm_Iu72bJJg",                // Half Kneeling Ankle Rocks - Ankle Mobility
+  "Glute Bridge": "wPM8icPu6H8",               // How To Do A Glute Bridge | Well+Good
 };
 
 const pose = (label, seconds, q, cue) => ({ label, seconds, q, cue, video: POSE_VIDEOS[label] || null });

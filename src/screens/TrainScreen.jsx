@@ -95,10 +95,11 @@ export default function TrainScreen() {
       title: "Stretch",
       accent: "warmup",
       steps: PRE_STRETCH,
-      // No clock on the stretches. They're dynamic — you move through the
-      // range and go on when it feels open, and a countdown on each one just
-      // put a second timer in front of a session that's meant to have one.
-      untimed: true,
+      // Each stretch opens on a ready screen — pose, cue, video — and the
+      // clock only runs once you tap Start. Same last-five-seconds count as
+      // the warm-up, so the end of a hold is something you can hear.
+      previewSteps: true,
+      countdownFrom: 5,
       doneNote: "Hips and shoulders are open.",
     },
     warmupSteps.length && {
@@ -241,9 +242,7 @@ export default function TrainScreen() {
               <div className="session-start">
                 <div className="ss-top">
                   <span className="ss-kicker">Session</span>
-                  <span className="ss-len">
-                    {PRE_STRETCH.length} stretches{preSeconds > 0 ? ` + ${clock(preSeconds)} warm-up` : ""}
-                  </span>
+                  <span className="ss-len">{clock(preSeconds)} guided before the lifts</span>
                 </div>
                 <button className="ss-btn" onClick={startSession}>▶ Start session</button>
                 <div className="ss-note">
@@ -258,9 +257,8 @@ export default function TrainScreen() {
             <div className="phase-step"><span className="ps-n">1</span> Stretch</div>
             <PhaseCard
               heading="Stretch"
-              blurb="dynamic — move through it at your own pace"
+              blurb="dynamic — move through it, don't hold"
               steps={PRE_STRETCH}
-              untimed
               onList={() => setStretchList(true)}
               listLabel="Stretches & videos"
             />
@@ -443,7 +441,7 @@ export default function TrainScreen() {
             accent: "rest",
             steps: cooldown,
             previewSteps: true,
-            countdownFrom: 10,
+            countdownFrom: 5,
           }]}
           voice={voiceOn}
           donePhase="Session complete"
@@ -469,7 +467,6 @@ export default function TrainScreen() {
         title="Stretch"
         subtitle="dynamic, before you load up"
         startLabel="Start the session"
-        untimed
         onStart={startSession}
       />
 
