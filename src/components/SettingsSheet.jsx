@@ -3,6 +3,7 @@ import Sheet from "./Sheet.jsx";
 import { useStore } from "../store.jsx";
 import { haptic, unlockAudio } from "../lib/fx.js";
 import { introSoundOn, setIntroSoundOn } from "./SplashIntro.jsx";
+import { primeIntroSound } from "../lib/introSound.js";
 import { programPosition, programStart, dateKey } from "../lib/program.js";
 import { EQUIPMENT } from "../data/exercises.js";
 import { buildId, checkNow } from "../lib/updater.js";
@@ -255,6 +256,7 @@ export default function SettingsSheet({ open, onClose }) {
               // Unlock audio right here, in the tap itself — iOS ignores it
               // if it happens later, from an effect or a promise.
               unlockAudio();
+              primeIntroSound();   // same tap, so the fallback is playable too
               haptic();
               onClose();
               window.dispatchEvent(new CustomEvent("uvt:replay-intro"));

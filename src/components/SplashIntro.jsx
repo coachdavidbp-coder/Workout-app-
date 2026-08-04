@@ -1,6 +1,9 @@
 import { useEffect, useRef, useState } from "react";
 import { audioCtx, unlockAudio } from "../lib/fx.js";
-import { loadIntroSound, playIntroSound } from "../lib/introSound.js";
+import {
+  CRACK_AT, introBuffer, loadIntroSound, playIntroSound,
+  prefetchIntroSound, primeIntroSound, stopIntroSound,
+} from "../lib/introSound.js";
 import logoUrl from "../assets/logo.png";
 import vsUrl from "../assets/vs-mark.webp";
 
@@ -89,15 +92,17 @@ export default function SplashIntro({ onDone }) {
     try { return audioCtx()?.state !== "running"; } catch (e) { return true; }
   });
 
-  // Fetch and decode the clip up front, so the crack isn't late on a cold
-  // start. Decoding needs no gesture; only playing does.
+  // Pull the file down at mount so the crack isn't waiting on the network.
+  // Only the bytes — decoding waits for a context that's actually running,
+  // because Safari can leave a decode on a suspended one hanging forever.
   useEffect(() => {
-    if (introSoundOn()) loadIntroSound(audioCtx());
+    if (introSoundOn()) prefetchIntroSound();
   }, []);
 
   const begin = () => {
     if (!armed) { onDone?.(); return; }   // not gated → a tap means skip
     unlockAudio();                        // must happen inside the gesture
+    primeIntroSound();                    // and the fallback, in the same tap
     setArmed(false);
     beginRef.current?.();
   };
@@ -216,6 +221,7 @@ export default function SplashIntro({ onDone }) {
     let bus = null; // master gain, so skipping the intro kills queued cues
 
     const stopAudio = () => {
+      stopIntroSound();          // the <audio> fallback, if that's what played
       if (!bus) return;
       try {
         bus.gain.cancelScheduledValues(0);
@@ -243,12 +249,22 @@ export default function SplashIntro({ onDone }) {
     const schedule = (ac) => {
       if (scheduled || !bus) return;
       scheduled = true;
-      loadIntroSound(ac).then((buffer) => {
-        if (!buffer || !bus) return;   // skipped out while it was decoding
-        // Where the animation already is, so a late unlock drops into the
-        // clip rather than cracking over a frame that's already gone.
+      // The decode gets exactly as long as there is before the clip has to
+      // start, less a moment to hand over. Waiting any longer than that is
+      // waiting past the frame the sound exists to hit — and on a Safari that
+      // never finishes decoding, waiting for it means silence.
+      const at0 = (Date.now() - audioAt) / 1000;
+      const grace = Math.max(0, (T.impact / 1000 - CRACK_AT) - at0 - 0.12) * 1000;
+      Promise.race([
+        loadIntroSound(ac),
+        new Promise((r) => setTimeout(r, grace)),
+      ]).then((raced) => {
+        if (!bus) return;   // skipped out while it was decoding
+        // Where the animation already is, so a late start drops into the clip
+        // rather than cracking over a frame that's already gone. With no
+        // buffer, playIntroSound uses the element primed during the tap.
         const elapsed = (Date.now() - audioAt) / 1000;
-        playIntroSound(ac, bus, buffer, T.impact / 1000 - elapsed);
+        playIntroSound(ac, bus, raced || introBuffer(), T.impact / 1000 - elapsed);
       });
       // The clip starts 729 ms in and runs 3.25 s, so it finishes at 3.98 s —
       // just past the intro. Cut it after that and the roll dies out over the
