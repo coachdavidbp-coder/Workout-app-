@@ -60,7 +60,7 @@ export default defineConfig(async () => {
           ],
         },
         workbox: {
-          globPatterns: ["**/*.{js,css,html,svg,png,webp,woff2}"],
+          globPatterns: ["**/*.{js,css,html,svg,png,webp,woff2,mp3}"],
           navigateFallback: "/index.html",
           runtimeCaching: [
             {

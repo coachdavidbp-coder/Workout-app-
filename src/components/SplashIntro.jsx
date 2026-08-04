@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { audioCtx, unlockAudio } from "../lib/fx.js";
-import { scheduleIntroSound } from "../lib/introSound.js";
+import { loadIntroSound, playIntroSound } from "../lib/introSound.js";
 import logoUrl from "../assets/logo.png";
 import vsUrl from "../assets/vs-mark.webp";
 
@@ -88,6 +88,12 @@ export default function SplashIntro({ onDone }) {
     if (!introSoundOn()) return false;
     try { return audioCtx()?.state !== "running"; } catch (e) { return true; }
   });
+
+  // Fetch and decode the clip up front, so the crack isn't late on a cold
+  // start. Decoding needs no gesture; only playing does.
+  useEffect(() => {
+    if (introSoundOn()) loadIntroSound(audioCtx());
+  }, []);
 
   const begin = () => {
     if (!armed) { onDone?.(); return; }   // not gated → a tap means skip
@@ -237,17 +243,17 @@ export default function SplashIntro({ onDone }) {
     const schedule = (ac) => {
       if (scheduled || !bus) return;
       scheduled = true;
-      try {
-        const now = ac.currentTime;
-        // Where we already are, so a late unlock plays only what's ahead.
+      loadIntroSound(ac).then((buffer) => {
+        if (!buffer || !bus) return;   // skipped out while it was decoding
+        // Where the animation already is, so a late unlock drops into the
+        // clip rather than cracking over a frame that's already gone.
         const elapsed = (Date.now() - audioAt) / 1000;
-        const cue = (sec) => (sec < elapsed - 0.05 ? null : now + (sec - elapsed));
-        scheduleIntroSound(ac, bus, {
-          impact: cue(T.impact / 1000),
-          shine: cue(T.shineStart / 1000),
-        });
-        setTimeout(stopAudio, DUR + 1400);
-      } catch (e) { /* silent is fine */ }
+        playIntroSound(ac, bus, buffer, T.impact / 1000 - elapsed);
+      });
+      // The clip starts 729 ms in and runs 3.25 s, so it finishes at 3.98 s —
+      // just past the intro. Cut it after that and the roll dies out over the
+      // top of the home screen instead of being clipped off at the door.
+      setTimeout(stopAudio, DUR + 1700);
     };
 
     // ---- assets ----
