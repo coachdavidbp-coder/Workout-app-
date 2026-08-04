@@ -3,6 +3,7 @@ import { useStore } from "../store.jsx";
 import { fmtDuration } from "../lib/progress.js";
 import { speak, randomEncouragement, stopSpeaking } from "../lib/voice.js";
 import { beep, haptic } from "../lib/fx.js";
+import { setSession } from "../lib/sessionClock.js";
 
 // Stopwatch that records how long a workout took (saved to state.durations).
 // Start runs a spoken 5-second countdown, then the clock; you can Pause/
@@ -24,6 +25,10 @@ export default function WorkoutTimer({ week, dayId, voice = true, startSignal = 
   const elapsedRef = useRef(saved);
 
   // if the underlying saved value changes (day switch), resync & clear counts
+  // keep the published phase current without re-arming the interval
+  const phaseRef = useRef(phase);
+  useEffect(() => { phaseRef.current = phase; setSession(elapsedRef.current, phase); }, [phase]);
+
   useEffect(() => {
     setElapsed(saved);
     elapsedRef.current = saved;
@@ -42,6 +47,8 @@ export default function WorkoutTimer({ week, dayId, voice = true, startSignal = 
     tick.current = setInterval(() => {
       elapsedRef.current += 1;
       setElapsed(elapsedRef.current);
+      // Publish so the guided sequences can show this same clock.
+      setSession(elapsedRef.current, phaseRef.current);
       if (elapsedRef.current % 5 === 0) actions.setDuration(week, dayId, elapsedRef.current);
       // coach checks in mid-workout every 2.5 min
       if (voice && elapsedRef.current > 0 && elapsedRef.current % 150 === 0) {

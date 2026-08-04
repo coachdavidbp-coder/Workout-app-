@@ -83,7 +83,8 @@ export const POSE_VIDEOS = {
 const pose = (label, seconds, q, cue) => ({ label, seconds, q, cue, video: POSE_VIDEOS[label] || null });
 
 // ---------------------------------------------------------
-// PRE-WORKOUT STRETCH — dynamic. You move through range, you don't hold.
+// STRETCH — dynamic, and it opens the session. You move through range,
+// you don't hold.
 // Static holds before lifting temporarily cut force output; these open the
 // hips, ankles and thoracic spine so you can squat and press in real
 // positions instead of fighting for them under load.
@@ -103,22 +104,3 @@ export const PRE_STRETCH = [
     "On your back, feet flat, drive through the heels and squeeze at the top for a second. Wakes the glutes up so your low back doesn't do their job."),
 ];
 
-// ---------------------------------------------------------
-// POST-WORKOUT STRETCH — static. Now the holds are the point: muscles are
-// warm, and this is where length actually gets kept. Hits the six things
-// lifting and sprinting shorten most.
-// ---------------------------------------------------------
-export const POST_STRETCH = [
-  pose("Standing Hamstring Stretch", 60, "standing hamstring stretch tutorial",
-    "Heel on the floor in front, toes up, hinge from the hips with a flat back. 30 seconds a leg. Chase it in the belly of the muscle, not behind the knee."),
-  pose("Standing Quad Stretch", 60, "standing quad stretch tutorial",
-    "Heel to your backside, knees together, tuck the pelvis under. 30 seconds a leg. The tuck is what makes it work."),
-  pose("Kneeling Hip Flexor Stretch", 90, "kneeling hip flexor stretch tutorial",
-    "Half-kneeling, squeeze the back glute and tuck the hips before you lean. 45 seconds a side. Tight hip flexors pull your pelvis forward and load your low back all day."),
-  pose("Doorway Chest Stretch", 60, "doorway chest stretch tutorial",
-    "Forearm on the frame at shoulder height, step through and turn away. 30 seconds a side. Undoes every press you just did."),
-  pose("Calf Stretch", 60, "standing calf stretch wall tutorial",
-    "Hands on a wall, back leg straight, heel down, hips forward. 30 seconds a leg. Then soften that back knee for 10 to catch the soleus."),
-  pose("Overhead Lat Stretch", 60, "overhead lat stretch tutorial",
-    "Hands on a rack or doorframe about hip height, walk back, sit the hips down and let the chest sink. Breathe into the side of your ribs."),
-];

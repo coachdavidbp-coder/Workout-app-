@@ -2,6 +2,7 @@ import Sheet from "./Sheet.jsx";
 import { useStore } from "../store.jsx";
 import { haptic, unlockAudio } from "../lib/fx.js";
 import { introSoundOn, setIntroSoundOn } from "./SplashIntro.jsx";
+import { programPosition, programStart, dateKey } from "../lib/program.js";
 import {
   speak, listVoices, setVoiceName, setCoachStyle, COACH_STYLES,
   hasHumanVoice, currentVoiceInfo,
@@ -148,6 +149,27 @@ export default function SettingsSheet({ open, onClose }) {
               onBlur={(e) => actions.setProfile({ exerciseGoal: Math.max(5, parseInt(e.target.value, 10) || 30) })}
             />
           </div>
+        </div>
+
+        <div className="setting-row" style={{ flexWrap: "wrap", gap: 10 }}>
+          <div className="lab">
+            Program start
+            <small>
+              Week {programPosition(state).week} of {programPosition(state).totalWeeks} ·
+              began {programStart(state)}. Missed days are counted from here, so
+              reset it if you're picking the program up fresh.
+            </small>
+          </div>
+          <button
+            className="btn"
+            onClick={() => {
+              actions.setProfile({ programStart: dateKey() });
+              actions.setWeek(1);
+              haptic("success");
+            }}
+          >
+            Start from today
+          </button>
         </div>
 
         <div className="setting-row" style={{ flexWrap: "wrap", gap: 10 }}>

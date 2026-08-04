@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useStore, currentDayId, todayKey, weekDates } from "../store.jsx";
 import { DAY_NAMES, weeksOf, daysOf, dayById, trainingCount, setsFor, protoFor } from "../data/plans.js";
 import { IconPlay } from "../components/icons.jsx";
@@ -12,8 +12,9 @@ import IntervalTimer from "../components/IntervalTimer.jsx";
 import CountdownTimer from "../components/CountdownTimer.jsx";
 import SequenceTimer from "../components/SequenceTimer.jsx";
 import CooldownSheet from "../components/CooldownSheet.jsx";
-import { parseSequence, totalSeconds, PRE_STRETCH, POST_STRETCH } from "../lib/sequence.js";
+import { parseSequence, totalSeconds, PRE_STRETCH } from "../lib/sequence.js";
 import { cooldownFor, focusLabel } from "../lib/yoga.js";
+import { programPosition, dayStatus, programStats, dateForProgramDay } from "../lib/program.js";
 import WorkoutSummarySheet from "../components/WorkoutSummarySheet.jsx";
 import { trainingCoach, fatigueCheck } from "../lib/coach.js";
 import { fmtPace, fmtDuration } from "../lib/progress.js";
@@ -43,13 +44,21 @@ export default function TrainScreen() {
   const [warmupOpen, setWarmupOpen] = useState(false);
   const [cooldownOpen, setCooldownOpen] = useState(false);
   const [cooldownList, setCooldownList] = useState(false);
-  // "pre" | "post" | null — which stretch block is open, list vs guided run
-  const [stretchList, setStretchList] = useState(null);
-  const [stretchRun, setStretchRun] = useState(null);
+  const [stretchList, setStretchList] = useState(false);
+  const [stretchRun, setStretchRun] = useState(false);
   const [summaryOpen, setSummaryOpen] = useState(false);
   const [startSignal, setStartSignal] = useState(0);
   const beginTiming = () => setStartSignal((n) => n + 1);
   const openEx = (ex, i) => { setSheetIdx(i); beginTiming(); };
+
+  // Where the program actually is today, rather than whichever week tab was
+  // last tapped. The stored week is corrected to match on open; the pills
+  // still let you look back at earlier weeks.
+  const pos = programPosition(state);
+  const stats = programStats(state);
+  useEffect(() => {
+    if (state.week !== pos.week) actions.setWeek(pos.week);
+  }, [pos.week]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const week = state.week;
   const day = dayById(state, dayId);
@@ -69,10 +78,10 @@ export default function TrainScreen() {
   const cooldown = day.type === "rest" ? [] : cooldownFor(day, daySwaps);
   const cooldownFocus = day.type === "rest" ? "" : focusLabel(day, daySwaps);
 
-  const wkDates = weekDates(new Date());
-  const dateKeyFor = (id) => wkDates[DAY_IDS.indexOf(id)]?.key || todayKey();
+  const dateKeyFor = (id) => dateForProgramDay(state, week, id);
   const missedKey = dateKeyFor(dayId);
-  const isMissed = !!state.missed?.[missedKey];
+  const todayStatus = dayStatus(state, week, day);
+  const isMissed = todayStatus === "missed";
 
   const sessionSec = state.durations?.[doneKey] || 0;
   // One session control: the Start card until the workout clock is live.
@@ -141,20 +150,33 @@ export default function TrainScreen() {
           </span>
         </div>
 
+        <div className="prog-line">
+          <span className="pl-where">
+            Week {pos.week} of {pos.totalWeeks} · Day {pos.dayNumber}
+            {week !== pos.week && <em> · viewing week {week}</em>}
+          </span>
+          <span className="pl-tally">
+            <b className="ok">{stats.done}</b> done
+            {stats.missed > 0 && <><span className="sep">·</span><b className="miss">{stats.missed}</b> missed</>}
+          </span>
+        </div>
+
         <div className="daystrip">
           {days.map((d) => {
             const active = d.id === dayId;
-            const isDone = d.type !== "rest" && state.done[`w${week}-${d.id}`];
-            const skipped = d.type !== "rest" && !isDone && !!state.missed?.[dateKeyFor(d.id)];
+            const st = dayStatus(state, week, d);
+            const isToday = week === pos.week && d.id === pos.dayId;
             return (
               <button
                 key={d.id}
-                className={`day-cell ${active ? "on" : ""} ${d.type === "rest" ? "rest" : ""}`}
+                className={`day-cell ${active ? "on" : ""} ${d.type === "rest" ? "rest" : ""} ${st}`}
                 onClick={() => setDayId(d.id)}
               >
-                {d.id === today && <span className="today-dot" />}
+                {isToday && <span className="today-dot" />}
                 {d.label}
-                <span className={`ck ${skipped ? "miss" : ""}`}>{isDone ? "✓" : skipped ? "✕" : " "}</span>
+                <span className={`ck ${st === "missed" ? "miss" : ""}`}>
+                  {st === "done" ? "✓" : st === "missed" ? "✕" : " "}
+                </span>
               </button>
             );
           })}
@@ -183,7 +205,7 @@ export default function TrainScreen() {
             {sessionLive ? (
               <div className="train-toolbar">
                 <WorkoutTimer week={week} dayId={dayId} voice={voiceOn} startSignal={startSignal}
-                  phase={warmupOpen ? "Warm-up" : null} />
+                  phase={stretchRun ? "Stretch" : warmupOpen ? "Warm-up" : cooldownOpen ? "Yoga" : null} />
               </div>
             ) : (
               <div className="session-start">
@@ -205,13 +227,24 @@ export default function TrainScreen() {
                 </button>
                 <div className="ss-note">
                   {day.warmup
-                    ? "One clock: it starts on the warm-up and keeps running into the lifts."
+                    ? "One clock for the whole session — stretch, warm-up, lifts, yoga."
                     : "Starts the workout clock."}
                 </div>
               </div>
             )}
-            {/* Always visible: the warm-up is part of the session, not just a
-                prompt before it. Re-runnable once the workout is underway. */}
+            {/* Session order: stretch, warm-up, the work, then yoga. Every
+                one of them runs on the same clock. */}
+            <div className="phase-step"><span className="ps-n">1</span> Stretch</div>
+            <StretchCard
+              kind="pre"
+              steps={PRE_STRETCH}
+              heading="Stretch"
+              blurb="dynamic — move through it, don't hold"
+              onList={() => setStretchList(true)}
+              onRun={() => { beginTiming(); setStretchRun(true); }}
+            />
+
+            {day.warmup && <div className="phase-step"><span className="ps-n">2</span> Warm-up</div>}
             {day.warmup && (
               <div className="warmup-card">
                 <div className="warmup-txt"><b>Warm-up</b> · {day.warmup}</div>
@@ -224,20 +257,11 @@ export default function TrainScreen() {
               </div>
             )}
 
-            {/* Dynamic stretching goes after the warm-up, not before it —
-                you want to be warm before you chase range. */}
-            <StretchCard
-              kind="pre"
-              steps={PRE_STRETCH}
-              heading="Pre-workout stretch"
-              blurb="dynamic — move through it, don't hold"
-              onList={() => setStretchList("pre")}
-              onRun={() => setStretchRun("pre")}
-            />
-
             <NowPlaying />
           </>
         )}
+
+        {day.type !== "rest" && <div className="phase-step"><span className="ps-n">3</span> Workout</div>}
 
         {day.type === "lift" && (
           <LiftDay day={day} week={week} log={log} onOpen={openEx} actions={actions} dayId={dayId} swaps={state.swaps?.[doneKey] || {}} />
@@ -265,15 +289,7 @@ export default function TrainScreen() {
 
         {day.type !== "rest" && (
           <>
-            <StretchCard
-              kind="post"
-              steps={POST_STRETCH}
-              heading="Post-workout stretch"
-              blurb="static — hold each one, this is where length sticks"
-              onList={() => setStretchList("post")}
-              onRun={() => setStretchRun("post")}
-            />
-
+            {cooldown.length > 0 && <div className="phase-step"><span className="ps-n">4</span> Yoga</div>}
             {cooldown.length > 0 && (
               <div className="warmup-card cooldown-card">
                 <div className="warmup-txt">
@@ -290,7 +306,7 @@ export default function TrainScreen() {
                   <button className="btn" style={{ flex: 1 }} onClick={() => { haptic(); setCooldownList(true); }}>
                     Poses &amp; videos
                   </button>
-                  <button className="btn cooldown-btn" style={{ flex: 1.4, marginTop: 0 }} onClick={() => { beep(600, 0.05); haptic(); setCooldownOpen(true); }}>
+                  <button className="btn cooldown-btn" style={{ flex: 1.4, marginTop: 0 }} onClick={() => { beep(600, 0.05); haptic(); beginTiming(); setCooldownOpen(true); }}>
                     ▶ Start · {clock(totalSeconds(cooldown))}
                   </button>
                 </div>
@@ -415,32 +431,28 @@ export default function TrainScreen() {
       />
 
       <CooldownSheet
-        open={stretchList !== null}
-        onClose={() => setStretchList(null)}
-        steps={stretchList === "post" ? POST_STRETCH : PRE_STRETCH}
+        open={stretchList}
+        onClose={() => setStretchList(false)}
+        steps={PRE_STRETCH}
         noun="stretches"
-        title={stretchList === "post" ? "Post-workout stretch" : "Pre-workout stretch"}
-        subtitle={stretchList === "post" ? "static holds, while you're warm" : "dynamic, before you load up"}
-        startLabel={stretchList === "post" ? "Start guided stretch" : "Start guided stretch"}
-        onStart={() => setStretchRun(stretchList)}
+        title="Stretch"
+        subtitle="dynamic, before you load up"
+        startLabel="Start guided stretch"
+        onStart={() => { beginTiming(); setStretchRun(true); }}
       />
 
       {stretchRun && (
         <SequenceTimer
-          title={stretchRun === "post" ? "Post-workout stretch" : "Pre-workout stretch"}
-          steps={stretchRun === "post" ? POST_STRETCH : PRE_STRETCH}
-          accent={stretchRun === "post" ? "rest" : "warmup"}
+          title="Stretch"
+          steps={PRE_STRETCH}
+          accent="warmup"
           voice={voiceOn}
           countdownFrom={10}
           previewSteps
-          donePhase={stretchRun === "post" ? "Stretch complete" : "Mobility done"}
-          doneNote={
-            stretchRun === "post"
-              ? "That's the part most people skip. Water and protein next."
-              : "Hips and shoulders are open. Go lift."
-          }
+          donePhase="Mobility done"
+          doneNote="Hips and shoulders are open. Warm-up next."
           doneLabel="Done"
-          onClose={() => setStretchRun(null)}
+          onClose={() => setStretchRun(false)}
         />
       )}
 

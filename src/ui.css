@@ -1676,3 +1676,38 @@
 .manual-cta .mc-txt b { font-family: var(--font-display); font-size: 13.5px; color: var(--tx); }
 .manual-cta .mc-txt em { font-style: normal; font-size: 11.5px; color: var(--mu); }
 .empty-hint .eh-note { display: block; margin-top: 7px; font-size: 12px; line-height: 1.5; color: var(--mu); }
+
+/* the single session clock, echoed in the corner of a guided block */
+.it-session {
+  width: 52px; text-align: right; font-family: var(--font-display); font-weight: 800;
+  font-size: 12px; color: var(--mu); letter-spacing: 0.02em;
+}
+
+/* ---------- where you are in the program ---------- */
+.prog-line {
+  display: flex; align-items: baseline; justify-content: space-between; gap: 10px;
+  margin-top: 8px; font-size: 11.5px;
+}
+.prog-line .pl-where { font-family: var(--font-display); font-weight: 700; color: var(--tx-2); letter-spacing: 0.02em; }
+.prog-line .pl-where em { font-style: normal; color: var(--mu); font-weight: 600; }
+.prog-line .pl-tally { color: var(--mu); font-family: var(--font-display); font-weight: 700; }
+.prog-line .pl-tally b { font-variant-numeric: tabular-nums; }
+.prog-line .pl-tally .ok { color: var(--good); }
+.prog-line .pl-tally .miss { color: var(--live); }
+.prog-line .pl-tally .sep { margin: 0 6px; opacity: 0.5; }
+
+/* a training day that came and went unlogged */
+.day-cell.missed .ck.miss { color: var(--live); font-weight: 900; }
+.day-cell.missed { border-color: rgba(255, 90, 95, 0.38); }
+
+/* the four steps of a session, in order */
+.phase-step {
+  display: flex; align-items: center; gap: 8px; margin: 20px 0 -2px;
+  font-family: var(--font-display); font-weight: 800; font-size: 11px;
+  letter-spacing: 0.16em; text-transform: uppercase; color: var(--mu);
+}
+.phase-step .ps-n {
+  width: 19px; height: 19px; flex: none; display: grid; place-items: center;
+  border-radius: 50%; background: var(--panel-3); color: var(--tx);
+  font-size: 10px; letter-spacing: 0;
+}

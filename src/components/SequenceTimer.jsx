@@ -4,6 +4,7 @@ import HowToVideo from "./HowToVideo.jsx";
 import { beep, haptic } from "../lib/fx.js";
 import { speak } from "../lib/voice.js";
 import { totalSeconds } from "../lib/sequence.js";
+import { subscribeSession } from "../lib/sessionClock.js";
 
 // Guided warm-up / cool-down: shows the move you're on RIGHT NOW, how long
 // it lasts, what's next, and counts the last few seconds down out loud.
@@ -29,6 +30,11 @@ export default function SequenceTimer({
   onComplete,
   onClose,
 }) {
+  // The one session clock, mirrored here so a guided block doesn't look
+  // like a separate timer running alongside the workout.
+  const [session, setSession_] = useState(0);
+  useEffect(() => subscribeSession((sec) => setSession_(sec)), []);
+
   const [idx, setIdx] = useState(0);
   const [remaining, setRemaining] = useState(steps[0]?.seconds || 0);
   // preview → waiting on Start | running → counting | done → finished
@@ -138,7 +144,7 @@ export default function SequenceTimer({
         <div className="it-top">
           <button className="it-close" onClick={onClose} aria-label="Close">✕</button>
           <div className="it-round">{done ? title : `${title} · ${idx + 1}/${steps.length}`}</div>
-          <span style={{ width: 40 }} />
+          <span className="it-session tnum">{session > 0 ? fmt(session) : ""}</span>
         </div>
 
         {done ? (
