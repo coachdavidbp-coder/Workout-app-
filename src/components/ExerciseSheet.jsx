@@ -5,6 +5,7 @@ import CountdownTimer from "./CountdownTimer.jsx";
 import { useStore } from "../store.jsx";
 import { setsFor } from "../data/plans.js";
 import { swapsFor } from "../data/exercises.js";
+import { lastPerformance, nextTarget, summarise } from "../lib/history.js";
 import { toast } from "../lib/toast.js";
 import { beep, haptic } from "../lib/fx.js";
 
@@ -51,10 +52,16 @@ export default function ExerciseSheet({
   // actually did, so the history stays honest.
   const swapped = state.swaps?.[key]?.[exercise.name] || null;
   const shownName = swapped || exercise.name;
-  const alts = swapsFor(exercise.name);
+  const alts = swapsFor(exercise.name, 10, state.profile?.equipment);
   const log = state.liftLogs[key]?.exercises?.[shownName] || {};
   const target = setsFor(exercise, week);
   const reps = log.reps || [];
+
+  // Last time on this movement, and the call for today. The weight is offered
+  // rather than filled in — writing a number you didn't lift would put a load
+  // in your history that never happened.
+  const last = lastPerformance(state, shownName, week, dayId);
+  const advice = nextTarget(last, target);
 
   const setRep = (i, v) => {
     const next = [...reps];
@@ -166,7 +173,27 @@ export default function ExerciseSheet({
       )}
 
       <div className="log-block" ref={bodyRef}>
-      <div className="section-label">
+      {last && (
+        <div className="last-time">
+          <div className="lt-row">
+            <span className="lt-k">Last time</span>
+            <span className="lt-v">{summarise(last)}</span>
+            {last.weight != null && (
+              <button
+                className="lt-use"
+                onClick={() => {
+                  haptic();
+                  actions.setExerciseLog(week, dayId, shownName, { weight: String(advice?.weight ?? last.weight) });
+                }}
+              >
+                Use {advice?.weight ?? last.weight} lb
+              </button>
+            )}
+          </div>
+          {advice && <p className={`lt-advice ${advice.kind}`}>{advice.text}</p>}
+        </div>
+      )}
+      <div className="section-label" style={{ marginTop: last ? 14 : 0 }}>
         Log your sets
       </div>
       <div className="ex-log" style={{ flexWrap: "wrap" }}>
@@ -175,7 +202,7 @@ export default function ExerciseSheet({
           value={log.weight}
           accent
           onFocus={keepInView}
-          placeholder="55"
+          placeholder={last?.weight != null ? String(last.weight) : "55"}
           onCommit={(v) => actions.setExerciseLog(week, dayId, shownName, { weight: v })}
         />
         {Array.from({ length: Math.min(setCount, 5) }).map((_, i) => (

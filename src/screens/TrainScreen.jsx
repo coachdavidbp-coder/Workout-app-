@@ -15,6 +15,7 @@ import CooldownSheet from "../components/CooldownSheet.jsx";
 import { parseSequence, totalSeconds, PRE_STRETCH } from "../lib/sequence.js";
 import { cooldownFor, focusLabel } from "../lib/yoga.js";
 import { programPosition, dayStatus, programStats, dateForProgramDay } from "../lib/program.js";
+import { lastPerformance, summarise } from "../lib/history.js";
 import WorkoutSummarySheet from "../components/WorkoutSummarySheet.jsx";
 import { trainingCoach, fatigueCheck } from "../lib/coach.js";
 import { fmtPace, fmtDuration } from "../lib/progress.js";
@@ -264,7 +265,7 @@ export default function TrainScreen() {
         {day.type !== "rest" && <div className="phase-step"><span className="ps-n">3</span> Workout</div>}
 
         {day.type === "lift" && (
-          <LiftDay day={day} week={week} log={log} onOpen={openEx} actions={actions} dayId={dayId} swaps={state.swaps?.[doneKey] || {}} />
+          <LiftDay day={day} week={week} log={log} onOpen={openEx} actions={actions} dayId={dayId} swaps={state.swaps?.[doneKey] || {}} state={state} />
         )}
 
         {day.type === "cardio" && (
@@ -514,7 +515,7 @@ function StretchCard({ kind, steps, heading, blurb, onList, onRun }) {
   );
 }
 
-function LiftDay({ day, week, log, onOpen, actions, dayId, swaps = {} }) {
+function LiftDay({ day, week, log, onOpen, actions, dayId, swaps = {}, state }) {
   return (
     <>
       <div className="bw-log">
@@ -566,6 +567,11 @@ function LiftDay({ day, week, log, onOpen, actions, dayId, swaps = {} }) {
                     {exLog.weight ? `${exLog.weight} lb` : "Tap for video & log"}
                     {reps.length ? ` · ${reps.join("/")} reps` : ""}
                   </div>
+                  {/* What you did last time, so you're not lifting from memory. */}
+                  {!exLog.weight && (() => {
+                    const prev = summarise(lastPerformance(state, shownName, week, dayId));
+                    return prev ? <div className="ex-last">Last time · {prev}</div> : null;
+                  })()}
                 </div>
                 <span className="set-pill">{setsFor(ex, week)}</span>
               </button>

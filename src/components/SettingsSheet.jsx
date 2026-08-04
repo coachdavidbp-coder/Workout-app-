@@ -3,6 +3,7 @@ import { useStore } from "../store.jsx";
 import { haptic, unlockAudio } from "../lib/fx.js";
 import { introSoundOn, setIntroSoundOn } from "./SplashIntro.jsx";
 import { programPosition, programStart, dateKey } from "../lib/program.js";
+import { EQUIPMENT } from "../data/exercises.js";
 import {
   speak, listVoices, setVoiceName, setCoachStyle, COACH_STYLES,
   hasHumanVoice, currentVoiceInfo,
@@ -148,6 +149,33 @@ export default function SettingsSheet({ open, onClose }) {
               defaultValue={state.profile?.exerciseGoal ?? 30}
               onBlur={(e) => actions.setProfile({ exerciseGoal: Math.max(5, parseInt(e.target.value, 10) || 30) })}
             />
+          </div>
+        </div>
+
+        <div className="setting-row" style={{ flexWrap: "wrap", gap: 10 }}>
+          <div className="lab">
+            Your gear
+            <small>Exercise swaps only offer things you can actually pick up. Nothing selected shows everything.</small>
+          </div>
+          <div className="row gap-2" style={{ flexWrap: "wrap" }}>
+            {EQUIPMENT.map((e) => {
+              const owned = state.profile?.equipment || [];
+              const on = owned.includes(e.id);
+              return (
+                <button
+                  key={e.id}
+                  className={`week-pill ${on ? "on" : ""}`}
+                  onClick={() => {
+                    haptic();
+                    actions.setProfile({
+                      equipment: on ? owned.filter((x) => x !== e.id) : [...owned, e.id],
+                    });
+                  }}
+                >
+                  {e.label}
+                </button>
+              );
+            })}
           </div>
         </div>
 

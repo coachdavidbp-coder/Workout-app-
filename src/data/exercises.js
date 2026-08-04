@@ -101,9 +101,28 @@ export function groupOf(name) {
   return null;
 }
 
-export function swapsFor(name, limit = 10) {
+// `owned` is a list of equipment tags. Suggesting a barbell to someone
+// training with two dumbbells in a garage isn't a swap, it's a dead end —
+// so anything you can't actually pick up drops out. Bodyweight is always
+// available, and an empty list means we don't know yet, so show everything.
+export function swapsFor(name, limit = 10, owned = null) {
   const grp = groupOf(name);
   if (!grp) return [];
   const lower = String(name || "").toLowerCase();
-  return EXERCISES.filter((e) => e.grp === grp && e.name.toLowerCase() !== lower).slice(0, limit);
+  const have = owned && owned.length ? new Set([...owned, "bw"]) : null;
+  return EXERCISES.filter(
+    (e) =>
+      e.grp === grp &&
+      e.name.toLowerCase() !== lower &&
+      (!have || (e.eq || []).some((t) => have.has(t)))
+  ).slice(0, limit);
 }
+
+export const EQUIPMENT = [
+  { id: "db", label: "Dumbbells" },
+  { id: "kb", label: "Kettlebell" },
+  { id: "bb", label: "Barbell" },
+  { id: "band", label: "Bands" },
+  { id: "bench", label: "Bench" },
+  { id: "bw", label: "Bodyweight" },
+];

@@ -9,6 +9,9 @@ import BrandLogo from "../components/BrandLogo.jsx";
 import CoachCard from "../components/CoachCard.jsx";
 import SupplementsSection from "../components/SupplementsSection.jsx";
 import { nutritionCoach } from "../lib/coach.js";
+import { calorieAdvice } from "../lib/nutritionCoach.js";
+import { haptic } from "../lib/fx.js";
+import { toast } from "../lib/toast.js";
 
 const WATER_ADDS = [
   { label: "Cup", oz: 8 },
@@ -109,6 +112,38 @@ export default function MealsScreen() {
 
       <main className="content">
         <CoachCard msg={{ name: "Nutrition Coach", ...nutritionCoach(state, { dateKey: selected, isToday }) }} />
+
+        {/* Is the target actually working? Checked against the scale rather
+            than left as a number set once and never revisited. */}
+        {(() => {
+          const a = calorieAdvice(state);
+          if (!a.ok) return <div className="cal-check waiting">{a.text}</div>;
+          return (
+            <div className={`cal-check ${a.verdict}`}>
+              <div className="cc-top">
+                <span className="cc-k">Calorie check</span>
+                <span className="cc-rate tnum">
+                  {a.rate > 0 ? "−" : a.rate < 0 ? "+" : ""}{Math.abs(a.rate)} lb/wk
+                </span>
+              </div>
+              <p className="cc-text">{a.text}</p>
+              {a.canApply && (
+                <button
+                  className="cc-apply"
+                  onClick={() => {
+                    haptic("success");
+                    actions.setProfile({ calorieGoal: a.suggested });
+                    toast({ emoji: "🎯", title: "Target updated",
+                            sub: `${a.current} → ${a.suggested} cal/day`, tone: "good" });
+                  }}
+                >
+                  Set target to {a.suggested} cal
+                </button>
+              )}
+              <div className="cc-foot">{a.count} weigh-ins over {a.spanDays} days</div>
+            </div>
+          );
+        })()}
 
         {/* weekly summary */}
         <div className="mini-stats">

@@ -1,4 +1,6 @@
 import { useMemo, useState } from "react";
+import { volumeVsBodyweight, cutVerdict } from "../lib/history.js";
+import { programPosition, dateForProgramDay } from "../lib/program.js";
 import { useStore, todayKey } from "../store.jsx";
 import WeightChart from "../components/WeightChart.jsx";
 import TrendChart from "../components/TrendChart.jsx";
@@ -132,6 +134,7 @@ function WeightBody() {
           <div className="l">lb lost · {Math.max(0, current - state.profile.goalWeight).toFixed(0)} to goal</div>
         </div>
       </div>
+
       <div className="chart-card">
         <WeightChart data={filtered} />
         <div className="range-row">
@@ -178,6 +181,14 @@ function StrengthBody() {
 
   const points = s.weekly.map((w) => ({ label: `W${w.week}`, value: w.volume > 0 ? w.volume : null }));
 
+  // The chart that matters on a cut: total weight moved, against what you
+  // weighed while moving it. Volume holding as the scale falls means the
+  // weight coming off isn't muscle.
+  const pos = programPosition(state);
+  const cutRows = volumeVsBodyweight(state, pos.totalWeeks, (w) => dateForProgramDay(state, w, "sat"));
+  const verdict = cutVerdict(cutRows);
+  const maxVol = Math.max(1, ...cutRows.map((r) => r.volume));
+
   return (
     <>
       <div className="mini-stats">
@@ -196,6 +207,41 @@ function StrengthBody() {
           <div className="l">Lifts logged</div>
         </div>
       </div>
+
+      {cutRows.length >= 2 && (
+        <div className="card cut-card">
+          <div className="cut-head">
+            <span className="section-label" style={{ margin: 0 }}>Strength vs bodyweight</span>
+            {verdict && (
+              <span className={`cut-verdict ${verdict.winning ? "win" : ""}`}>
+                {verdict.volPct >= 0 ? "+" : ""}{verdict.volPct}% volume
+                {verdict.bwDelta != null && `, ${verdict.bwDelta > 0 ? "+" : ""}${verdict.bwDelta} lb`}
+              </span>
+            )}
+          </div>
+          <div className="cut-bars">
+            {cutRows.map((r) => (
+              <div className="cut-col" key={r.week}>
+                <div className="cut-bar" style={{ height: `${Math.max(4, (r.volume / maxVol) * 100)}%` }} />
+                <span className="cut-wk">W{r.week}</span>
+              </div>
+            ))}
+          </div>
+          <div className="cut-bw">
+            {cutRows.map((r) => (
+              <span key={r.week}>{r.bodyweight != null ? `${Math.round(r.bodyweight)}` : "—"}</span>
+            ))}
+          </div>
+          <p className="cut-legend">
+            Bars are total weight moved each week. Numbers under them are what you weighed.
+            {verdict?.winning
+              ? " Volume is holding while the scale drops — that's muscle staying on."
+              : verdict && verdict.bwDelta != null && verdict.volPct < -5
+                ? " Volume is falling with the weight. Eat more or pull the deficit back."
+                : ""}
+          </p>
+        </div>
+      )}
 
       <div className="chart-card">
         <div className="section-label" style={{ margin: "0 0 8px" }}>Total volume by week (lb × reps)</div>
