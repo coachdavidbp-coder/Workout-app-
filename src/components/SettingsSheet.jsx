@@ -1,9 +1,11 @@
+import { useState } from "react";
 import Sheet from "./Sheet.jsx";
 import { useStore } from "../store.jsx";
 import { haptic, unlockAudio } from "../lib/fx.js";
 import { introSoundOn, setIntroSoundOn } from "./SplashIntro.jsx";
 import { programPosition, programStart, dateKey } from "../lib/program.js";
 import { EQUIPMENT } from "../data/exercises.js";
+import { buildId, checkNow } from "../lib/updater.js";
 import {
   speak, listVoices, setVoiceName, setCoachStyle, COACH_STYLES,
   hasHumanVoice, currentVoiceInfo,
@@ -24,6 +26,7 @@ export default function SettingsSheet({ open, onClose }) {
   const voiceOn = state.settings?.voice !== false;
   const style = state.settings?.coachStyle || "balanced";
   const sample = () => VOICE_SAMPLES[Math.floor(Math.random() * VOICE_SAMPLES.length)];
+  const [updating, setUpdating] = useState(null);   // null | "checking" | result
 
   return (
     <Sheet open={open} onClose={onClose}>
@@ -248,6 +251,33 @@ export default function SettingsSheet({ open, onClose }) {
               </button>
             ))}
           </div>
+        </div>
+        <div className="setting-row">
+          <div className="lab">
+            App version
+            <small>
+              {updating === "checking"
+                ? "Looking for a newer build…"
+                : updating === "updating"
+                  ? "New build found — reloading…"
+                  : updating === "current"
+                    ? `Up to date · ${buildId}`
+                    : updating === "offline"
+                      ? "Couldn't reach the server. Try again on Wi-Fi."
+                      : buildId}
+            </small>
+          </div>
+          <button
+            className="btn"
+            disabled={updating === "checking"}
+            onClick={async () => {
+              haptic();
+              setUpdating("checking");
+              setUpdating(await checkNow());
+            }}
+          >
+            Check for updates
+          </button>
         </div>
       </div>
 
