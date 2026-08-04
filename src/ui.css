@@ -428,6 +428,16 @@
 /* Sits in a settings row next to buttons, so it sizes to its content
    rather than stretching the row. */
 .date-field { width: auto; min-width: 152px; padding: 10px 12px; font-size: 14px; }
+
+/* Sound check — one line per link in the audio chain, then what it means. */
+.sound-check { margin-top: 12px; border-top: 1px solid var(--line); padding-top: 12px; }
+.sc-line { display: flex; align-items: baseline; gap: 8px; font-size: 13px; padding: 3px 0; }
+.sc-mark { width: 14px; font-weight: 800; }
+.sc-line.ok .sc-mark { color: var(--good); }
+.sc-line.bad .sc-mark { color: var(--live); }
+.sc-lab { color: var(--tx-2); }
+.sc-detail { margin-left: auto; color: var(--mu); font-size: 12px; text-align: right; }
+.sc-verdict { margin: 10px 0 0; font-size: 13px; line-height: 1.5; color: var(--tx-2); }
 .login-err { color: var(--live); font-size: 13px; text-align: center; }
 .login-toggle { background: none; border: none; color: var(--ac); font-size: 13px; font-weight: 600; }
 .pw-field { position: relative; }

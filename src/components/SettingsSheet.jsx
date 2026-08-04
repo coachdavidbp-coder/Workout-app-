@@ -4,6 +4,7 @@ import { useStore } from "../store.jsx";
 import { haptic, unlockAudio } from "../lib/fx.js";
 import { introSoundOn, setIntroSoundOn } from "./SplashIntro.jsx";
 import { primeIntroSound } from "../lib/introSound.js";
+import { runSoundCheck, soundVerdict } from "../lib/soundCheck.js";
 import { programPosition, programStart, dateKey } from "../lib/program.js";
 import { EQUIPMENT } from "../data/exercises.js";
 import { buildId, checkNow } from "../lib/updater.js";
@@ -28,6 +29,8 @@ export default function SettingsSheet({ open, onClose }) {
   const style = state.settings?.coachStyle || "balanced";
   const sample = () => VOICE_SAMPLES[Math.floor(Math.random() * VOICE_SAMPLES.length)];
   const [updating, setUpdating] = useState(null);   // null | "checking" | result
+  const [sound, setSound] = useState(null);         // sound-check lines
+  const [checking, setChecking] = useState(false);
 
   return (
     <Sheet open={open} onClose={onClose}>
@@ -264,6 +267,41 @@ export default function SettingsSheet({ open, onClose }) {
           >
             ▶ Play with sound
           </button>
+        </div>
+
+        <div className="setting-row" style={{ flexWrap: "wrap", gap: 10 }}>
+          <div className="lab">
+            Sound check
+            <small>Runs the whole chain on this phone and shows where it stops.</small>
+          </div>
+          <button
+            className="btn"
+            disabled={checking}
+            onClick={async () => {
+              // Started from the tap itself, because everything downstream
+              // depends on the gesture.
+              unlockAudio();
+              primeIntroSound();
+              haptic();
+              setChecking(true);
+              setSound(null);
+              try { setSound(await runSoundCheck()); } finally { setChecking(false); }
+            }}
+          >
+            {checking ? "Testing…" : "Run test"}
+          </button>
+          {sound && (
+            <div className="sound-check" style={{ flexBasis: "100%" }}>
+              {sound.map((l) => (
+                <div key={l.label} className={`sc-line ${l.ok ? "ok" : "bad"}`}>
+                  <span className="sc-mark">{l.ok ? "✓" : "✗"}</span>
+                  <span className="sc-lab">{l.label}</span>
+                  <span className="sc-detail">{l.detail}</span>
+                </div>
+              ))}
+              <p className="sc-verdict">{soundVerdict(sound)}</p>
+            </div>
+          )}
         </div>
 
         <div className="setting-row" style={{ flexWrap: "wrap", gap: 10 }}>
