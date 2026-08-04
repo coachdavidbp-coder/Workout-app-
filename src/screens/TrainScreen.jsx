@@ -25,11 +25,6 @@ import { toast } from "../lib/toast.js";
 
 const FEELS = ["😩", "😕", "🙂", "💪", "🔥"];
 
-// Pull a warm-up length out of the plan text ("5 min ..." → 300s); default 5 min.
-function warmupSeconds(text) {
-  const m = String(text || "").match(/(\d+)\s*min/i);
-  return m ? parseInt(m[1], 10) * 60 : 300;
-}
 function clock(s) { return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, "0")}`; }
 
 // Sunday-first day ids, so a program day maps to a real calendar date
@@ -42,11 +37,11 @@ export default function TrainScreen() {
   const [dayId, setDayId] = useState(today);
   const [sheetIdx, setSheetIdx] = useState(null);
   const [timerOpen, setTimerOpen] = useState(false);
-  const [warmupOpen, setWarmupOpen] = useState(false);
-  const [cooldownOpen, setCooldownOpen] = useState(false);
   const [cooldownList, setCooldownList] = useState(false);
   const [stretchList, setStretchList] = useState(false);
-  const [stretchRun, setStretchRun] = useState(false);
+  // One runner, two halves of the session: everything before the lifting, and
+  // the yoga after it. null when nothing guided is on screen.
+  const [runPhase, setRunPhase] = useState(null);   // null | "pre" | "post"
   const [summaryOpen, setSummaryOpen] = useState(false);
   const [startSignal, setStartSignal] = useState(0);
   const beginTiming = () => setStartSignal((n) => n + 1);
@@ -90,6 +85,35 @@ export default function TrainScreen() {
   const estCals = caloriesForSession(sessionSec, day.type, bodyweight(state));
 
   const voiceOn = state.settings?.voice !== false;
+
+  // The guided run, as blocks. Everything before the lifting goes in one
+  // continuous pass — you press Start once and it takes you from the first
+  // leg swing to the last warm-up rep without asking again.
+  const warmupSteps = day.warmup ? parseSequence(day.warmup) : [];
+  const preBlocks = [
+    {
+      title: "Stretch",
+      accent: "warmup",
+      steps: PRE_STRETCH,
+      previewSteps: true,
+      countdownFrom: 10,
+      doneNote: "Hips and shoulders are open.",
+    },
+    warmupSteps.length && {
+      title: "Warm-up",
+      accent: "warmup",
+      steps: warmupSteps,
+      countdownFrom: 5,
+      doneNote: "You're warm.",
+    },
+  ].filter(Boolean);
+  const preSeconds = preBlocks.reduce((a, b) => a + totalSeconds(b.steps), 0);
+
+  const startSession = () => {
+    beep(600, 0.05); haptic("success");
+    beginTiming();          // the clock starts here and keeps running
+    setRunPhase("pre");
+  };
 
   const completeDay = () => {
     const turningOn = !state.done[doneKey];
@@ -206,56 +230,37 @@ export default function TrainScreen() {
             {sessionLive ? (
               <div className="train-toolbar">
                 <WorkoutTimer week={week} dayId={dayId} voice={voiceOn} startSignal={startSignal}
-                  phase={stretchRun ? "Stretch" : warmupOpen ? "Warm-up" : cooldownOpen ? "Yoga" : null} />
+                  phase={runPhase === "pre" ? "Stretch & warm-up" : runPhase === "post" ? "Yoga" : null} />
+                <button className="btn tt-resume" onClick={startSession}>▶ Run stretch &amp; warm-up again</button>
               </div>
             ) : (
               <div className="session-start">
                 <div className="ss-top">
                   <span className="ss-kicker">Session</span>
-                  <span className="ss-len">{day.warmup ? `${clock(totalSeconds(parseSequence(day.warmup)))} guided warm-up first` : "No warm-up listed"}</span>
+                  <span className="ss-len">{clock(preSeconds)} guided before the lifts</span>
                 </div>
-                <button
-                  className="ss-btn"
-                  onClick={() => {
-                    beep(600, 0.05); haptic("success");
-                    // The clock starts here either way — warm-up is part of
-                    // the session, not a separate thing you time on its own.
-                    beginTiming();
-                    if (day.warmup) setWarmupOpen(true);
-                  }}
-                >
-                  ▶ Start session
-                </button>
+                <button className="ss-btn" onClick={startSession}>▶ Start session</button>
                 <div className="ss-note">
-                  {day.warmup
-                    ? "One clock for the whole session — stretch, warm-up, lifts, yoga."
-                    : "Starts the workout clock."}
+                  One button, one clock: stretch straight into warm-up, then the lifts, then yoga.
                 </div>
               </div>
             )}
-            {/* Session order: stretch, warm-up, the work, then yoga. Every
-                one of them runs on the same clock. */}
+
+            {/* The order the session runs in. These are what's coming, not
+                things to start on their own — Start session walks you through
+                the lot. */}
             <div className="phase-step"><span className="ps-n">1</span> Stretch</div>
-            <StretchCard
-              kind="pre"
-              steps={PRE_STRETCH}
+            <PhaseCard
               heading="Stretch"
               blurb="dynamic — move through it, don't hold"
+              steps={PRE_STRETCH}
               onList={() => setStretchList(true)}
-              onRun={() => { beginTiming(); setStretchRun(true); }}
+              listLabel="Stretches & videos"
             />
 
-            {day.warmup && <div className="phase-step"><span className="ps-n">2</span> Warm-up</div>}
-            {day.warmup && (
-              <div className="warmup-card">
-                <div className="warmup-txt"><b>Warm-up</b> · {day.warmup}</div>
-                <button
-                  className="btn warmup-btn"
-                  onClick={() => { beep(600, 0.05); haptic(); beginTiming(); setWarmupOpen(true); }}
-                >
-                  ▶ {sessionLive ? "Run warm-up again" : "Start warm-up"} · {clock(totalSeconds(parseSequence(day.warmup)))}
-                </button>
-              </div>
+            {warmupSteps.length > 0 && <div className="phase-step"><span className="ps-n">2</span> Warm-up</div>}
+            {warmupSteps.length > 0 && (
+              <PhaseCard heading="Warm-up" blurb={day.warmup} steps={warmupSteps} />
             )}
 
             <NowPlaying />
@@ -307,8 +312,12 @@ export default function TrainScreen() {
                   <button className="btn" style={{ flex: 1 }} onClick={() => { haptic(); setCooldownList(true); }}>
                     Poses &amp; videos
                   </button>
-                  <button className="btn cooldown-btn" style={{ flex: 1.4, marginTop: 0 }} onClick={() => { beep(600, 0.05); haptic(); beginTiming(); setCooldownOpen(true); }}>
-                    ▶ Start · {clock(totalSeconds(cooldown))}
+                  <button
+                    className="btn cooldown-btn"
+                    style={{ flex: 1.4, marginTop: 0 }}
+                    onClick={() => { beep(600, 0.05); haptic(); beginTiming(); setRunPhase("post"); }}
+                  >
+                    ▶ Finish with yoga · {clock(totalSeconds(cooldown))}
                   </button>
                 </div>
               </div>
@@ -409,17 +418,31 @@ export default function TrainScreen() {
         </div>
       )}
 
-      {warmupOpen && day.warmup && (
+      {runPhase === "pre" && (
         <SequenceTimer
-          title="Warm-up"
-          steps={parseSequence(day.warmup)}
-          accent="warmup"
+          blocks={preBlocks}
           voice={voiceOn}
-          countdownFrom={5}
-          donePhase="Warm-up complete"
-          doneNote="Clock's already running — go lift."
+          donePhase="Ready to lift"
+          doneNote="Clock's still running — it doesn't stop for the lifts."
           doneLabel="Start lifting ▶"
-          onClose={() => setWarmupOpen(false)}
+          onClose={() => setRunPhase(null)}
+        />
+      )}
+
+      {runPhase === "post" && cooldown.length > 0 && (
+        <SequenceTimer
+          blocks={[{
+            title: "Yoga",
+            accent: "rest",
+            steps: cooldown,
+            previewSteps: true,
+            countdownFrom: 10,
+          }]}
+          voice={voiceOn}
+          donePhase="Session complete"
+          doneNote={`That should have opened up ${cooldownFocus}. Water and protein next.`}
+          doneLabel="Done"
+          onClose={() => setRunPhase(null)}
         />
       )}
 
@@ -428,7 +451,7 @@ export default function TrainScreen() {
         onClose={() => setCooldownList(false)}
         steps={cooldown}
         subtitle={`chosen for ${day.name} — ${cooldownFocus}`}
-        onStart={() => setCooldownOpen(true)}
+        onStart={() => { beginTiming(); setRunPhase("post"); }}
       />
 
       <CooldownSheet
@@ -438,39 +461,9 @@ export default function TrainScreen() {
         noun="stretches"
         title="Stretch"
         subtitle="dynamic, before you load up"
-        startLabel="Start guided stretch"
-        onStart={() => { beginTiming(); setStretchRun(true); }}
+        startLabel="Start the session"
+        onStart={startSession}
       />
-
-      {stretchRun && (
-        <SequenceTimer
-          title="Stretch"
-          steps={PRE_STRETCH}
-          accent="warmup"
-          voice={voiceOn}
-          countdownFrom={10}
-          previewSteps
-          donePhase="Mobility done"
-          doneNote="Hips and shoulders are open. Warm-up next."
-          doneLabel="Done"
-          onClose={() => setStretchRun(false)}
-        />
-      )}
-
-      {cooldownOpen && cooldown.length > 0 && (
-        <SequenceTimer
-          title="Cool-down"
-          steps={cooldown}
-          accent="rest"
-          voice={voiceOn}
-          countdownFrom={10}
-          previewSteps
-          donePhase="Cool-down complete"
-          doneNote={`That should have opened up ${cooldownFocus}. Water and protein next.`}
-          doneLabel="Done"
-          onClose={() => setCooldownOpen(false)}
-        />
-      )}
 
       <WorkoutSummarySheet
         open={summaryOpen}
@@ -488,9 +481,12 @@ export default function TrainScreen() {
 
 // Pre / post stretch block. Same shape as the yoga cool-down card so the
 // three of them read as one family down the page.
-function StretchCard({ kind, steps, heading, blurb, onList, onRun }) {
+// What's coming in this part of the session. Deliberately has no Start of its
+// own — three Start buttons on one screen is what made the session feel like
+// three separate workouts. Start session runs the lot.
+function PhaseCard({ heading, blurb, steps, onList, listLabel }) {
   return (
-    <div className={`warmup-card stretch-card ${kind}`}>
+    <div className="warmup-card stretch-card pre">
       <div className="warmup-txt"><b>{heading}</b> · {blurb}</div>
       <div className="pose-mini">
         {steps.map((s) => (
@@ -499,18 +495,11 @@ function StretchCard({ kind, steps, heading, blurb, onList, onRun }) {
           </span>
         ))}
       </div>
-      <div className="row gap-2" style={{ marginTop: 10 }}>
-        <button className="btn" style={{ flex: 1 }} onClick={() => { haptic(); onList(); }}>
-          Stretches &amp; videos
+      {onList && (
+        <button className="btn btn-block" style={{ marginTop: 10 }} onClick={() => { haptic(); onList(); }}>
+          {listLabel}
         </button>
-        <button
-          className="btn cooldown-btn"
-          style={{ flex: 1.4, marginTop: 0 }}
-          onClick={() => { beep(600, 0.05); haptic(); onRun(); }}
-        >
-          ▶ Start · {clock(totalSeconds(steps))}
-        </button>
-      </div>
+      )}
     </div>
   );
 }

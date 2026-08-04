@@ -3,27 +3,30 @@ import { createPortal } from "react-dom";
 import HowToVideo from "./HowToVideo.jsx";
 import { beep, haptic } from "../lib/fx.js";
 import { speak } from "../lib/voice.js";
-import { totalSeconds } from "../lib/sequence.js";
 import { subscribeSession } from "../lib/sessionClock.js";
 
-// Guided warm-up / cool-down: shows the move you're on RIGHT NOW, how long
-// it lasts, what's next, and counts the last few seconds down out loud.
+// One runner for the whole guided part of a session.
 //
-// With `previewSteps`, each move opens on a ready screen — name, length, cue
-// and the how-to video — and only starts counting when you tap Start. That
-// suits stretching, where you want to see the shape before the clock runs.
+// It takes *blocks* — stretch, then warm-up, then the yoga at the end — and
+// walks them end to end without ever handing you back to a list with another
+// Start button on it. Between blocks it pauses on a handoff card so you know
+// what just finished and what's coming, then carries straight on.
+//
+// The "left of" figure counts every step in every block, so the number on
+// screen is how much guided work is left in the session, not how much is left
+// of whichever block you happen to be in.
+//
+// A block with `previewSteps` opens each move on a ready screen — name,
+// length, cue and the how-to video — and only counts down when you tap Start.
+// That suits stretching, where you want to see the shape first.
 //
 // The clock runs off wall-time (an end timestamp), not a tick counter, so
 // leaving the app and coming back shows the correct time instead of a frozen
 // one. iOS still freezes JS in the background, so a notification fires when a
-// step or the sequence finishes while the app isn't in front.
+// step or a block finishes while the app isn't in front.
 export default function SequenceTimer({
-  title = "Warm-up",
-  steps = [],
-  accent = "warmup",
+  blocks = [],
   voice = true,
-  countdownFrom = 5,
-  previewSteps = false,
   doneLabel = "Done",
   donePhase,
   doneNote,
@@ -35,23 +38,36 @@ export default function SequenceTimer({
   const [session, setSession_] = useState(0);
   useEffect(() => subscribeSession((sec) => setSession_(sec)), []);
 
-  const [idx, setIdx] = useState(0);
-  const [remaining, setRemaining] = useState(steps[0]?.seconds || 0);
-  // preview → waiting on Start | running → counting | done → finished
-  const [phase, setPhase] = useState(previewSteps ? "preview" : "running");
+  const list = blocks.filter((b) => b && (b.steps || []).length);
+  const first = list[0] || { title: "", steps: [], accent: "warmup" };
 
-  const endAtRef = useRef(Date.now() + (steps[0]?.seconds || 0) * 1000);
-  const idxRef = useRef(0);
+  const [bi, setBi] = useState(0);
+  const [idx, setIdx] = useState(0);
+  // preview → waiting on Start | running | paused | handoff → between blocks | done
+  const [phase, setPhase] = useState(first.previewSteps ? "preview" : "running");
+  const [remaining, setRemaining] = useState(first.steps[0]?.seconds || 0);
+
+  const at = useRef({ bi: 0, idx: 0 });
+  const endAtRef = useRef(Date.now() + (first.steps[0]?.seconds || 0) * 1000);
   const spokeRef = useRef(-1);
   const tick = useRef(null);
   const wakeRef = useRef(null);
 
-  const step = steps[idx] || steps[steps.length - 1] || { label: title, seconds: 0 };
+  const block = list[bi] || first;
+  const steps = block.steps || [];
+  const step = steps[idx] || steps[steps.length - 1] || { label: block.title, seconds: 0 };
   const next = steps[idx + 1] || null;
+  const nextBlock = list[bi + 1] || null;
   const done = phase === "done";
-  const total = totalSeconds(steps);
-  const elapsedBefore = steps.slice(0, idx).reduce((a, s) => a + s.seconds, 0);
-  const overallLeft = Math.max(0, total - elapsedBefore - (step.seconds - remaining));
+  const handoff = phase === "handoff";
+  const preview = phase === "preview";
+  const countdownFrom = block.countdownFrom ?? 5;
+
+  // Progress across the whole run, not just this block.
+  const secs = (arr) => arr.reduce((a, s) => a + s.seconds, 0);
+  const total = secs(list.flatMap((b) => b.steps));
+  const behind = secs(list.slice(0, bi).flatMap((b) => b.steps)) + secs(steps.slice(0, idx));
+  const overallLeft = Math.max(0, total - behind - (step.seconds - remaining));
 
   useEffect(() => {
     (async () => {
@@ -75,28 +91,43 @@ export default function SequenceTimer({
     setTimeout(() => beep(1120, 0.55, 0.32), 240);
     haptic("success");
     try { navigator.vibrate?.([0, 240, 120, 240, 120, 360]); } catch (e) { /* ignore */ }
-    if (voice) speak(accent === "warmup" ? "Warm-up done. Let's get to work." : "Nice work. All done.");
-    notify(`${title} complete.`);
+    if (voice) speak("That's the whole thing. Nice work.");
+    notify("Session block complete.");
   };
 
-  // Move to a step. With previews we stop on the ready screen first.
-  const goTo = (to) => {
-    if (to >= steps.length) { finishAll(); return; }
-    idxRef.current = to;
+  // Land on a step. With previews we stop on the ready screen first.
+  const land = (b, i) => {
+    at.current = { bi: b, idx: i };
     spokeRef.current = -1;
-    setIdx(to);
-    setRemaining(steps[to].seconds);
+    setBi(b);
+    setIdx(i);
+    const s = list[b].steps[i];
+    setRemaining(s.seconds);
     beep(760, 0.16); haptic("medium");
-    if (previewSteps) {
+    if (list[b].previewSteps) {
       setPhase("preview");
-      if (voice) speak(`Next. ${steps[to].label}.`);
-      notify(`Next: ${steps[to].label}`);
+      if (voice) speak(`Next. ${s.label}.`);
     } else {
-      endAtRef.current = Date.now() + steps[to].seconds * 1000;
+      endAtRef.current = Date.now() + s.seconds * 1000;
       setPhase("running");
-      if (voice) speak(`Next. ${steps[to].label}. ${Math.round(steps[to].seconds / 5) * 5} seconds.`);
-      notify(`Next: ${steps[to].label}`);
+      if (voice) speak(`Next. ${s.label}. ${Math.round(s.seconds / 5) * 5} seconds.`);
     }
+    notify(`Next: ${s.label}`);
+  };
+
+  // End of a step: next step, next block, or done.
+  const advance = () => {
+    const { bi: b, idx: i } = at.current;
+    if (i + 1 < list[b].steps.length) { land(b, i + 1); return; }
+    if (b + 1 < list.length) {
+      setPhase("handoff");
+      beep(880, 0.34, 0.3);
+      haptic("success");
+      if (voice) speak(`${list[b].title} done. ${list[b + 1].title} next.`);
+      notify(`${list[b].title} done — ${list[b + 1].title} next.`);
+      return;
+    }
+    finishAll();
   };
 
   const startStep = () => {
@@ -106,6 +137,8 @@ export default function SequenceTimer({
     beep(880, 0.14); haptic("success");
     if (voice) speak(`${step.label}. ${Math.round(step.seconds / 5) * 5} seconds. Go.`);
   };
+
+  const continueOn = () => { haptic(); land(at.current.bi + 1, 0); };
 
   // wall-clock tick
   useEffect(() => {
@@ -119,7 +152,7 @@ export default function SequenceTimer({
         haptic("light");
         if (voice) speak(String(left), { rate: 1.15 });
       }
-      if (left <= 0) goTo(idxRef.current + 1);
+      if (left <= 0) advance();
     };
     tick.current = setInterval(run, 250);
     const onVis = () => { if (!document.hidden) run(); };
@@ -132,18 +165,22 @@ export default function SequenceTimer({
     else { endAtRef.current = Date.now() + remaining * 1000; setPhase("running"); }
     haptic();
   };
-  const skip = () => { haptic(); goTo(idxRef.current + 1); };
+  const skip = () => { haptic(); advance(); };
   const addTime = (s) => { endAtRef.current += s * 1000; setRemaining((r) => r + s); haptic(); };
 
   const pct = step.seconds ? 1 - remaining / step.seconds : 0;
-  const preview = phase === "preview";
+  const timed = !done && !handoff && !preview;
+
+  if (!list.length) return null;
 
   return createPortal(
     <div className="timer-overlay">
-      <div className={`itimer ${done ? "done" : accent} ${preview ? "previewing" : ""}`}>
+      <div className={`itimer ${done ? "done" : block.accent || "warmup"} ${preview ? "previewing" : ""}`}>
         <div className="it-top">
           <button className="it-close" onClick={onClose} aria-label="Close">✕</button>
-          <div className="it-round">{done ? title : `${title} · ${idx + 1}/${steps.length}`}</div>
+          <div className="it-round">
+            {done ? "Session" : handoff ? block.title : `${block.title} · ${idx + 1}/${steps.length}`}
+          </div>
           <span className="it-session tnum">{session > 0 ? fmt(session) : ""}</span>
         </div>
 
@@ -152,6 +189,15 @@ export default function SequenceTimer({
             <div className="it-phase">{donePhase || "Complete"}</div>
             <div className="it-count tnum">✓</div>
             {doneNote && <div className="it-note">{doneNote}</div>}
+          </>
+        ) : handoff ? (
+          <>
+            <div className="it-phase">{block.title} done</div>
+            <div className="it-count tnum">✓</div>
+            {block.doneNote && <div className="it-note">{block.doneNote}</div>}
+            <div className="seq-next">
+              Next up · <b>{nextBlock.title}</b> · {fmt(secs(nextBlock.steps))}
+            </div>
           </>
         ) : preview ? (
           <>
@@ -171,17 +217,25 @@ export default function SequenceTimer({
             <div className="it-count tnum">{fmt(remaining)}</div>
             {step.cue && <p className="seq-cue">{step.cue}</p>}
             <div className="seq-next">
-              {next ? <>Next · <b>{next.label}</b> · {fmt(next.seconds)}</> : "Last one — finish strong."}
+              {next
+                ? <>Next · <b>{next.label}</b> · {fmt(next.seconds)}</>
+                : nextBlock
+                  ? <>Last of the {block.title.toLowerCase()} — <b>{nextBlock.title}</b> after this.</>
+                  : "Last one — finish strong."}
             </div>
           </>
         )}
 
-        {!preview && <div className="it-progress"><span style={{ width: `${done ? 100 : pct * 100}%` }} /></div>}
-        {!done && !preview && <div className="it-elapsed tnum">{fmt(overallLeft)} left of {fmt(total)}</div>}
+        {timed && <div className="it-progress"><span style={{ width: `${pct * 100}%` }} /></div>}
+        {!done && <div className="it-elapsed tnum">{fmt(overallLeft)} left of {fmt(total)}</div>}
 
         <div className="it-controls">
           {done ? (
             <button className="btn btn-primary it-main" onClick={() => { onComplete?.(); onClose(); }}>{doneLabel}</button>
+          ) : handoff ? (
+            <button className="btn btn-primary it-main" onClick={continueOn}>
+              {nextBlock.title} ▶
+            </button>
           ) : preview ? (
             <>
               <button className="btn btn-primary it-main" onClick={startStep}>▶ Start · {fmt(step.seconds)}</button>
@@ -198,8 +252,16 @@ export default function SequenceTimer({
 
         {!done && (
           <div className="seq-list">
-            {steps.map((s, i) => (
-              <span key={i} className={`seq-pip ${i < idx ? "done" : i === idx ? "on" : ""}`} title={s.label} />
+            {list.map((b, j) => (
+              <span key={j} className={`seq-group ${j === bi ? "on" : ""}`} title={b.title}>
+                {b.steps.map((s, i) => {
+                  // On the handoff card the block is finished, so its last
+                  // step should read done rather than still-in-progress.
+                  const past = j < bi || (j === bi && (handoff || i < idx));
+                  const here = j === bi && i === idx && !handoff;
+                  return <span key={i} className={`seq-pip ${past ? "done" : here ? "on" : ""}`} title={s.label} />;
+                })}
+              </span>
             ))}
           </div>
         )}
