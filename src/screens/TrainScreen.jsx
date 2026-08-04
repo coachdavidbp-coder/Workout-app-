@@ -95,8 +95,10 @@ export default function TrainScreen() {
       title: "Stretch",
       accent: "warmup",
       steps: PRE_STRETCH,
-      previewSteps: true,
-      countdownFrom: 10,
+      // No clock on the stretches. They're dynamic — you move through the
+      // range and go on when it feels open, and a countdown on each one just
+      // put a second timer in front of a session that's meant to have one.
+      untimed: true,
       doneNote: "Hips and shoulders are open.",
     },
     warmupSteps.length && {
@@ -107,7 +109,9 @@ export default function TrainScreen() {
       doneNote: "You're warm.",
     },
   ].filter(Boolean);
-  const preSeconds = preBlocks.reduce((a, b) => a + totalSeconds(b.steps), 0);
+  const preSeconds = preBlocks
+    .filter((b) => !b.untimed)
+    .reduce((a, b) => a + totalSeconds(b.steps), 0);
 
   const startSession = () => {
     beep(600, 0.05); haptic("success");
@@ -237,7 +241,9 @@ export default function TrainScreen() {
               <div className="session-start">
                 <div className="ss-top">
                   <span className="ss-kicker">Session</span>
-                  <span className="ss-len">{clock(preSeconds)} guided before the lifts</span>
+                  <span className="ss-len">
+                    {PRE_STRETCH.length} stretches{preSeconds > 0 ? ` + ${clock(preSeconds)} warm-up` : ""}
+                  </span>
                 </div>
                 <button className="ss-btn" onClick={startSession}>▶ Start session</button>
                 <div className="ss-note">
@@ -252,8 +258,9 @@ export default function TrainScreen() {
             <div className="phase-step"><span className="ps-n">1</span> Stretch</div>
             <PhaseCard
               heading="Stretch"
-              blurb="dynamic — move through it, don't hold"
+              blurb="dynamic — move through it at your own pace"
               steps={PRE_STRETCH}
+              untimed
               onList={() => setStretchList(true)}
               listLabel="Stretches & videos"
             />
@@ -462,6 +469,7 @@ export default function TrainScreen() {
         title="Stretch"
         subtitle="dynamic, before you load up"
         startLabel="Start the session"
+        untimed
         onStart={startSession}
       />
 
@@ -484,14 +492,14 @@ export default function TrainScreen() {
 // What's coming in this part of the session. Deliberately has no Start of its
 // own — three Start buttons on one screen is what made the session feel like
 // three separate workouts. Start session runs the lot.
-function PhaseCard({ heading, blurb, steps, onList, listLabel }) {
+function PhaseCard({ heading, blurb, steps, onList, listLabel, untimed = false }) {
   return (
     <div className="warmup-card stretch-card pre">
       <div className="warmup-txt"><b>{heading}</b> · {blurb}</div>
       <div className="pose-mini">
         {steps.map((s) => (
           <span className="pose-chip" key={s.label}>
-            {s.label}<em className="tnum">{clock(s.seconds)}</em>
+            {s.label}{!untimed && <em className="tnum">{clock(s.seconds)}</em>}
           </span>
         ))}
       </div>

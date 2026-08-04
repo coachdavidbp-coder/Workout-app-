@@ -14,6 +14,7 @@ export default function CooldownSheet({
   subtitle = "for your lower back",
   noun = "poses",
   startLabel = "Start guided cool-down",
+  untimed = false,
 }) {
   const [openId, setOpenId] = useState(null);
 
@@ -21,7 +22,7 @@ export default function CooldownSheet({
     <Sheet open={open} onClose={onClose}>
       <h3 className="sheet-title">{title}</h3>
       <div className="sheet-sub">
-        {steps.length} {noun} · {fmt(totalSeconds(steps))} · {subtitle}
+        {steps.length} {noun}{untimed ? "" : ` · ${fmt(totalSeconds(steps))}`} · {subtitle}
       </div>
 
       <div className="pose-list">
@@ -34,7 +35,7 @@ export default function CooldownSheet({
               <span className="pose-n">{i + 1}</span>
               <span className="pose-txt">
                 <span className="pose-name">{p.label}</span>
-                <span className="pose-time tnum">{fmt(p.seconds)}</span>
+                {!untimed && <span className="pose-time tnum">{fmt(p.seconds)}</span>}
               </span>
               <span className="pose-caret">{openId === p.label ? "▾" : "▸"}</span>
             </button>
@@ -55,9 +56,13 @@ export default function CooldownSheet({
         style={{ marginTop: 16 }}
         onClick={() => { haptic("success"); onClose(); onStart?.(); }}
       >
-        ▶ {startLabel} · {fmt(totalSeconds(steps))}
+        ▶ {startLabel}{untimed ? "" : ` · ${fmt(totalSeconds(steps))}`}
       </button>
-      <div className="ss-note">Runs one {noun.replace(/e?s$/, "")} at a time with a timer and a countdown into the next.</div>
+      <div className="ss-note">
+        {untimed
+          ? `Shows one ${noun.replace(/e?s$/, "")} at a time — move on when you're ready.`
+          : `Runs one ${noun.replace(/e?s$/, "")} at a time with a timer and a countdown into the next.`}
+      </div>
     </Sheet>
   );
 }

@@ -43,8 +43,11 @@ export default function SequenceTimer({
 
   const [bi, setBi] = useState(0);
   const [idx, setIdx] = useState(0);
-  // preview → waiting on Start | running | paused | handoff → between blocks | done
-  const [phase, setPhase] = useState(first.previewSteps ? "preview" : "running");
+  // showing → untimed, move on when you're ready | preview → waiting on Start
+  // running | paused | handoff → between blocks | done
+  const [phase, setPhase] = useState(
+    first.untimed ? "showing" : first.previewSteps ? "preview" : "running"
+  );
   const [remaining, setRemaining] = useState(first.steps[0]?.seconds || 0);
 
   const at = useRef({ bi: 0, idx: 0 });
@@ -61,13 +64,20 @@ export default function SequenceTimer({
   const done = phase === "done";
   const handoff = phase === "handoff";
   const preview = phase === "preview";
+  const showing = phase === "showing";
+  const untimed = !!block.untimed;
   const countdownFrom = block.countdownFrom ?? 5;
 
-  // Progress across the whole run, not just this block.
+  // Time left across the whole run. Untimed blocks are left out of both
+  // numbers — a move you do at your own pace has no length to count down, and
+  // folding a made-up one in would make the total a lie.
   const secs = (arr) => arr.reduce((a, s) => a + s.seconds, 0);
-  const total = secs(list.flatMap((b) => b.steps));
-  const behind = secs(list.slice(0, bi).flatMap((b) => b.steps)) + secs(steps.slice(0, idx));
-  const overallLeft = Math.max(0, total - behind - (step.seconds - remaining));
+  const timedOf = (bs) => bs.filter((b) => !b.untimed).flatMap((b) => b.steps);
+  const total = secs(timedOf(list));
+  const behind =
+    secs(timedOf(list.slice(0, bi))) + (untimed ? 0 : secs(steps.slice(0, idx)));
+  const overallLeft = Math.max(0, total - behind - (untimed ? 0 : step.seconds - remaining));
+  const laterTimed = secs(timedOf(list.slice(bi + 1)));
 
   useEffect(() => {
     (async () => {
@@ -104,7 +114,10 @@ export default function SequenceTimer({
     const s = list[b].steps[i];
     setRemaining(s.seconds);
     beep(760, 0.16); haptic("medium");
-    if (list[b].previewSteps) {
+    if (list[b].untimed) {
+      setPhase("showing");
+      if (voice) speak(`Next. ${s.label}.`);
+    } else if (list[b].previewSteps) {
       setPhase("preview");
       if (voice) speak(`Next. ${s.label}.`);
     } else {
@@ -169,7 +182,7 @@ export default function SequenceTimer({
   const addTime = (s) => { endAtRef.current += s * 1000; setRemaining((r) => r + s); haptic(); };
 
   const pct = step.seconds ? 1 - remaining / step.seconds : 0;
-  const timed = !done && !handoff && !preview;
+  const timed = !done && !handoff && !preview && !showing;
 
   if (!list.length) return null;
 
@@ -197,6 +210,25 @@ export default function SequenceTimer({
             {block.doneNote && <div className="it-note">{block.doneNote}</div>}
             <div className="seq-next">
               Next up · <b>{nextBlock.title}</b> · {fmt(secs(nextBlock.steps))}
+            </div>
+          </>
+        ) : showing ? (
+          // No clock on this one. It's the move, how to do it, and the video —
+          // you go at your own pace and tap on when you're done.
+          <>
+            <div className="seq-now">{step.label}</div>
+            {step.cue && <p className="seq-cue">{step.cue}</p>}
+            {(step.video || step.q) && (
+              <div className="seq-video">
+                <HowToVideo videoId={step.video} slug={step.label} query={step.q} title={`${step.label} how-to`} />
+              </div>
+            )}
+            <div className="seq-next">
+              {next
+                ? <>Next · <b>{next.label}</b></>
+                : nextBlock
+                  ? <>Last one — <b>{nextBlock.title}</b> after this.</>
+                  : "Last one — finish strong."}
             </div>
           </>
         ) : preview ? (
@@ -227,7 +259,16 @@ export default function SequenceTimer({
         )}
 
         {timed && <div className="it-progress"><span style={{ width: `${pct * 100}%` }} /></div>}
-        {!done && <div className="it-elapsed tnum">{fmt(overallLeft)} left of {fmt(total)}</div>}
+        {/* The handoff card already names what's next and how long it is. */}
+        {!done && !handoff && (
+          <div className="it-elapsed tnum">
+            {untimed
+              ? laterTimed > 0
+                ? `${idx + 1} of ${steps.length} · ${fmt(laterTimed)} timed after this`
+                : `${idx + 1} of ${steps.length}`
+              : `${fmt(overallLeft)} left of ${fmt(total)}`}
+          </div>
+        )}
 
         <div className="it-controls">
           {done ? (
@@ -235,6 +276,10 @@ export default function SequenceTimer({
           ) : handoff ? (
             <button className="btn btn-primary it-main" onClick={continueOn}>
               {nextBlock.title} ▶
+            </button>
+          ) : showing ? (
+            <button className="btn btn-primary it-main" onClick={skip}>
+              {next || nextBlock ? "Next ›" : "Finish ›"}
             </button>
           ) : preview ? (
             <>
